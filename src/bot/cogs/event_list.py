@@ -48,12 +48,14 @@ class EventList(commands.Cog):
     async def _process_job_post(self, content: str):
         """메시지 원문을 파싱하고 데이터베이스에 병합(UPSERT) 처리"""
         try:
+            print(f"[Debug] 파싱 시작 (문자열 길이: {len(content)})")
             parsed_data = parse_discord_jobs(content)
+
             if parsed_data:
                 sync_jobs_to_db(parsed_data)
                 print(f"[{len(parsed_data)}]건의 직업 데이터 파싱 및 DB 동기화 완료.")
             else:
-                print("파싱된 직업 데이터가 없습니다.")
+                print("[Warning] 파싱된 직업 데이터가 없습니다. 정규식 매칭 실패.")
         except Exception as e:
             print(f"데이터 처리 중 오류 발생: {e}")
 
