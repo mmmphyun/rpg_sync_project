@@ -15,15 +15,19 @@ class EventList(commands.Cog):
 
         if target_ids_str:
             for c_id in target_ids_str.split(','):
-                c_id = c_id.strip()
+                c_id = c_id.strip().replace('"', '').replace("'", "")
                 if c_id.isdigit():
                     self.target_channel_ids.add(int(c_id))
+
+        print(f"[System] Target Channels Loaded: {self.target_channel_ids}")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """새로운 메시지(포스트)가 등록될 때 트리거"""
         if message.author.bot or not self.target_channel_ids:
             return
+
+        print(f"[Log] Message received in {message.channel.id}")
 
         if message.channel.id == self.target_channel_ids:
             await self._process_job_post(message.content)
