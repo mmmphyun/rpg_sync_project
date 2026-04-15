@@ -22,23 +22,23 @@ class EventList(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """새로운 메시지(포스트)가 등록될 때 트리거"""
-        if message.author.bot or not self.target_channel_id:
+        if message.author.bot or not self.target_channel_ids:
             return
 
-        if message.channel.id == self.target_channel_id:
+        if message.channel.id == self.target_channel_ids:
             await self._process_job_post(message.content)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         """기존 메시지(포스트)가 수정될 때 트리거"""
-        if after.author.bot or not self.target_channel_id:
+        if after.author.bot or not self.target_channel_ids:
             return
 
         # 메시지 내용이 실제로 변경된 경우에만 처리
         if before.content == after.content:
             return
 
-        if after.channel.id == self.target_channel_id:
+        if after.channel.id == self.target_channel_ids:
             await self._process_job_post(after.content)
 
     async def _process_job_post(self, content: str):
