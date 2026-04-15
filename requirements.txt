@@ -1,3 +1,5 @@
 oracledb
 python-dotenv
 discord.py
+fastapi
+uvicorn

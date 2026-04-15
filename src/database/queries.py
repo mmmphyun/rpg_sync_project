@@ -48,3 +48,36 @@ def update_job_single_column(job_name: str, column_name: str, value: str) -> int
     finally:
         cursor.close()
         conn.close()
+
+
+def get_all_jobs_for_web() -> list[dict]:
+    """
+    웹 프론트엔드에 제공할 모든 직업 정보를 조회합니다.
+    """
+    sql = """
+        SELECT NAME, DISPLAY_NAME, GATE, JOB_GROUP, DESCRIPTION, 
+               RANGE_TYPE, POSITION, RESOURCE_TYPE, IS_LIMIT, 
+               REQ_CONDITION, IMG, PHOTO_1, PHOTO_2, PHOTO_3, PHOTO_4
+        FROM JOBS
+        ORDER BY GATE, DISPLAY_NAME
+    """
+
+    conn = get_connection()
+    # 딕셔너리 형태로 결과를 반환받기 위해 rowfactory 설정
+    conn.autocommit = False
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(sql)
+        # 컬럼명을 소문자 키로 가지는 딕셔너리 리스트 생성
+        columns = [col[0].lower() for col in cursor.description]
+        cursor.rowfactory = lambda *args: dict(zip(columns, args))
+
+        jobs = cursor.fetchall()
+        return jobs
+    except oracledb.Error as e:
+        print(f"조회 중 오류 발생: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
