@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>직업 종류 - 나나의 화석서버 공략집</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 상단 바 -->
+<div class="top-bar">
+  <a href="index.html" class="back-link">← 홈</a>
+  <h1>직업 선택</h1>
+  <span class="job-count" id="jobCount"></span>
+  <img src="https://visitor-badge.laobi.icu/badge?page_id=jaeunify.do-it-minecraft-fossile.jobs" alt="방문자수" style="height:20px; vertical-align:middle; opacity:0.6;">
+</div>
+
+<!-- 분류 바 -->
+<div class="filter-bar">
+  <span class="filter-label">분류</span>
+  <button class="filter-btn active" data-sort="range">사거리</button>
+  <button class="filter-btn" data-sort="position">포지션</button>
+  <button class="filter-btn" data-sort="resource">재화</button>
+  <button class="filter-btn" data-sort="gate">게이트</button>
+</div>
+<!-- 필터 바 -->
+<div class="filter-bar">
+  <span class="filter-label">필터</span>
+  <button class="filter-btn tag-filter" data-key="range" data-val="근거리">근거리</button>
+  <button class="filter-btn tag-filter" data-key="range" data-val="원거리">원거리</button>
+  <div class="filter-sep"></div>
+  <button class="filter-btn tag-filter" data-key="position" data-val="탱">탱</button>
+  <button class="filter-btn tag-filter" data-key="position" data-val="딜">딜</button>
+  <button class="filter-btn tag-filter" data-key="position" data-val="힐">힐</button>
+</div>
+
+<!-- 메인 -->
+<div class="main">
+  <div class="grid-area" id="app"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-inner" id="sidebarContent"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="main.js"></script>
+
+<div class="lightbox" id="lightbox"><img src="" alt=""></div>
+
+</body>
+</html>
