@@ -33,6 +33,7 @@ function getInitials(name) {
 // =============================================
 //  State & DOM References
 // =============================================
+let JOBS = [];
 const app = document.getElementById("app");
 const sidebar = document.getElementById("sidebar");
 const sidebarContent = document.getElementById("sidebarContent");
@@ -254,4 +255,22 @@ document.addEventListener("click", e => {
 // =============================================
 //  Initialize
 // =============================================
-renderGrid();
+async function initApp() {
+    try {
+        // FastAPI 서버 주소 호출
+        const response = await fetch("http://localhost:8000/api/jobs");
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        JOBS = await response.json();
+
+        // 데이터 로드 완료 후 화면 그리기
+        renderGrid();
+    } catch (error) {
+        console.error("데이터를 불러오는 중 오류가 발생했습니다:", error);
+        app.innerHTML = `<div style="text-align:center; padding:50px; color:#e74c3c;">데이터베이스 연결에 실패했습니다.</div>`;
+    }
+}
+
+// 앱 실행
+initApp();
