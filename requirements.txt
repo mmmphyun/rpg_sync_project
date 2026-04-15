@@ -1,5 +1,5 @@
-oracledb
-python-dotenv
 discord.py
+psycopg2-binary
+python-dotenv
 fastapi
 uvicorn

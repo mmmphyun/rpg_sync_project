@@ -1,19 +1,15 @@
 import os
-import oracledb
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 
-# .env 파일 로드
 load_dotenv()
 
 
 def get_connection():
-    """Oracle DB 연결 객체를 반환합니다."""
+    """PostgreSQL DB 연결 객체를 반환합니다."""
     try:
-        connection = oracledb.connect(
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            dsn=os.getenv("DB_DSN")
-        )
+        connection = psycopg2.connect(os.getenv("DATABASE_URL"))
         return connection
     except Exception as e:
         print(f"Database connection error: {e}")
@@ -22,52 +18,29 @@ def get_connection():
 
 def sync_jobs_to_db(jobs_data: list[dict]):
     """
-    파싱된 직업 데이터(jobs_data)를 DB에 병합(UPSERT)합니다.
+    파싱된 직업 데이터를 DB에 병합(UPSERT)합니다.
+    PostgreSQL의 INSERT ... ON CONFLICT 구문을 사용합니다.
     """
-    merge_sql = """
-        MERGE INTO JOBS j
-        USING (
-            SELECT :name AS NAME,
-                   :display_name AS DISPLAY_NAME,
-                   :gate AS GATE,
-                   :job_group AS JOB_GROUP,
-                   :description AS DESCRIPTION,
-                   :resource_type AS RESOURCE_TYPE,
-                   :is_limit AS IS_LIMIT,
-                   :req_condition AS REQ_CONDITION
-            FROM DUAL
-        ) src
-        ON (j.NAME = src.NAME)
-        WHEN MATCHED THEN
-            UPDATE SET
-                j.DISPLAY_NAME = src.DISPLAY_NAME,
-                j.GATE = src.GATE,
-                j.JOB_GROUP = src.JOB_GROUP,
-                j.DESCRIPTION = src.DESCRIPTION,
-                j.RESOURCE_TYPE = src.RESOURCE_TYPE,
-                j.IS_LIMIT = src.IS_LIMIT,
-                j.REQ_CONDITION = src.REQ_CONDITION
-        WHEN NOT MATCHED THEN
-            INSERT (NAME, DISPLAY_NAME, GATE, JOB_GROUP, DESCRIPTION, RESOURCE_TYPE, IS_LIMIT, REQ_CONDITION)
-            VALUES (src.NAME, src.DISPLAY_NAME, src.GATE, src.JOB_GROUP, src.DESCRIPTION, src.RESOURCE_TYPE, src.IS_LIMIT, src.REQ_CONDITION)
+    upsert_sql = """
+        INSERT INTO JOBS (NAME, DISPLAY_NAME, GATE, JOB_GROUP, DESCRIPTION, RESOURCE_TYPE, IS_LIMIT, REQ_CONDITION)
+        VALUES (%(name)s, %(display_name)s, %(gate)s, %(job_group)s, %(description)s, %(resource_type)s, %(is_limit)s, %(req_condition)s)
+        ON CONFLICT (NAME) DO UPDATE SET
+            DISPLAY_NAME = EXCLUDED.DISPLAY_NAME,
+            GATE = EXCLUDED.GATE,
+            JOB_GROUP = EXCLUDED.JOB_GROUP,
+            DESCRIPTION = EXCLUDED.DESCRIPTION,
+            RESOURCE_TYPE = EXCLUDED.RESOURCE_TYPE,
+            IS_LIMIT = EXCLUDED.IS_LIMIT,
+            REQ_CONDITION = EXCLUDED.REQ_CONDITION
     """
 
     conn = get_connection()
     cursor = conn.cursor()
-
     success_count = 0
+
     try:
         for job in jobs_data:
-            cursor.execute(merge_sql, {
-                "name": job["name"],
-                "display_name": job["display_name"],
-                "gate": job["gate"],
-                "job_group": job["job_group"],
-                "description": job["description"],
-                "resource_type": job["resource_type"],
-                "is_limit": job["is_limit"],
-                "req_condition": job["req_condition"]
-            })
+            cursor.execute(upsert_sql, job)
             success_count += 1
 
         conn.commit()
