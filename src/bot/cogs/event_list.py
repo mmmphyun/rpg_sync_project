@@ -8,9 +8,16 @@ from src.database.connection import sync_jobs_to_db
 class EventList(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # .env에서 감지 대상 채널 ID 로드
-        target_id = os.getenv('TARGET_CHANNEL_ID')
-        self.target_channel_id = int(target_id) if target_id else None
+
+        # 콤마로 구분된 채널 ID 문자열을 파싱하여 정수형 Set으로 변환
+        target_ids_str = os.getenv('TARGET_CHANNEL_IDS', '')
+        self.target_channel_ids = set()
+
+        if target_ids_str:
+            for c_id in target_ids_str.split(','):
+                c_id = c_id.strip()
+                if c_id.isdigit():
+                    self.target_channel_ids.add(int(c_id))
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
