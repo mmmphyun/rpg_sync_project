@@ -1,13 +1,17 @@
+# src/bot/utils/text_parser.py
 import re
+from typing import Optional, List, Dict, Any
+
+RESOURCE_KEYWORDS = ["기력", "마나", "체력", "에너지"]
 
 
-def parse_discord_jobs(raw_text: str) -> list[dict]:
+def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
     """
-    엄격한 표준 양식을 적용한 디스코드 직업 포스트 파서
-    - 게이트: '게이트 [-+]알파벳' 또는 '고대 게이트'
-    - 그룹: 게이트와 동일한 줄의 [ ] 내부 텍스트
-    - 직업: '직업명 :'
-    - 조건: 직업 설명 하단의 [ ] 내부 텍스트
+    [직업 설명 쓰레드] 파서
+    포맷:
+    ## 게이트명 [ 그룹명 ]
+    ### 직업명
+    설명...
     """
     jobs_data = []
 
@@ -15,29 +19,26 @@ def parse_discord_jobs(raw_text: str) -> list[dict]:
     current_group = "정보 없음"
     current_job_name = None
     current_desc_lines = []
-    current_condition = "정보 없음"
-
-    RESOURCE_KEYWORDS = ["기력", "마나", "체력", "에너지"]
 
     lines = raw_text.split('\n')
 
     def _flush_job():
-        nonlocal current_job_name, current_desc_lines, current_condition
+        nonlocal current_job_name, current_desc_lines
 
         if current_job_name:
             desc_str = "\n".join(current_desc_lines).strip()
 
-            # 자원 파싱
+            # 코스트 자원 식별
             resource_type = "정보 없음"
             for res in RESOURCE_KEYWORDS:
                 if res in desc_str:
                     resource_type = res
                     break
 
-            # 1인 제한 확인
+            # 1인 제한 여부 식별 (기존 규칙 유지)
             is_limit = 'Y' if '1인 제한' in desc_str or '1인 제한' in current_job_name else 'N'
 
-            # 식별자 정제
+            # 공백을 제거한 고유 ID 생성 및 표시명 분리
             clean_job_id = re.sub(r"\s+", "", current_job_name)
             clean_display_name = current_job_name.strip()
 
@@ -49,69 +50,85 @@ def parse_discord_jobs(raw_text: str) -> list[dict]:
                 "description": desc_str,
                 "resource_type": resource_type,
                 "is_limit": is_limit,
-                "req_condition": current_condition
+                "req_condition": "정보 없음"  # 신규 양식에 조건 추출 명세가 없어 기본값 처리
             })
 
-            # 변수 초기화
             current_job_name = None
             current_desc_lines = []
-            current_condition = "정보 없음"
 
     for line in lines:
         line = line.strip()
         if not line:
             continue
 
-        # 맺음말 필터링
-        if line in ["자세한 설명은 패치노트에 적어두겠습니다", "궁금한점은 DM주세용", "@everyone"]:
-            continue
-
-        # 1. Gate & Group 파싱
-        # Match ex: "게이트 -C [ 데몬 ]", "게이트 A", "게이트 +B", "고대 게이트"
-        gate_match = re.match(r"^(게이트\s*[-+]?[A-Za-z]|고대\s*게이트)", line)
-        if gate_match:
+        # 1. Gate & Group (H2)
+        if line.startswith("## "):
             _flush_job()
+            header_content = line[3:].strip()
 
-            raw_gate = gate_match.group(1)
-            current_gate = re.sub(r"\s*[-+]\s*", " ", raw_gate).strip()
-            current_group = "정보 없음"
-
-            # 같은 줄에 존재하는 그룹명 [ ] 추출
-            group_match = re.search(r"\[(.*?)\]", line[len(raw_gate):])
+            # 대괄호 존재 여부로 그룹 추출
+            group_match = re.search(r"\[(.*?)\]", header_content)
             if group_match:
                 current_group = group_match.group(1).strip()
+                current_gate = header_content[:group_match.start()].strip()
+            else:
+                current_gate = header_content
+                current_group = "정보 없음"
             continue
 
-        # 2. 직업 파싱
-        # Match ex: "환신 :", "다크 메이지 :"
-        if ":" in line:
-            parts = line.split(":", 1)
-            left_part = parts[0].strip()
-            right_part = parts[1].strip()
+        # 2. 직업명 (H3)
+        if line.startswith("### "):
+            _flush_job()
+            current_job_name = line[4:].strip()
+            continue
 
-            # 문장 내 콜론 예외 처리 (설명문 내의 콜론 배제)
-            if len(left_part) <= 20 and "게이트" not in left_part:
-                _flush_job()
-                current_job_name = left_part
-                if right_part:
-                    current_desc_lines.append(right_part)
-                continue
-
-        # 3. 설명 및 조건 누적 (직업명 인식 이후)
+        # 3. 설명문 버퍼링
         if current_job_name:
-            # 대괄호로 묶인 조건문 파싱 (예: [ 서버내 2차 각성한 계정 필요 ])
-            cond_match = re.search(r"\[(.*?)\]", line)
-            if cond_match:
-                cond = cond_match.group(1).strip()
-                if current_condition == "정보 없음":
-                    current_condition = cond
-                else:
-                    current_condition += f" / {cond}"
-            else:
-                # 대괄호가 없다면 일반 설명문으로 취급
-                current_desc_lines.append(line)
+            current_desc_lines.append(line)
 
-    # 마지막 버퍼 처리
     _flush_job()
-
     return jobs_data
+
+
+def parse_job_patches(raw_text: str) -> Optional[Dict[str, str]]:
+    """
+    [직업 패치노트 채널] 파서
+    포맷:
+    ## 직업명
+    - 설명1
+    """
+    lines = raw_text.split('\n')
+    job_name = None
+    notes = []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        if line.startswith("## "):
+            job_name = line[3:].strip()
+        else:
+            # '-', '*' 불릿 기호를 유지하거나 일반 텍스트 모두 notes 배열로 병합
+            notes.append(line)
+
+    if job_name:
+        clean_job_id = re.sub(r"\s+", "", job_name)
+        return {
+            "name": clean_job_id,
+            "notes": "\n".join(notes).strip()
+        }
+    return None
+
+
+def parse_job_illustration(raw_text: str) -> Optional[str]:
+    """
+    [직업 종류(일러스트) 쓰레드] 텍스트 파서
+    포맷: << 직업이름 >>
+    첨부파일(이미지) 자체는 discord.py의 message.attachments를 통해 Event Listener 측에서 처리해야 함.
+    """
+    match = re.search(r"<<\s*(.*?)\s*>>", raw_text)
+    if match:
+        # DB 조회를 위해 공백이 제거된 ID 형태 반환
+        return re.sub(r"\s+", "", match.group(1).strip())
+    return None
