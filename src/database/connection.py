@@ -78,3 +78,35 @@ def sync_job_patch_to_db(patch_data: dict):
     finally:
         cursor.close()
         conn.close()
+
+def sync_users_to_db(users_data: list[dict]) -> int:
+    """
+    디스코드 서버 유저 목록을 DB에 병합(UPSERT).
+    진행 중인 직업이나 마지막 음성채널 퇴장 시간은 덮어쓰지 않음.
+    """
+    upsert_sql = """
+        INSERT INTO USERS (DISCORD_ID, NICKNAME, SERVER_ROLE)
+        VALUES (%(discord_id)s, %(nickname)s, %(server_role)s)
+        ON CONFLICT (DISCORD_ID) DO UPDATE SET
+            NICKNAME = EXCLUDED.NICKNAME,
+            SERVER_ROLE = EXCLUDED.SERVER_ROLE
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    success_count = 0
+
+    try:
+        for user in users_data:
+            cursor.execute(upsert_sql, user)
+            success_count += 1
+
+        conn.commit()
+        return success_count
+    except Exception as e:
+        conn.rollback()
+        print(f"유저 동기화 중 오류 발생: {e}")
+        return 0
+    finally:
+        cursor.close()
+        conn.close()
