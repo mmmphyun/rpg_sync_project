@@ -11,7 +11,8 @@ def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
     포맷:
     ## 게이트명 [ 그룹명 ]
     ### 직업명
-    설명...
+    설명(마나, 기력 등의 코스트 키워드가 포함되면 자동으로 인식)
+    << 1인 제한, 2차 각성 필요 등의 조건 >>
     """
     jobs_data = []
 
@@ -35,8 +36,16 @@ def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
                     resource_type = res
                     break
 
-            # 1인 제한 여부 식별 (기존 규칙 유지)
-            is_limit = 'Y' if '1인 제한' in desc_str or '1인 제한' in current_job_name else 'N'
+            # 조건(req_condition) 파싱 및 설명문 정제
+            req_condition = "정보 없음"
+            condition_match = re.search(r"<<(.*?)>>", desc_str)
+            if condition_match:
+                req_condition = condition_match.group(1).strip()
+                # DB 적재 시 설명 컬럼 중복 방지를 위한 태그 제거
+                desc_str = desc_str.replace(condition_match.group(0), "").strip()
+
+            # 1인 제한 여부 식별 (조건문, 설명문, 직업명 모두 검사)
+            is_limit = 'Y' if '1인 제한' in req_condition or '1인 제한' in desc_str or '1인 제한' in current_job_name else 'N'
 
             # 공백을 제거한 고유 ID 생성 및 표시명 분리
             clean_job_id = re.sub(r"\s+", "", current_job_name)
@@ -50,7 +59,7 @@ def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
                 "description": desc_str,
                 "resource_type": resource_type,
                 "is_limit": is_limit,
-                "req_condition": "정보 없음"  # 신규 양식에 조건 추출 명세가 없어 기본값 처리
+                "req_condition": req_condition
             })
 
             current_job_name = None
