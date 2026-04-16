@@ -56,9 +56,9 @@ class SyncCmd(commands.Cog):
             if not member.bot:
                 role_name = member.top_role.name if member.top_role else "유저"
 
-                # 닉네임 파싱 (구분자: 한글 'ㅣ' 또는 영문 파이프 '|')
+                # 닉네임 파싱
                 display_name = member.display_name
-                parts = [p.strip() for p in re.split(r'[ㅣ|]', display_name)]
+                parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
 
                 job_name = None
                 if len(parts) >= 2:
