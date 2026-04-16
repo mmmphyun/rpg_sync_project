@@ -1,5 +1,5 @@
 import os
-import discord
+import re
 from discord.ext import commands
 from src.database.queries import update_job_single_column, update_job_illustrations
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
