@@ -1,6 +1,7 @@
 import os
 import re
 from discord.ext import commands
+from datetime import timedelta
 from src.database.queries import update_job_single_column, update_job_illustrations
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
@@ -123,8 +124,20 @@ class SyncCmd(commands.Cog):
                 if not message.author.bot:
                     parsed_data = parse_job_patches(message.content)
                     if parsed_data:
-                        sync_job_patch_to_db(parsed_data)
-                        patch_count += 1
+                        # UTC 기준인 message.created_at에 9시간을 더해 KST(한국 시간)로 변환
+                        kst_time = message.created_at + timedelta(hours=9)
+                        patch_date_str = kst_time.strftime('%Y-%m-%d')
+
+                        # 파서가 단일 딕셔너리 또는 리스트를 반환할 경우 모두 대응
+                        if isinstance(parsed_data, list):
+                            for pd in parsed_data:
+                                pd['patch_date'] = patch_date_str
+                                sync_job_patch_to_db(pd)
+                                patch_count += 1
+                        else:
+                            parsed_data['patch_date'] = patch_date_str
+                            sync_job_patch_to_db(parsed_data)
+                            patch_count += 1
 
         # 3. 일러스트 동기화 (JOBS 테이블 PHOTO 업데이트)
         illust_channel = self.bot.get_channel(illust_thread_id) or await self.bot.fetch_channel(illust_thread_id)

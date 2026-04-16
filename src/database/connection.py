@@ -61,9 +61,15 @@ def sync_job_patch_to_db(patch_data: dict):
     """
     sql = """
         INSERT INTO JOB_PATCHES (JOB_ID, PATCH_DATE, NOTES)
-        SELECT JOB_ID, TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS'), %(notes)s
+        SELECT JOB_ID, %(patch_date)s, %(notes)s
         FROM JOBS
         WHERE NAME = %(name)s
+          AND NOT EXISTS (
+              SELECT 1 
+              FROM JOB_PATCHES jp 
+              WHERE jp.JOB_ID = JOBS.JOB_ID 
+                AND jp.NOTES = %(notes)s
+          )
     """
 
     conn = get_connection()
