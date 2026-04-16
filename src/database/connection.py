@@ -85,11 +85,17 @@ def sync_users_to_db(users_data: list[dict]) -> int:
     진행 중인 직업이나 마지막 음성채널 퇴장 시간은 덮어쓰지 않음.
     """
     upsert_sql = """
-        INSERT INTO USERS (DISCORD_ID, NICKNAME, SERVER_ROLE)
-        VALUES (%(discord_id)s, %(nickname)s, %(server_role)s)
+        INSERT INTO USERS (DISCORD_ID, NICKNAME, SERVER_ROLE, CURRENT_JOB_ID)
+        VALUES (
+            %(discord_id)s, 
+            %(nickname)s, 
+            %(server_role)s,
+            (SELECT JOB_ID FROM JOBS WHERE NAME = %(job_name)s LIMIT 1)
+        )
         ON CONFLICT (DISCORD_ID) DO UPDATE SET
             NICKNAME = EXCLUDED.NICKNAME,
-            SERVER_ROLE = EXCLUDED.SERVER_ROLE
+            SERVER_ROLE = EXCLUDED.SERVER_ROLE,
+            CURRENT_JOB_ID = EXCLUDED.CURRENT_JOB_ID
     """
 
     conn = get_connection()

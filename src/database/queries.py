@@ -70,15 +70,25 @@ def update_job_single_column(job_name: str, column_name: str, value: str) -> int
 
 def get_all_jobs_for_web() -> list[dict]:
     sql = """
-        SELECT NAME, DISPLAY_NAME, GATE, JOB_GROUP, DESCRIPTION, 
-               RANGE_TYPE, POSITION, RESOURCE_TYPE, IS_LIMIT, 
-               REQ_CONDITION, IMG, PHOTO_1, PHOTO_2, PHOTO_3, PHOTO_4
-        FROM JOBS
-        ORDER BY GATE, DISPLAY_NAME
-    """
+            SELECT 
+                j.JOB_ID, j.NAME, j.DISPLAY_NAME, j.GATE, j.JOB_GROUP, j.DESCRIPTION, 
+                j.RANGE_TYPE, j.POSITION, j.RESOURCE_TYPE, j.IS_LIMIT, j.REQ_CONDITION, 
+                j.IMG, j.PHOTO_1, j.PHOTO_2, j.PHOTO_3, j.PHOTO_4,
+                COALESCE(
+                    (SELECT json_agg(json_build_object('date', jp.PATCH_DATE, 'notes', jp.NOTES)) 
+                     FROM JOB_PATCHES jp WHERE jp.JOB_ID = j.JOB_ID), 
+                    '[]'::json
+                ) AS patches,
+                COALESCE(
+                    (SELECT json_agg(u.NICKNAME) 
+                     FROM USERS u WHERE u.CURRENT_JOB_ID = j.JOB_ID), 
+                    '[]'::json
+                ) AS players
+            FROM JOBS j
+            ORDER BY j.GATE, j.DISPLAY_NAME
+        """
 
     conn = get_connection()
-    # 결과를 Dictionary 형태로 반환받기 위해 RealDictCursor 사용
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     try:

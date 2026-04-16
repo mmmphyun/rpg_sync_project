@@ -47,15 +47,13 @@ def read_jobs():
     """
     jobs_data = get_all_jobs_for_web()
 
-    # 프론트엔드 data.js 구조에 맞게 데이터 가공
     formatted_jobs = []
     for row in jobs_data:
-        # 사진 리스트 조립 (None 값 필터링)
         photos = [p for p in [row.get('photo_1'), row.get('photo_2'), row.get('photo_3'), row.get('photo_4')] if p]
 
         formatted_jobs.append({
-            "name": row.get('display_name'),  # UI 노출용 이름
-            "searchName": row.get('name'),  # 식별용 이름 (공백없음)
+            "name": row.get('display_name'),
+            "searchName": row.get('name'),
             "gate": row.get('gate'),
             "group": row.get('job_group'),
             "desc": row.get('description'),
@@ -65,12 +63,9 @@ def read_jobs():
             "img": row.get('img', ''),
             "photos": photos,
             "limit": True if row.get('is_limit') == 'Y' else False,
-            "req_condition": row.get('req_condition')
+            "req_condition": row.get('req_condition'),
+            "patches": row.get('patches', []),  # 추가된 패치노트
+            "players": row.get('players', [])    # 추가된 해당 직업 유저 목록
         })
 
     return formatted_jobs
-
-# 서버 실행 (터미널 작동 확인용)
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run("src.web.main:app", host="0.0.0.0", port=8000, reload=True)

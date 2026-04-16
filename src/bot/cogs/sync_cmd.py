@@ -45,22 +45,31 @@ class SyncCmd(commands.Cog):
         elif isinstance(error, commands.MissingPermissions):
             await ctx.send("명령어 실행 권한이 없습니다.")
 
-
     @commands.command(name="유저동기화")
     @commands.has_permissions(administrator=True)
     async def sync_users_command(self, ctx: commands.Context):
-        """서버 내 전체 유저의 ID, 닉네임, 역할을 DB와 동기화합니다."""
+        """서버 내 전체 유저의 ID, 닉네임, 역할 및 직업을 DB와 동기화합니다."""
         await ctx.send("유저 동기화를 시작합니다. (서버 크기에 따라 시간이 소요될 수 있습니다)")
 
         users_data = []
         for member in ctx.guild.members:
             if not member.bot:
-                # 최상위 역할명 추출
                 role_name = member.top_role.name if member.top_role else "유저"
+
+                # 닉네임 파싱 (구분자: 한글 'ㅣ' 또는 영문 파이프 '|')
+                display_name = member.display_name
+                parts = [p.strip() for p in re.split(r'[ㅣ|]', display_name)]
+
+                job_name = None
+                if len(parts) >= 2:
+                    # 항상 배열의 마지막 요소를 직업명으로 취급 (공백 제거)
+                    job_name = parts[-1].replace(" ", "")
+
                 users_data.append({
                     "discord_id": str(member.id),
-                    "nickname": member.display_name,
-                    "server_role": role_name
+                    "nickname": display_name,
+                    "server_role": role_name,
+                    "job_name": job_name
                 })
 
         success_count = sync_users_to_db(users_data)
