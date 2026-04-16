@@ -3,6 +3,38 @@ from psycopg2.extras import RealDictCursor
 from src.database.connection import get_connection
 
 
+def update_job_illustrations(job_name: str, image_urls: list[str]) -> int:
+    """
+    추출된 이미지 URL 리스트(최대 4개)를 해당 직업의 PHOTO_N 컬럼에 일괄 업데이트.
+    부족한 배열 크기는 None으로 채워 null 처리함.
+    """
+    clean_job_name = job_name.replace(" ", "")
+
+    # 4칸 배열 고정 할당 (index out of range 방지)
+    urls = (image_urls + [None] * 4)[:4]
+
+    sql = """
+        UPDATE JOBS 
+        SET PHOTO_1 = %s, PHOTO_2 = %s, PHOTO_3 = %s, PHOTO_4 = %s
+        WHERE NAME = %s
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Tuple binding for PostgreSQL
+        cursor.execute(sql, (urls[0], urls[1], urls[2], urls[3], clean_job_name))
+        affected_rows = cursor.rowcount
+        conn.commit()
+        return affected_rows
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
 def update_job_single_column(job_name: str, column_name: str, value: str) -> int:
     # ... (allowed_columns 및 target_col 검증 로직은 기존과 동일) ...
     allowed_columns = {

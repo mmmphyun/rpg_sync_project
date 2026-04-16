@@ -1,65 +1,86 @@
 import os
 import discord
 from discord.ext import commands
-from src.bot.utils.text_parser import parse_discord_jobs
-from src.database.connection import sync_jobs_to_db
+from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
+from src.database.connection import sync_jobs_to_db, sync_job_patch_to_db
+from src.database.queries import update_job_illustrations
 
 
 class EventList(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # 콤마로 구분된 채널 ID 문자열을 파싱하여 정수형 Set으로 변환
-        target_ids_str = os.getenv('TARGET_CHANNEL_IDS', '')
-        self.target_channel_ids = set()
+        # TARGET_CHANNEL_ID 맵핑 규칙: 0=패치노트, 1=직업설명, 2=일러스트
+        target_ids_str = os.getenv('TARGET_CHANNEL_ID', '')
+        try:
+            # 설정 값 정제 및 int 캐스팅 (IndexError 방지를 위해 할당 전 검증 처리)
+            id_list = [int(c_id.strip().replace('"', '').replace("'", ""))
+                       for c_id in target_ids_str.split(',') if c_id.strip().isdigit()]
 
-        if target_ids_str:
-            for c_id in target_ids_str.split(','):
-                c_id = c_id.strip().replace('"', '').replace("'", "")
-                if c_id.isdigit():
-                    self.target_channel_ids.add(int(c_id))
+            self.patch_channel_id = id_list[0] if len(id_list) > 0 else None
+            self.desc_thread_id = id_list[1] if len(id_list) > 1 else None
+            self.illust_thread_id = id_list[2] if len(id_list) > 2 else None
+        except Exception as e:
+            print(f"[Critical] Failed to parse target channels: {e}")
+            self.patch_channel_id = self.desc_thread_id = self.illust_thread_id = None
 
-        print(f"[System] Target Channels Loaded: {self.target_channel_ids}")
+        print(
+            f"[System] Targets Loaded - Patch: {self.patch_channel_id}, Desc: {self.desc_thread_id}, Illust: {self.illust_thread_id}")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        """새로운 메시지(포스트)가 등록될 때 트리거"""
-        if message.author.bot or not self.target_channel_ids:
+        """이벤트 라우팅: 신규 등록"""
+        if message.author.bot:
             return
-
-        print(f"[Log] Message received in {message.channel.id}")
-
-        if message.channel.id == self.target_channel_ids:
-            await self._process_job_post(message.content)
+        await self._route_event(message)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        """기존 메시지(포스트)가 수정될 때 트리거"""
-        if after.author.bot or not self.target_channel_ids:
+        """이벤트 라우팅: 기존 포스트 수정"""
+        if after.author.bot or before.content == after.content:
             return
+        await self._route_event(after)
 
-        # 메시지 내용이 실제로 변경된 경우에만 처리
-        if before.content == after.content:
-            return
+    async def _route_event(self, message: discord.Message):
+        """채널 식별자에 기반한 핸들러 분기"""
+        channel_id = message.channel.id
 
-        if after.channel.id == self.target_channel_ids:
-            await self._process_job_post(after.content)
+        if channel_id == self.desc_thread_id:
+            await self._process_description(message.content)
+        elif channel_id == self.patch_channel_id:
+            await self._process_patch(message.content)
+        elif channel_id == self.illust_thread_id:
+            await self._process_illustration(message.content, message.attachments)
 
-    async def _process_job_post(self, content: str):
-        """메시지 원문을 파싱하고 데이터베이스에 병합(UPSERT) 처리"""
+    async def _process_description(self, content: str):
         try:
-            print(f"[Debug] 파싱 시작 (문자열 길이: {len(content)})")
-            parsed_data = parse_discord_jobs(content)
-
+            parsed_data = parse_job_descriptions(content)
             if parsed_data:
                 sync_jobs_to_db(parsed_data)
-                print(f"[{len(parsed_data)}]건의 직업 데이터 파싱 및 DB 동기화 완료.")
-            else:
-                print("[Warning] 파싱된 직업 데이터가 없습니다. 정규식 매칭 실패.")
+                print(f"[Info] Description sync completed. Processed: {len(parsed_data)} items.")
         except Exception as e:
-            print(f"데이터 처리 중 오류 발생: {e}")
+            print(f"[Error] Description parsing failed: {e}")
+
+    async def _process_patch(self, content: str):
+        try:
+            parsed_data = parse_job_patches(content)
+            if parsed_data:
+                sync_job_patch_to_db(parsed_data)
+                print(f"[Info] Patch note sync completed for job: {parsed_data.get('name')}")
+        except Exception as e:
+            print(f"[Error] Patch note processing failed: {e}")
+
+    async def _process_illustration(self, content: str, attachments: list[discord.Attachment]):
+        try:
+            job_name = parse_job_illustration(content)
+            if job_name and attachments:
+                # 테이블 스키마에 맞춰 최대 4개의 attachment URL 슬라이싱
+                image_urls = [att.url for att in attachments[:4]]
+                affected = update_job_illustrations(job_name, image_urls)
+                print(f"[Info] Illustration update completed. Job: {job_name}, Affected: {affected}")
+        except Exception as e:
+            print(f"[Error] Illustration processing failed: {e}")
 
 
 async def setup(self):
-    """Cog 로드 엔트리 포인트"""
     await self.add_cog(EventList(self))

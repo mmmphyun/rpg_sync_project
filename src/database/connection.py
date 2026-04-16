@@ -52,3 +52,29 @@ def sync_jobs_to_db(jobs_data: list[dict]):
     finally:
         cursor.close()
         conn.close()
+
+
+def sync_job_patch_to_db(patch_data: dict):
+    """
+    파싱된 패치노트를 DB에 삽입.
+    JOBS 테이블의 NAME 컬럼으로 매핑하여 JOB_ID 외래키를 조회 후 적재함.
+    """
+    sql = """
+        INSERT INTO JOB_PATCHES (JOB_ID, PATCH_DATE, NOTES)
+        SELECT JOB_ID, TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS'), %(notes)s
+        FROM JOBS
+        WHERE NAME = %(name)s
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(sql, patch_data)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"패치노트 동기화 중 오류 발생: {e}")
+    finally:
+        cursor.close()
+        conn.close()
