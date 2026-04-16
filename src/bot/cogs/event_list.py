@@ -30,6 +30,8 @@ class EventList(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """이벤트 라우팅: 신규 등록"""
+        print(f"[Debug] 신규 메시지 감지 - 채널ID: {message.channel.id}, 봇여부: {message.author.bot}, 내용: {message.content[:20]}")
+
         if message.author.bot:
             return
         await self._route_event(message)
@@ -37,6 +39,8 @@ class EventList(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
         """캐시되지 않은 기존 메시지(포스트 본문)가 수정될 때 트리거"""
+        print(f"[Debug] 수정 이벤트 감지 - 채널ID: {payload.channel_id}, 메시지ID: {payload.message_id}")
+
         channel_id = payload.channel_id
 
         # 대상 채널(쓰레드)이 아니면 조기 반환
