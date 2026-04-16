@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from src.database.queries import get_all_jobs_for_web
+import os
 
 app = FastAPI(title="RPG Server API", version="1.0.0")
 
@@ -13,6 +15,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def serve_index():
+    return FileResponse("index.html")
+
+@app.get("/{filename}.html")
+def serve_html(filename: str):
+    file_path = f"{filename}.html"
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return {"detail": "Not Found"}
+
+@app.get("/{filename}.js")
+def serve_js(filename: str):
+    file_path = f"{filename}.js"
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return {"detail": "Not Found"}
+
+@app.get("/{filename}.css")
+def serve_css(filename: str):
+    file_path = f"{filename}.css"
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return {"detail": "Not Found"}
 
 @app.get("/api/jobs")
 def read_jobs():
