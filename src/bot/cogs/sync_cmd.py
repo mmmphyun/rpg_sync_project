@@ -61,13 +61,22 @@ class SyncCmd(commands.Cog):
                 parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
 
                 job_name = None
-                if len(parts) >= 2:
-                    # 항상 배열의 마지막 요소를 직업명으로 취급 (공백 제거)
+                actual_nickname = display_name
+                if len(parts) >= 3:
+                    # 양식: 직급ㅣ닉네임ㅣ직업이름
+                    actual_nickname = parts[1]
                     job_name = parts[-1].replace(" ", "")
+                elif len(parts) == 2:
+                    # 양식: 닉네임ㅣ직업이름
+                    actual_nickname = parts[0]
+                    job_name = parts[-1].replace(" ", "")
+                elif len(parts) == 1:
+                    # 양식: 닉네임 (직업 없음)
+                    actual_nickname = parts[0]
 
                 users_data.append({
                     "discord_id": str(member.id),
-                    "nickname": display_name,
+                    "nickname": actual_nickname,
                     "server_role": role_name,
                     "job_name": job_name
                 })
