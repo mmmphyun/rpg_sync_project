@@ -90,7 +90,16 @@ def sync_users_to_db(users_data: list[dict]) -> int:
             %(discord_id)s, 
             %(nickname)s, 
             %(server_role)s,
-            (SELECT JOB_ID FROM JOBS WHERE NAME = %(job_name)s LIMIT 1)
+            (
+                SELECT JOB_ID 
+                FROM JOBS 
+                WHERE NULLIF(%(job_name)s, '') IS NOT NULL 
+                  AND REPLACE(NAME, ' ', '') LIKE CONCAT('%%', %(job_name)s, '%%')
+                ORDER BY 
+                    CASE WHEN REPLACE(NAME, ' ', '') = %(job_name)s THEN 1 ELSE 2 END ASC,
+                    LENGTH(NAME) ASC
+                LIMIT 1
+            )
         )
         ON CONFLICT (DISCORD_ID) DO UPDATE SET
             NICKNAME = EXCLUDED.NICKNAME,

@@ -74,6 +74,9 @@ class SyncCmd(commands.Cog):
                     # 양식: 닉네임 (직업 없음)
                     actual_nickname = parts[0]
 
+                if job_name and not job_name.strip():
+                    job_name = None
+
                 users_data.append({
                     "discord_id": str(member.id),
                     "nickname": actual_nickname,
