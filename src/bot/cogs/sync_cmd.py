@@ -10,6 +10,14 @@ class SyncCmd(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def cog_command_error(self, ctx: commands.Context, error: Exception):
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("❌ 이 명령어를 실행할 관리자 권한이 없습니다.")
+        elif isinstance(error, commands.CommandInvokeError):
+            await ctx.send(f"❌ 실행 중 오류가 발생했습니다: {error.original}")
+        else:
+            print(f"[명령어 에러] {error}")
+
     @commands.command(name="직업수정")
     @commands.has_permissions(administrator=True)
     async def update_job_command(self, ctx: commands.Context, job_name: str, column: str, *, value: str):
