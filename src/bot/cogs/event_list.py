@@ -11,7 +11,7 @@ class EventList(commands.Cog):
         self.bot = bot
 
         # TARGET_CHANNEL_ID 맵핑 규칙: 0=패치노트, 1=직업설명, 2=일러스트
-        target_ids_str = os.getenv('TARGET_CHANNEL_ID', '')
+        target_ids_str = os.getenv('TARGET_CHANNEL_IDS', '')
         try:
             # 설정 값 정제 및 int 캐스팅 (IndexError 방지를 위해 할당 전 검증 처리)
             id_list = [int(c_id.strip().replace('"', '').replace("'", ""))
