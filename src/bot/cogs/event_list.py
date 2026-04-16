@@ -35,14 +35,28 @@ class EventList(commands.Cog):
         await self._route_event(message)
 
     @commands.Cog.listener()
-    async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        """이벤트 라우팅: 기존 포스트 수정"""
-        if after.author.bot or before.content == after.content:
+    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+        """캐시되지 않은 기존 메시지(포스트 본문)가 수정될 때 트리거"""
+        channel_id = payload.channel_id
+
+        # 대상 채널(쓰레드)이 아니면 조기 반환
+        if channel_id not in (self.patch_channel_id, self.desc_thread_id, self.illust_thread_id):
             return
-        await self._route_event(after)
+
+        try:
+            # 채널 및 메시지 객체를 API를 통해 직접 Fetch
+            channel = self.bot.get_channel(channel_id) or await self.bot.fetch_channel(channel_id)
+            message = await channel.fetch_message(payload.message_id)
+
+            if message.author.bot:
+                return
+
+            await self._route_event(message)
+        except Exception as e:
+            print(f"[Error] Raw message fetch failed: {e}")
 
     async def _route_event(self, message: discord.Message):
-        """채널 식별자에 기반한 핸들러 분기"""
+        """채널/쓰레드 식별자에 기반한 핸들러 분기"""
         channel_id = message.channel.id
 
         if channel_id == self.desc_thread_id:
