@@ -44,6 +44,44 @@ def update_job_illustrations(job_name: str, image_urls: list[str]) -> int:
         cursor.close()
         conn.close()
 
+def batch_update_profile_images(image_data: dict) -> int:
+    """
+    Process batch update for profile images based on filename mapping.
+    """
+    sql = """
+        UPDATE JOBS 
+        SET IMG = %s
+        WHERE JOB_ID = (
+            SELECT JOB_ID 
+            FROM JOBS 
+            WHERE NULLIF(%s, '') IS NOT NULL 
+              AND REPLACE(NAME, ' ', '') LIKE CONCAT('%%', %s, '%%')
+            ORDER BY 
+                CASE WHEN REPLACE(NAME, ' ', '') = %s THEN 1 ELSE 2 END ASC,
+                LENGTH(NAME) ASC
+            LIMIT 1
+        )
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    success_count = 0
+
+    try:
+        for job_name, img_path in image_data.items():
+            clean_name = job_name.replace(" ", "")
+            cursor.execute(sql, (img_path, clean_name, clean_name, clean_name))
+            if cursor.rowcount > 0:
+                success_count += 1
+        conn.commit()
+        return success_count
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
 def update_job_single_column(job_name: str, column_name: str, value: str) -> int:
     # ... (allowed_columns 및 target_col 검증 로직은 기존과 동일) ...
     allowed_columns = {

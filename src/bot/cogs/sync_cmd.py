@@ -2,7 +2,7 @@ import os
 import re
 from discord.ext import commands
 from datetime import timedelta
-from src.database.queries import update_job_single_column, update_job_illustrations
+from src.database.queries import update_job_single_column, update_job_illustrations, batch_update_profile_images
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 
@@ -146,6 +146,30 @@ class SyncCmd(commands.Cog):
                         illust_count += 1
 
         await ctx.send(f"일괄 데이터 동기화 완료\n- 파싱된 직업: {desc_count}건\n- 적재된 패치노트: {patch_count}건\n- 연결된 일러스트: {illust_count}건")
+
+    @commands.command(name="이미지일괄적용")
+    @commands.has_permissions(administrator=True)
+    async def batch_sync_images_command(self, ctx: commands.Context):
+        """Process batch update for local profile images in public/images."""
+        img_dir = "public/images"
+        if not os.path.exists(img_dir):
+            await ctx.send("[Error] public/images 폴더를 찾을 수 없습니다.")
+            return
+
+        image_data = {}
+        valid_exts = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
+        for filename in os.listdir(img_dir):
+            name, ext = os.path.splitext(filename)
+            if ext.lower() in valid_exts:
+                image_data[name] = f"/images/{filename}"
+
+        if not image_data:
+            await ctx.send("[System] 적용할 이미지 파일이 없습니다.")
+            return
+
+        success_count = batch_update_profile_images(image_data)
+        await ctx.send(f"[Success] 프로필 이미지 일괄 적용 완료 (적용 건수: {success_count}건)")
 
 
 async def setup(bot: commands.Bot):
