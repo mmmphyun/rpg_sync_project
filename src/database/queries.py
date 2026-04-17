@@ -16,7 +16,16 @@ def update_job_illustrations(job_name: str, image_urls: list[str]) -> int:
     sql = """
         UPDATE JOBS 
         SET PHOTO_1 = %s, PHOTO_2 = %s, PHOTO_3 = %s, PHOTO_4 = %s
-        WHERE NAME = %s
+        WHERE JOB_ID = (
+            SELECT JOB_ID 
+            FROM JOBS 
+            WHERE NULLIF(%s, '') IS NOT NULL 
+              AND REPLACE(NAME, ' ', '') LIKE CONCAT('%%', %s, '%%')
+            ORDER BY 
+                CASE WHEN REPLACE(NAME, ' ', '') = %s THEN 1 ELSE 2 END ASC,
+                LENGTH(NAME) ASC
+            LIMIT 1
+        )
     """
 
     conn = get_connection()
@@ -24,7 +33,7 @@ def update_job_illustrations(job_name: str, image_urls: list[str]) -> int:
 
     try:
         # Tuple binding for PostgreSQL
-        cursor.execute(sql, (urls[0], urls[1], urls[2], urls[3], clean_job_name))
+        cursor.execute(sql, (urls[0], urls[1], urls[2], urls[3], clean_job_name, clean_job_name, clean_job_name))
         affected_rows = cursor.rowcount
         conn.commit()
         return affected_rows
