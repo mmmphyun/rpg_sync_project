@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  rpg-sync-app:
+    build: .
+    container_name: rpg-sync-container
+    restart: always
+    ports:
+      - "80:8000"
+    env_file:
+      - .env
+    volumes:
+      # 호스트의 public/images 디렉토리를 컨테이너 내부에 동기화하여 정적 파일 서빙
+      - ./public/images:/app/public/images
