@@ -63,16 +63,10 @@ class SyncCmd(commands.Cog):
 
                 job_name = None
                 actual_nickname = display_name
-                if len(parts) >= 3:
-                    # 양식: 직급ㅣ닉네임ㅣ직업이름
-                    actual_nickname = parts[1]
-                    job_name = parts[-1].replace(" ", "")
-                elif len(parts) == 2:
-                    # 양식: 닉네임ㅣ직업이름
-                    actual_nickname = parts[0]
+                if len(parts) >= 2:
+                    actual_nickname = parts[-2]
                     job_name = parts[-1].replace(" ", "")
                 elif len(parts) == 1:
-                    # 양식: 닉네임 (직업 없음)
                     actual_nickname = parts[0]
 
                 if job_name and not job_name.strip():
