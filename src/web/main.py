@@ -58,7 +58,11 @@ templates = Jinja2Templates(directory="src/web/templates")
 
 @app.get("/", response_class=HTMLResponse)
 def serve_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"request": request}
+    )
 
 @app.get("/jobs", response_class=HTMLResponse)
 @limiter.limit("30/minute")
@@ -92,6 +96,7 @@ def serve_jobs(request: Request):
     jobs_json = json.dumps(formatted_jobs)
 
     return templates.TemplateResponse(
-        "jobs.html",
-        {"request": request, "jobs_json": jobs_json}
+        request=request,
+        name="jobs.html",
+        context={"request": request, "jobs_json": jobs_json}
     )
