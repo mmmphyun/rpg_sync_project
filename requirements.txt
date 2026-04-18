@@ -6,3 +6,4 @@ slowapi
 uvicorn
 boto3
 aiohttp
+jinja2
