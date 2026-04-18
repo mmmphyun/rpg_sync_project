@@ -254,19 +254,19 @@ document.addEventListener("click", e => {
 });
 
 // =============================================
-//  Initialize
+//  Initialize (SSR Hydration)
 // =============================================
-async function initApp() {
+function initApp() {
     try {
-        // 실제 서버가 구동 중인 URL/IP로 변경 필요
-        const response = await fetch("/api/jobs");
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // 주입된 전역 변수 참조
+        if (window.INITIAL_JOBS_DATA) {
+            JOBS = window.INITIAL_JOBS_DATA;
+            renderGrid();
+        } else {
+            throw new Error("서버로부터 초기 데이터를 전달받지 못했습니다.");
         }
-        JOBS = await response.json();
-        renderGrid();
     } catch (error) {
-        console.error("데이터를 불러오는 중 오류가 발생했습니다:", error);
+        console.error("데이터 초기화 중 오류 발생:", error);
         app.innerHTML = `<div style="text-align:center; padding:50px; color:#e74c3c;">데이터베이스 연결에 실패했습니다.</div>`;
     }
 }

@@ -2,4 +2,7 @@ discord.py
 psycopg2-binary
 python-dotenv
 fastapi
+slowapi
 uvicorn
+boto3
+aiohttp

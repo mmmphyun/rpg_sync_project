@@ -1,11 +1,16 @@
-import os
-import re
 from discord.ext import commands
+
 from datetime import timedelta
+
 from src.database.queries import update_job_single_column, update_job_illustrations, batch_update_profile_images
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
+from src.bot.utils.s3_client import upload_to_r2
 
+import os
+import re
+import asyncio
+import aiohttp
 
 class SyncCmd(commands.Cog):
     def __init__(self, bot):
@@ -133,19 +138,39 @@ class SyncCmd(commands.Cog):
                             sync_job_patch_to_db(parsed_data)
                             patch_count += 1
 
-        # 3. 일러스트 동기화 (JOBS 테이블 PHOTO 업데이트)
-        illust_channel = self.bot.get_channel(illust_thread_id) or await self.bot.fetch_channel(illust_thread_id)
-        illust_count = 0
-        if illust_channel:
-            async for message in illust_channel.history(limit=None, oldest_first=True):
-                if not message.author.bot and message.attachments:
-                    job_name = parse_job_illustration(message.content)
-                    if job_name:
-                        image_urls = [att.url for att in message.attachments[:4]]
-                        update_job_illustrations(job_name, image_urls)
-                        illust_count += 1
+                # 3. 일러스트 동기화 (JOBS 테이블 PHOTO 업데이트)
+                illust_channel = self.bot.get_channel(illust_thread_id) or await self.bot.fetch_channel(
+                    illust_thread_id)
+                illust_count = 0
+                if illust_channel:
+                    async with aiohttp.ClientSession() as session:
+                        async for message in illust_channel.history(limit=None, oldest_first=True):
+                            if not message.author.bot and message.attachments:
+                                job_name = parse_job_illustration(message.content)
+                                if job_name:
+                                    uploaded_urls = []
+                                    for att in message.attachments[:4]:
+                                        async with session.get(att.url) as resp:
+                                            if resp.status == 200:
+                                                file_bytes = await resp.read()
 
-        await ctx.send(f"일괄 데이터 동기화 완료\n- 파싱된 직업: {desc_count}건\n- 적재된 패치노트: {patch_count}건\n- 연결된 일러스트: {illust_count}건")
+                                                # boto3는 동기 라이브러리이므로 이벤트 루프 블로킹 방지를 위해 to_thread 실행
+                                                public_url = await asyncio.to_thread(
+                                                    upload_to_r2,
+                                                    file_bytes,
+                                                    att.filename,
+                                                    att.content_type
+                                                )
+
+                                                if public_url:
+                                                    uploaded_urls.append(public_url)
+
+                                    if uploaded_urls:
+                                        update_job_illustrations(job_name, uploaded_urls)
+                                        illust_count += 1
+
+                await ctx.send(
+                    f"일괄 데이터 동기화 완료\n- 파싱된 직업: {desc_count}건\n- 적재된 패치노트: {patch_count}건\n- 연결된 일러스트: {illust_count}건")
 
     @commands.command(name="이미지일괄적용")
     @commands.has_permissions(administrator=True)

@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>직업 종류 - 나나의 화석서버 공략집</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body class="page-jobs">
 
 <!-- 상단 바 -->
 <div class="top-bar">
-  <a href="index.html" class="back-link">← 홈</a>
+  <a href="/" class="back-link">← 홈</a>
   <h1>직업 선택</h1>
   <span class="job-count" id="jobCount"></span>
   <img src="https://visitor-badge.laobi.icu/badge?page_id=jaeunify.do-it-minecraft-fossile.jobs" alt="방문자수" style="height:20px; vertical-align:middle; opacity:0.6;">
@@ -43,7 +43,10 @@
   </div>
 </div>
 
-<script src="main.js"></script>
+<script>
+  window.INITIAL_JOBS_DATA = {{ jobs_json | safe }};
+</script>
+<script src="/static/main.js"></script>
 
 <div class="lightbox" id="lightbox"><img src="" alt=""></div>
 
