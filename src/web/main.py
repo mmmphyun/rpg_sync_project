@@ -27,8 +27,16 @@ def get_api_key(api_key: str = Depends(api_key_header)):
         )
     return api_key
 
+def get_real_ip(request: Request) -> str:
+    """Extract real client IP behind Cloudflare Proxy"""
+    if "cf-connecting-ip" in request.headers:
+        return request.headers["cf-connecting-ip"]
+    elif "x-forwarded-for" in request.headers:
+        return request.headers["x-forwarded-for"].split(",")[0].strip()
+    return get_remote_address(request)
+
 # IP 기반 Rate Limiter 초기화
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_real_ip)
 
 app = FastAPI(title="RPG Server API", version="1.0.0")
 
