@@ -1,4 +1,8 @@
-from fastapi import FastAPI, Request, Depends, HTTPException, status, Response, Form
+import os
+import json
+import jwt
+
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Response, Form, Cookie
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,9 +17,7 @@ from datetime import datetime, timedelta
 
 from src.database.queries import get_all_jobs_for_web, verify_and_consume_magic_token
 
-import os
-import json
-import jwt
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 JWT_SECRET = os.getenv("JWT_SECRET", "production_jwt_secret_key")
 JWT_ALGORITHM = "HS256"
@@ -163,3 +165,35 @@ def serve_jobs(request: Request):
         name="jobs.html",
         context={"request": request, "jobs_json": jobs_json}
     )
+
+
+@app.get("/api/v1/auth/me")
+def get_current_user(forum_session: str = Cookie(None)):
+    """현재 로그인된 유저의 세션 정보를 반환"""
+    if not forum_session:
+        return {"is_logged_in": False}
+
+    try:
+        payload = jwt.decode(forum_session, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return {
+            "is_logged_in": True,
+            "discord_id": payload.get("sub"),
+            "nickname": payload.get("nickname"),
+            "job_name": payload.get("job_name")
+        }
+    except ExpiredSignatureError:
+        return {"is_logged_in": False, "error": "session_expired"}
+    except InvalidTokenError:
+        return {"is_logged_in": False, "error": "invalid_session"}
+
+@app.post("/api/v1/auth/logout")
+def logout_user(response: Response):
+    """현재 유저의 세션 쿠키를 삭제하여 로그아웃 처리"""
+    response.delete_cookie(
+        key="forum_session",
+        path="/",
+        httponly=True,
+        secure=True,
+        samesite="lax"
+    )
+    return {"message": "success"}

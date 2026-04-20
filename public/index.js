@@ -57,20 +57,44 @@ function loadRecentReviews() {
 /**
  * 로그인 상태에 따른 헤더 UI 전환
  */
-function updateUserAuthUI() {
+async function updateUserAuthUI() {
     const area = document.getElementById('user-status-area');
-    // 세션 쿠키 존재 여부 확인 로직 필요
-    const session = null;
 
-    if (session) {
-        area.innerHTML = `
-            <div class="user-card logged-in">
-                <img src="${session.avatar_url}" alt="avatar" class="user-avatar">
-                <div class="user-meta">
-                    <span class="user-nick">${session.nickname}</span>
-                    <span class="user-job-tag">${session.job_name}</span>
+    try {
+        const response = await fetch('/api/v1/auth/me');
+        const session = await response.json();
+
+        if (session.is_logged_in) {
+            area.innerHTML = `
+                <div class="user-card logged-in">
+                    <div class="user-meta" style="display: flex; gap: 8px; align-items: center;">
+                        <span class="user-job-tag" style="color: #c89b3c; font-size: 0.75rem; border: 1px solid #c89b3c; padding: 2px 6px; border-radius: 4px;">${session.job_name}</span>
+                        <span class="user-nick" style="font-weight: bold;">${session.nickname}</span>
+                        <button onclick="logout()" style="background: none; border: none; color: #8b8b8b; font-size: 0.7rem; cursor: pointer; margin-left: 8px;">로그아웃</button>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
+    } catch (error) {
+        console.error('Auth check failed:', error);
+    }
+}
+
+/**
+ * 로그아웃 처리
+ */
+async function logout() {
+    try {
+        const response = await fetch('/api/v1/auth/logout', {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            location.reload();
+        } else {
+            console.error('Logout failed');
+        }
+    } catch (error) {
+        console.error('Network error during logout:', error);
     }
 }
