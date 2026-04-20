@@ -427,7 +427,7 @@
 /* Header & Floating User Card */
 .dash-header {
   height: 64px;
-  background: #0f0f23;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f23 100%);
   border-bottom: 1px solid #1e1e3a;
   display: flex;
   align-items: center;
@@ -517,6 +517,9 @@
 .stat-group .label { display: block; font-size: 0.75rem; color: #5b5a56; margin-bottom: 4px; }
 .stat-group .value { font-size: 1.1rem; font-weight: bold; color: #c89b3c; }
 
+.stat-group .value.online { color: #2ecc71; }
+.stat-group .value.offline { color: #e74c3c; }
+
 /* Quick Links Grid */
 .quick-links {
   display: grid;
@@ -544,11 +547,18 @@
 .link-icon {
   font-size: 0.7rem;
   font-weight: 800;
-  color: #1a1a2e;
-  background: #c89b3c;
-  padding: 4px 10px;
-  border-radius: 4px;
+  color: #fff;
+  background: linear-gradient(135deg, #1a1a2a, #101018);
+  border: 1px solid #1e1e3a;
+  padding: 8px 16px;
+  border-radius: 8px;
   margin-bottom: 12px;
+  letter-spacing: 1px;
+  transition: border-color 0.2s ease;
+}
+
+.link-card:hover .link-icon {
+  border-color: #c89b3c;
 }
 
 .link-title { color: #fff; font-size: 1.1rem; font-weight: 600; }
@@ -571,11 +581,28 @@
 
 .summary-widget, .review-widget { padding: 20px; flex: 1; }
 
-.summary-list { list-style: none; }
+.summary-list {
+  list-style: none;
+  overflow-y: auto;
+  max-height: 150px;
+}
+.summary-list::-webkit-scrollbar { width: 4px; }
+.summary-list::-webkit-scrollbar-track { background: transparent; }
+.summary-list::-webkit-scrollbar-thumb { background: #1e1e3a; border-radius: 2px; }
+
 .summary-list li { font-size: 0.85rem; color: #aaa; margin-bottom: 10px; cursor: pointer; }
 .summary-list li:hover { color: #fff; }
 
-.review-stack { display: flex; flex-direction: column; gap: 12px; }
+.review-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+.review-stack::-webkit-scrollbar { width: 4px; }
+.review-stack::-webkit-scrollbar-track { background: transparent; }
+.review-stack::-webkit-scrollbar-thumb { background: #1e1e3a; border-radius: 2px; }
 
 /* Responsive adjustments */
 @media (max-aspect-ratio: 16/10) {
