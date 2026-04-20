@@ -1,3 +1,7 @@
+/* Project: Fossile Wiki
+  Original Idea & Initial Source: 나나
+*/
+
 @charset "UTF-8";
 
 /* ==========================================================================
@@ -607,4 +611,31 @@
 /* Responsive adjustments */
 @media (max-aspect-ratio: 16/10) {
   .page-dashboard { overflow-y: auto; height: auto; }
+}
+
+/* Footer */
+.dash-footer {
+  height: 80px;
+  background: #0f0f23;
+  border-top: 1px solid #1e1e3a;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.footer-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #5b5a56;
+}
+
+.attribution {
+  color: #8b8b8b;
 }

@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import APIKeyHeader
 from fastapi.templating import Jinja2Templates
@@ -9,11 +9,16 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from src.database.queries import get_all_jobs_for_web
+from datetime import datetime, timedelta
+
+from src.database.queries import get_all_jobs_for_web, verify_and_consume_magic_token
 
 import os
 import json
+import jwt
 
+JWT_SECRET = os.getenv("JWT_SECRET", "production_jwt_secret_key_change_me")
+JWT_ALGORITHM = "HS256"
 # API 인증 키 및 헤더 설정
 API_KEY = os.getenv("WEB_API_KEY", "dev_secret_key_123")
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
@@ -61,6 +66,39 @@ app.mount("/images", StaticFiles(directory="public/images"), name="images")
 app.mount("/static", StaticFiles(directory="public"), name="static")
 
 templates = Jinja2Templates(directory="src/web/templates")
+
+
+@app.get("/api/v1/auth/verify")
+def verify_magic_link(token: str, response: Response):
+    """디스코드에서 발급받은 일회용 토큰을 검증하고 JWT 쿠키를 발급"""
+    user_data = verify_and_consume_magic_token(token)
+
+    if not user_data:
+        # 유효하지 않거나 만료된 토큰
+        return RedirectResponse(url="/?error=invalid_token", status_code=status.HTTP_302_FOUND)
+
+    # JWT 페이로드 생성 (7일 유지)
+    expiration = datetime.utcnow() + timedelta(days=7)
+    payload = {
+        "sub": user_data["discord_id"],
+        "nickname": user_data["nickname"],
+        "job_name": user_data["job_name"] or "직업 없음",
+        "exp": expiration
+    }
+
+    jwt_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+    redirect = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+    # HttpOnly, Secure 속성으로 XSS 우회 방지 및 HTTPS 강제
+    redirect.set_cookie(
+        key="forum_session",
+        value=jwt_token,
+        httponly=True,
+        secure=True,
+        max_age=7 * 24 * 60 * 60,  # 7일
+        samesite="lax"
+    )
+    return redirect
 
 @app.get("/", response_class=HTMLResponse)
 def serve_index(request: Request):

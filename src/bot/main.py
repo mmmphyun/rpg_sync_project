@@ -32,6 +32,13 @@ class RPGSyncBot(commands.Bot):
                 except Exception as e:
                     print(f"Failed to load extension {cog_path}: {e}")
 
+        # 로드된 슬래시 명령어 디스코드 서버와 동기화
+        try:
+            synced = await self.tree.sync()
+            print(f"Synced {len(synced)} command(s)")
+        except Exception as e:
+            print(f"Failed to sync commands: {e}")
+
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
         print('------')

@@ -1,3 +1,5 @@
+import discord
+from discord import app_commands
 from discord.ext import commands
 
 from datetime import timedelta
@@ -6,6 +8,7 @@ from src.database.queries import update_job_single_column, update_job_illustrati
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.bot.utils.s3_client import upload_to_r2
+from src.database.queries import check_user_exists, create_magic_token
 
 import os
 import re
@@ -23,6 +26,58 @@ class SyncCmd(commands.Cog):
             await ctx.send(f"❌ 실행 중 오류가 발생했습니다: {error.original}")
         else:
             print(f"[명령어 에러] {error}")
+
+    @app_commands.command(name="위키", description="위키 로그인을 위한 1회용 인증 링크를 발급합니다.")
+    async def forum_login(self, interaction: discord.Interaction):
+        discord_id = str(interaction.user.id)
+
+        # 1. DB에 유저가 존재하는지 확인
+        if not check_user_exists(discord_id):
+            # 2. 존재하지 않는다면 해당 유저 정보만 단건 동기화 진행
+            role_name = interaction.user.top_role.name if interaction.user.top_role else "유저"
+            display_name = interaction.user.display_name
+            parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
+
+            job_name = None
+            actual_nickname = display_name
+            if len(parts) >= 2:
+                actual_nickname = parts[-2]
+                job_name = parts[-1].replace(" ", "")
+            elif len(parts) == 1:
+                actual_nickname = parts[0]
+
+            if job_name and not job_name.strip():
+                job_name = None
+
+            user_data = [{
+                "discord_id": discord_id,
+                "nickname": actual_nickname,
+                "server_role": role_name,
+                "job_name": job_name
+            }]
+
+            # 단건 동기화 실행 (sync_users_to_db는 리스트를 받도록 설계됨)
+            sync_result = sync_users_to_db(user_data)
+            if sync_result == 0:
+                await interaction.response.send_message("유저 정보를 서버에 등록하는 중 오류가 발생했습니다. 관리자에게 문의하세요.", ephemeral=True)
+                return
+
+        # 3. 토큰 발급 및 메시지 전송
+        try:
+            token = create_magic_token(discord_id)
+            # 개발 환경 및 운영 환경 도메인 처리
+            domain = os.getenv("WEB_DOMAIN", "http://localhost:8000")
+            login_url = f"{domain}/api/v1/auth/verify?token={token}"
+
+            await interaction.response.send_message(
+                f"✅ **인증 링크가 발급되었습니다.**\n"
+                f"5분 안에 아래 링크를 클릭하여 접속하세요. 이 링크는 본인만 볼 수 있으며 1회만 사용 가능합니다.\n\n"
+                f"🔗 [Fossile Wiki 로그인]({login_url})",
+                ephemeral=True
+            )
+        except Exception as e:
+            print(f"토큰 발급 에러: {e}")
+            await interaction.response.send_message("인증 링크 발급 중 시스템 오류가 발생했습니다.", ephemeral=True)
 
     @commands.command(name="직업수정")
     @commands.has_permissions(administrator=True)
