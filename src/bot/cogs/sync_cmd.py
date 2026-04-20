@@ -29,55 +29,58 @@ class SyncCmd(commands.Cog):
 
     @app_commands.command(name="위키", description="위키 로그인을 위한 1회용 인증 링크를 발급합니다.")
     async def forum_login(self, interaction: discord.Interaction):
+        # 1. 3초 타임아웃 방지를 위해 응답 지연 (ephemeral 속성 유지)
+        await interaction.response.defer(ephemeral=True)
+
         discord_id = str(interaction.user.id)
 
-        # 1. DB에 유저가 존재하는지 확인
-        if not check_user_exists(discord_id):
-            # 2. 존재하지 않는다면 해당 유저 정보만 단건 동기화 진행
-            role_name = interaction.user.top_role.name if interaction.user.top_role else "유저"
-            display_name = interaction.user.display_name
-            parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
-
-            job_name = None
-            actual_nickname = display_name
-            if len(parts) >= 2:
-                actual_nickname = parts[-2]
-                job_name = parts[-1].replace(" ", "")
-            elif len(parts) == 1:
-                actual_nickname = parts[0]
-
-            if job_name and not job_name.strip():
-                job_name = None
-
-            user_data = [{
-                "discord_id": discord_id,
-                "nickname": actual_nickname,
-                "server_role": role_name,
-                "job_name": job_name
-            }]
-
-            # 단건 동기화 실행 (sync_users_to_db는 리스트를 받도록 설계됨)
-            sync_result = sync_users_to_db(user_data)
-            if sync_result == 0:
-                await interaction.response.send_message("유저 정보를 서버에 등록하는 중 오류가 발생했습니다. 관리자에게 문의하세요.", ephemeral=True)
-                return
-
-        # 3. 토큰 발급 및 메시지 전송
         try:
-            token = create_magic_token(discord_id)
-            # 개발 환경 및 운영 환경 도메인 처리
+            # 2. 동기 DB 작업들을 이벤트 루프 블로킹 방지를 위해 스레드 분리 실행
+            user_exists = await asyncio.to_thread(check_user_exists, discord_id)
+
+            if not user_exists:
+                role_name = interaction.user.top_role.name if interaction.user.top_role else "유저"
+                display_name = interaction.user.display_name
+                parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
+
+                job_name = None
+                actual_nickname = display_name
+                if len(parts) >= 2:
+                    actual_nickname = parts[-2]
+                    job_name = parts[-1].replace(" ", "")
+                elif len(parts) == 1:
+                    actual_nickname = parts[0]
+
+                if job_name and not job_name.strip():
+                    job_name = None
+
+                user_data = [{
+                    "discord_id": discord_id,
+                    "nickname": actual_nickname,
+                    "server_role": role_name,
+                    "job_name": job_name
+                }]
+
+                sync_result = await asyncio.to_thread(sync_users_to_db, user_data)
+                if sync_result == 0:
+                    # defer() 호출 이후에는 response가 아닌 followup.send()를 사용해야 함
+                    await interaction.followup.send("유저 정보를 서버에 등록하는 중 오류가 발생했습니다. 관리자에게 문의하세요.", ephemeral=True)
+                    return
+
+            # 3. 토큰 발급 및 메시지 전송
+            token = await asyncio.to_thread(create_magic_token, discord_id)
             domain = os.getenv("WEB_DOMAIN", "http://localhost:8000")
             login_url = f"{domain}/api/v1/auth/verify?token={token}"
 
-            await interaction.response.send_message(
-                f"✅ **인증 링크가 발급되었습니다.**\n"
+            await interaction.followup.send(
+                f"**인증 링크가 발급되었습니다.**\n"
                 f"5분 안에 아래 링크를 클릭하여 접속하세요. 이 링크는 본인만 볼 수 있으며 1회만 사용 가능합니다.\n\n"
-                f"🔗 [Fossile Wiki 로그인]({login_url})",
+                f"[Fossile Wiki 로그인]({login_url})",
                 ephemeral=True
             )
         except Exception as e:
             print(f"토큰 발급 에러: {e}")
-            await interaction.response.send_message("인증 링크 발급 중 시스템 오류가 발생했습니다.", ephemeral=True)
+            await interaction.followup.send("인증 링크 발급 중 시스템 오류가 발생했습니다.", ephemeral=True)
 
     @commands.command(name="직업수정")
     @commands.has_permissions(administrator=True)
