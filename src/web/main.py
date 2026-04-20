@@ -44,8 +44,6 @@ app = FastAPI(title="RPG Server API", version="1.0.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-app = FastAPI(title="RPG Server API", version="1.0.0")
-
 # CORS 설정 (실무에서는 특정 도메인만 허용하도록 변경)
 # 개발 환경 주소 기본값 세팅, 운영 서버 배포 시 환경변수로 도메인 주입
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000").split(",")
