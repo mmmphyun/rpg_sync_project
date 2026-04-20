@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, HTTPException, status, Response
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Response, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +17,7 @@ import os
 import json
 import jwt
 
-JWT_SECRET = os.getenv("JWT_SECRET", "production_jwt_secret_key_change_me")
+JWT_SECRET = os.getenv("JWT_SECRET", "production_jwt_secret_key")
 JWT_ALGORITHM = "HS256"
 # API 인증 키 및 헤더 설정
 API_KEY = os.getenv("WEB_API_KEY", "dev_secret_key_123")
@@ -67,6 +67,25 @@ app.mount("/static", StaticFiles(directory="public"), name="static")
 
 templates = Jinja2Templates(directory="src/web/templates")
 
+@app.get("/api/v1/auth/login", response_class=HTMLResponse)
+def auto_login_form(token: str):
+    """디스코드 링크 클릭 시 POST 요청을 강제하기 위한 징검다리 페이지"""
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="UTF-8">
+        <title>인증 처리 중</title>
+    </head>
+    <body onload="document.getElementById('login-form').submit();" style="background: #0a0a1a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif;">
+        <p>보안 인증 처리 중입니다...</p>
+        <form id="login-form" action="/api/v1/auth/verify" method="POST" style="display: none;">
+            <input type="hidden" name="token" value="{token}">
+        </form>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 @app.get("/api/v1/auth/verify")
 def verify_magic_link(token: str, response: Response):
