@@ -8,10 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initDashboard() {
-    updateServerStatus();
-    loadLatestPosts();
-    loadRecentReviews();
+    // 모든 페이지 공통 실행
     updateUserAuthUI();
+
+    // 메인 대시보드(index.html)에서만 실행
+    if (document.getElementById('status-indicator')) updateServerStatus();
+    if (document.getElementById('latest-posts')) loadLatestPosts();
+    if (document.getElementById('recent-reviews')) loadRecentReviews();
 }
 
 /**

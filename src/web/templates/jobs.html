@@ -8,6 +8,18 @@
 </head>
 <body class="page-jobs">
 
+<header class="dash-header">
+    <div class="header-container">
+        <h1 class="logo" onclick="location.href='/'">Fossile Wiki</h1>
+        <div id="user-status-area" class="user-card-anchor">
+            <div class="user-card guest">
+                <span class="status-label">상태: 게스트</span>
+                <span class="login-guide">디스코드에서 /포럼 입력 시 로그인 가능</span>
+            </div>
+        </div>
+    </div>
+</header>
+
 <!-- 상단 바 -->
 <div class="top-bar">
   <a href="/" class="back-link">← 홈</a>
@@ -42,6 +54,13 @@
     <div class="sidebar-inner" id="sidebarContent"></div>
   </div>
 </div>
+
+<footer class="dash-footer">
+    <div class="footer-container">
+        <p>&copy; 2026 Fossile Wiki. All rights reserved.</p>
+        <p class="attribution">아이디어 및 초기 소스 제공: 나나</p>
+    </div>
+</footer>
 
 <script>
   window.INITIAL_JOBS_DATA = {{ jobs_json | safe }};
