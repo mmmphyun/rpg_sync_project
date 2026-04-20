@@ -69,7 +69,7 @@ class SyncCmd(commands.Cog):
 
             # 3. 토큰 발급 및 메시지 전송
             token = await asyncio.to_thread(create_magic_token, discord_id)
-            domain = os.getenv("WEB_DOMAIN", "http://localhost:8000")
+            domain = os.getenv("WEB_DOMAIN", "https://fossile-wiki.cloud")
             login_url = f"{domain}/api/v1/auth/verify?token={token}"
 
             await interaction.followup.send(
