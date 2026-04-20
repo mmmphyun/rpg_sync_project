@@ -1,16 +1,80 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>나나의 화석서버 공략집</title>
-  <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fossile Wiki</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <h1>나나의 화석서버 공략집~</h1>
-  <a href="/jobs" class="btn">직업 종류 보기</a>
-  <div style="margin-top: 2rem">
-    <img src="https://visitor-badge.laobi.icu/badge?page_id=jaeunify.do-it-minecraft-fossile.index" alt="방문자수">
-  </div>
+<body class="page-dashboard">
+    <header class="dash-header">
+        <div class="header-container">
+            <h1 class="logo" onclick="location.href='/'">Fossile Wiki</h1>
+            <div id="user-status-area" class="user-card-anchor">
+                <div class="user-card guest">
+                    <span class="status-label">상태: 게스트</span>
+                    <span class="login-guide">디스코드에서 /포럼 입력 시 로그인 가능</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="dash-container">
+        <section class="main-content">
+            <article class="info-card card">
+                <div class="intro-text">
+                    <h2>Wiki Dashboard</h2>
+                    <p>나나의 화석서버 공식 인터랙티브 위키입니다. 실시간 정보와 직업 평가를 확인하세요.</p>
+                </div>
+                <div class="server-status" id="server-stats">
+                    <div class="stat-group">
+                        <span class="label">Server Status</span>
+                        <span id="status-indicator" class="value">Checking...</span>
+                    </div>
+                    <div class="stat-group">
+                        <span class="label">Online Players</span>
+                        <span id="player-count" class="value">0 / 0</span>
+                    </div>
+                </div>
+            </article>
+
+            <nav class="quick-links">
+                <a href="/notice" class="link-card card">
+                    <div class="link-icon notice">NOTICE</div>
+                    <span class="link-title">공지사항</span>
+                </a>
+                <a href="/event" class="link-card card">
+                    <div class="link-icon event">EVENT</div>
+                    <span class="link-title">이벤트</span>
+                </a>
+                <a href="/jobs" class="link-card card">
+                    <div class="link-icon job">JOB INFO</div>
+                    <span class="link-title">직업설명</span>
+                </a>
+                <a href="/tips" class="link-card card">
+                    <div class="link-icon tip">TIPS</div>
+                    <span class="link-title">팁</span>
+                </a>
+            </nav>
+        </section>
+
+        <aside class="side-content">
+            <section class="summary-widget card">
+                <h3 class="widget-title">Latest Updates</h3>
+                <ul id="latest-posts" class="summary-list">
+                    <li class="placeholder">업데이트를 불러오는 중입니다.</li>
+                </ul>
+            </section>
+
+            <section class="review-widget card">
+                <h3 class="widget-title">Recent Reviews</h3>
+                <div id="recent-reviews" class="review-stack">
+                    <p class="placeholder">최근 평가가 없습니다.</p>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <script src="/static/index.js"></script>
 </body>
 </html>
