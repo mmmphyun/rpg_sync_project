@@ -87,8 +87,8 @@ def auto_login_form(token: str):
     """
     return HTMLResponse(content=html_content)
 
-@app.get("/api/v1/auth/verify")
-def verify_magic_link(token: str, response: Response):
+@app.post("/api/v1/auth/verify")
+def verify_magic_link(token: str = Form(...)):
     """디스코드에서 발급받은 일회용 토큰을 검증하고 JWT 쿠키를 발급"""
     user_data = verify_and_consume_magic_token(token)
 
