@@ -183,6 +183,7 @@ function openSidebar(idx) {
       <button class="sidebar-close" onclick="closeSidebar()">&times;</button>
       <div class="sidebar-portrait ${posBg(job.position)}">${sidePortrait}</div>
       <div class="sidebar-name">${job.name}</div>
+      ${reviewSummaryHtml}
       <div class="sidebar-gate">${job.gate}${job.group && job.group !== "정보 없음" ? ` · ${job.group}` : ""}</div>
       <div class="sidebar-tags">
         <span class="sidebar-tag ${RANGE_CLS[job.range] || "t-unknown"}">${job.range}</span>
