@@ -239,11 +239,17 @@ def get_job_reviews(job_id: int):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        # 리뷰 목록 조회
+        # 리뷰 목록 조회 (LEFT JOIN으로 유저의 현재 직업명 조회, 없을 시 예외 처리)
         cursor.execute("""
-            SELECT r.rating, r.comment, r.created_at, u.nickname, u.job_name
+            SELECT 
+                r.rating, 
+                r.comment, 
+                r.created_at, 
+                u.nickname, 
+                COALESCE(j.display_name, '직업 없음') AS job_name
             FROM job_reviews r
             JOIN users u ON r.discord_id = u.discord_id
+            LEFT JOIN jobs j ON u.current_job_id = j.job_id
             WHERE r.job_id = %s
             ORDER BY r.created_at DESC
         """, (job_id,))
