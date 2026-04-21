@@ -158,6 +158,7 @@ def serve_jobs(request: Request):
         photos = [p for p in [row.get('photo_1'), row.get('photo_2'), row.get('photo_3'), row.get('photo_4')] if p]
 
         formatted_jobs.append({
+            "job_id": row.get('job_id'),
             "name": row.get('display_name'),
             "searchName": row.get('name'),
             "gate": row.get('gate'),
