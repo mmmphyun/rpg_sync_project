@@ -1,6 +1,7 @@
 import os
 import json
 import jwt
+import psycopg2
 
 from fastapi import FastAPI, Request, Depends, HTTPException, status, Response, Form, Cookie
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +19,10 @@ from datetime import datetime, timedelta
 from src.database.queries import get_all_jobs_for_web, verify_and_consume_magic_token
 
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+
+from pydantic import BaseModel, Field
+
+from psycopg2.extras import RealDictCursor
 
 JWT_SECRET = os.getenv("JWT_SECRET", "production_jwt_secret_key")
 JWT_ALGORITHM = "HS256"
@@ -41,6 +46,17 @@ def get_real_ip(request: Request) -> str:
     elif "x-forwarded-for" in request.headers:
         return request.headers["x-forwarded-for"].split(",")[0].strip()
     return get_remote_address(request)
+
+def get_db_connection():
+    """DB Connection 객체 생성 (사용 후 반드시 close 처리)"""
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        raise RuntimeError("DATABASE_URL 환경 변수가 설정되지 않았습니다.")
+    return psycopg2.connect(db_url)
+
+class ReviewPayload(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    comment: str = Field(..., max_length=255)
 
 # IP 기반 Rate Limiter 초기화
 limiter = Limiter(key_func=get_real_ip)
@@ -186,6 +202,23 @@ def get_current_user(forum_session: str = Cookie(None)):
     except InvalidTokenError:
         return {"is_logged_in": False, "error": "invalid_session"}
 
+def get_required_user(forum_session: str = Cookie(None)):
+    """쓰기 권한 검증: 토큰이 없거나 유효하지 않으면 401 반환"""
+    if not forum_session:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다."
+        )
+
+    try:
+        payload = jwt.decode(forum_session, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except (ExpiredSignatureError, InvalidTokenError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="유효하지 않은 세션입니다."
+        )
+
 @app.post("/api/v1/auth/logout")
 def logout_user(response: Response):
     """현재 유저의 세션 쿠키를 삭제하여 로그아웃 처리"""
@@ -197,3 +230,57 @@ def logout_user(response: Response):
         samesite="lax"
     )
     return {"message": "success"}
+
+
+@app.get("/api/v1/jobs/{job_id}/reviews")
+def get_job_reviews(job_id: int):
+    """특정 직업의 리뷰 목록 및 평균 별점 조회 (게스트 접근 가능)"""
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        # 리뷰 목록 조회
+        cursor.execute("""
+            SELECT r.rating, r.comment, r.created_at, u.nickname, u.job_name
+            FROM job_reviews r
+            JOIN users u ON r.discord_id = u.discord_id
+            WHERE r.job_id = %s
+            ORDER BY r.created_at DESC
+        """, (job_id,))
+        reviews = cursor.fetchall()
+
+        # 평균 별점 계산
+        cursor.execute("SELECT COALESCE(ROUND(AVG(rating), 1), 0) as avg_rating FROM job_reviews WHERE job_id = %s",
+                       (job_id,))
+        avg_rating = cursor.fetchone()['avg_rating']
+
+        return {"avg_rating": avg_rating, "reviews": reviews}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.post("/api/v1/jobs/{job_id}/reviews", status_code=status.HTTP_200_OK)
+def upsert_job_review(job_id: int, payload: ReviewPayload, user: dict = Depends(get_required_user)):
+    """직업 리뷰 작성 및 수정 (UPSERT, 인가된 유저만 접근 가능)"""
+    discord_id = user.get("sub")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO job_reviews (job_id, discord_id, rating, comment)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (job_id, discord_id) 
+            DO UPDATE SET 
+                rating = EXCLUDED.rating, 
+                comment = EXCLUDED.comment, 
+                updated_at = CURRENT_TIMESTAMP
+        """, (job_id, discord_id, payload.rating, payload.comment))
+        conn.commit()
+        return {"message": "success"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()

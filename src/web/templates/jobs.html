@@ -67,5 +67,38 @@
 
 <div class="lightbox" id="lightbox"><img src="" alt=""></div>
 
+<!-- 모달 -->
+<div class="review-modal-overlay" id="reviewModal">
+    <div class="review-modal-content">
+        <div class="review-modal-header">
+            <h3 id="reviewModalTitle">직업 평가</h3>
+            <button class="review-modal-close" onclick="closeReviewModal()">&times;</button>
+        </div>
+
+        <div class="review-list" id="reviewList">
+            </div>
+
+        <div class="review-form-area" id="reviewFormArea">
+            <div class="review-auth-blocker" id="reviewAuthBlocker">
+                평가를 작성하려면 로그인이 필요합니다.
+            </div>
+            <form id="reviewForm" onsubmit="submitReview(event)" style="display: none;">
+                <div class="rating-select">
+                    <label>별점: </label>
+                    <select id="reviewRating">
+                        <option value="5">5점</option>
+                        <option value="4">4점</option>
+                        <option value="3">3점</option>
+                        <option value="2">2점</option>
+                        <option value="1">1점</option>
+                    </select>
+                </div>
+                <textarea id="reviewComment" placeholder="한줄평을 남겨주세요 (최대 255자)" maxlength="255" required></textarea>
+                <button type="submit" class="review-submit-btn">작성</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

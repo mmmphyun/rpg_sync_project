@@ -430,6 +430,8 @@
 
 /* Header & Floating User Card */
 .dash-header {
+  position: relative;
+  z-index: 100;
   height: 64px;
   background: linear-gradient(180deg, #1a1a2e 0%, #0f0f23 100%);
   border-bottom: 1px solid #1e1e3a;
@@ -638,4 +640,76 @@
 
 .attribution {
   color: #8b8b8b;
+}
+
+/* Review Modal Structure */
+.review-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+}
+
+.review-modal-overlay.open {
+    display: flex;
+}
+
+.review-modal-content {
+    background: #1a1a24;
+    width: 450px;
+    max-width: 90%;
+    border-radius: 8px;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+}
+
+.review-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.review-modal-header h3 { margin: 0; font-size: 1.1rem; color: #fff; }
+.review-modal-close { background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; }
+
+.review-list {
+    padding: 15px 20px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.review-form-area {
+    padding: 15px 20px;
+    border-top: 1px solid #333;
+    background: #16161e;
+    border-radius: 0 0 8px 8px;
+}
+
+.review-auth-blocker {
+    text-align: center;
+    color: #888;
+    font-size: 0.9rem;
+    padding: 10px 0;
+}
+
+#reviewForm { display: flex; flex-direction: column; gap: 10px; }
+#reviewComment {
+    width: 100%; height: 60px;
+    background: #0f0f15; border: 1px solid #333; color: #fff;
+    padding: 8px; border-radius: 4px; resize: none;
+}
+.review-submit-btn {
+    background: #c89b3c; color: #fff; border: none; padding: 8px;
+    border-radius: 4px; cursor: pointer; font-weight: bold;
 }

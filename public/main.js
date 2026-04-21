@@ -172,6 +172,13 @@ function openSidebar(idx) {
         ? `<div style="margin-top:10px; color:#e74c3c; font-size:0.85em; font-weight:bold;">[ 조건: ${job.req_condition} ]</div>`
         : "";
 
+    const reviewSummaryHtml = `
+      <div class="sidebar-review-summary" style="margin: 10px 0; padding: 10px; background: #16161e; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="sideAvgRating" style="color: #c89b3c; font-weight: bold; font-size: 0.9rem;">평점 로딩 중...</span>
+        <button onclick="openReviewModal(${job.job_id}, '${job.name}')" style="background: #333; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">평가 보기/작성</button>
+      </div>
+    `;
+
     sidebarContent.innerHTML = `
       <button class="sidebar-close" onclick="closeSidebar()">&times;</button>
       <div class="sidebar-portrait ${posBg(job.position)}">${sidePortrait}</div>
@@ -194,6 +201,12 @@ function openSidebar(idx) {
       </div>` : ""}
       ${gallery}`;
 
+    fetch(`/api/v1/jobs/${job.job_id}/reviews`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('sideAvgRating').textContent = `★ ${data.avg_rating}`;
+        });
+
     sidebar.classList.add("open");
 }
 
@@ -207,6 +220,108 @@ function openLightbox(src) {
     const lb = document.getElementById("lightbox");
     lb.querySelector("img").src = src;
     lb.classList.add("open");
+}
+
+// =============================================
+//  Review System Logic
+// =============================================
+
+/**
+ * 리뷰 모달 열기 및 데이터 로드
+ */
+async function openReviewModal(jobId, jobName) {
+    const modal = document.getElementById('reviewModal');
+    const listContainer = document.getElementById('reviewList');
+    const form = document.getElementById('reviewForm');
+    const blocker = document.getElementById('reviewAuthBlocker');
+
+    document.getElementById('reviewModalTitle').textContent = `${jobName} 한줄평`;
+    modal.dataset.jobId = jobId;
+    modal.classList.add('open');
+
+    // 1. 로그인 상태 확인 (작성 폼 제어)
+    try {
+        const authRes = await fetch('/api/v1/auth/me');
+        const auth = await authRes.json();
+
+        if (auth.is_logged_in) {
+            blocker.style.display = 'none';
+            form.style.display = 'flex';
+        } else {
+            blocker.style.display = 'block';
+            form.style.display = 'none';
+        }
+    } catch (e) { console.error("Auth check failed", e); }
+
+    // 2. 리뷰 목록 로드
+    loadReviews(jobId);
+}
+
+function closeReviewModal() {
+    document.getElementById('reviewModal').classList.remove('open');
+}
+
+/**
+ * 리뷰 목록 렌더링
+ */
+async function loadReviews(jobId) {
+    const listContainer = document.getElementById('reviewList');
+    listContainer.innerHTML = '<div style="text-align:center; color:#888;">로딩 중...</div>';
+
+    try {
+        const res = await fetch(`/api/v1/jobs/${jobId}/reviews`);
+        const data = await res.json();
+
+        if (data.reviews.length === 0) {
+            listContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">첫 번째 평점을 남겨보세요!</div>';
+            return;
+        }
+
+        listContainer.innerHTML = data.reviews.map(r => `
+            <div class="review-item" style="padding: 10px; border-bottom: 1px solid #222;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#c89b3c; font-size:0.85rem;">${'★'.repeat(r.rating)}</span>
+                    <span style="color:#666; font-size:0.75rem;">${r.nickname}</span>
+                </div>
+                <div style="color:#eee; font-size:0.9rem; line-height:1.4;">${r.comment}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        listContainer.innerHTML = '<div style="color:#e74c3c;">리뷰를 불러오지 못했습니다.</div>';
+    }
+}
+
+/**
+ * 리뷰 제출 (UPSERT)
+ */
+async function submitReview(event) {
+    event.preventDefault();
+    const modal = document.getElementById('reviewModal');
+    const jobId = modal.dataset.jobId;
+    const rating = document.getElementById('reviewRating').value;
+    const comment = document.getElementById('reviewComment').value;
+
+    try {
+        const response = await fetch(`/api/v1/jobs/${jobId}/reviews`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating: parseInt(rating), comment: comment })
+        });
+
+        if (response.ok) {
+            alert('평가가 저장되었습니다.');
+            document.getElementById('reviewComment').value = '';
+            loadReviews(jobId);
+            // 사이드바 평점도 갱신
+            const avgData = await (await fetch(`/api/v1/jobs/${jobId}/reviews`)).json();
+            document.getElementById('sideAvgRating').textContent = `★ ${avgData.avg_rating}`;
+        } else {
+            const err = await response.json();
+            alert(err.detail || '저장에 실패했습니다.');
+        }
+    } catch (e) {
+        alert('네트워크 오류가 발생했습니다.');
+    }
 }
 
 // =============================================
