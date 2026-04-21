@@ -260,28 +260,34 @@ def get_job_reviews(job_id: int):
         conn.close()
 
 
-@app.post("/api/v1/jobs/{job_id}/reviews", status_code=status.HTTP_200_OK)
-def upsert_job_review(job_id: int, payload: ReviewPayload, user: dict = Depends(get_required_user)):
-    """직업 리뷰 작성 및 수정 (UPSERT, 인가된 유저만 접근 가능)"""
-    discord_id = user.get("sub")
-
+@app.get("/api/v1/jobs/{job_id}/reviews")
+def get_job_reviews(job_id: int):
+    """특정 직업의 리뷰 목록 및 평균 별점 조회 (게스트 접근 가능)"""
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
+        # 리뷰 목록 조회 (LEFT JOIN으로 유저의 현재 직업명 조회, 없을 시 예외 처리)
         cursor.execute("""
-            INSERT INTO job_reviews (job_id, discord_id, rating, comment)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (job_id, discord_id) 
-            DO UPDATE SET 
-                rating = EXCLUDED.rating, 
-                comment = EXCLUDED.comment, 
-                updated_at = CURRENT_TIMESTAMP
-        """, (job_id, discord_id, payload.rating, payload.comment))
-        conn.commit()
-        return {"message": "success"}
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+            SELECT 
+                r.rating, 
+                r.comment, 
+                r.created_at, 
+                u.nickname, 
+                COALESCE(j.display_name, '직업 없음') AS job_name
+            FROM job_reviews r
+            JOIN users u ON r.discord_id = u.discord_id
+            LEFT JOIN jobs j ON u.current_job_id = j.job_id
+            WHERE r.job_id = %s
+            ORDER BY r.created_at DESC
+        """, (job_id,))
+        reviews = cursor.fetchall()
+
+        # 평균 별점 계산
+        cursor.execute("SELECT COALESCE(ROUND(AVG(rating), 1), 0) as avg_rating FROM job_reviews WHERE job_id = %s",
+                       (job_id,))
+        avg_rating = cursor.fetchone()['avg_rating']
+
+        return {"avg_rating": avg_rating, "reviews": reviews}
     finally:
         cursor.close()
         conn.close()
