@@ -18,7 +18,7 @@ function initDashboard() {
 }
 
 /**
- * 서버 통계 데이터 업데이트 (mcstatus 연동 예정)
+ * 서버 통계 데이터 업데이트
  */
 async function updateServerStatus() {
     try {

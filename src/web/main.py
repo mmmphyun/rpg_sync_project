@@ -12,7 +12,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from src.database.queries import get_all_jobs_for_web
-from src.web.routers import auth, jobs, boards
+from src.web.routers import auth, jobs, boards, server
 
 def get_real_ip(request: Request) -> str:
     if "cf-connecting-ip" in request.headers:
@@ -47,6 +47,7 @@ templates = Jinja2Templates(directory="src/web/templates")
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["Jobs"])
 app.include_router(boards.router, prefix="/api/v1/boards", tags=["Boards"])
+app.include_router(server.router)
 
 @app.get("/")
 async def serve_index(request: Request):
