@@ -118,14 +118,33 @@ def sync_users_to_db(users_data: list[dict]) -> int:
     cursor = conn.cursor()
 
     try:
-        # DB에서 직업명-ID 매핑 데이터 로드 (I/O 병목 방지용 메모리 캐싱)
-        cursor.execute("SELECT job_id, REPLACE(name, ' ', '') FROM jobs")
-        job_map = {row[1]: row[0] for row in cursor.fetchall()}
+        # 메모리 캐싱용 직업 리스트 생성 (DB I/O 병목 방지)
+        cursor.execute("SELECT job_id, LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(display_name, ' ', '')) FROM jobs")
+        cached_jobs = [{"id": row[0], "name": row[1] or "", "display": row[2] or ""} for row in cursor.fetchall()]
 
-        # 파이썬 메모리에서 매핑 처리
+        # 애플리케이션 계층 매핑 로직 (우선순위: 완전 일치 -> 부분 일치)
         for user in users_data:
             job_name = user.pop('job_name', None)
-            user['current_job_id'] = job_map.get(job_name) if job_name else None
+            matched_job_id = None
+
+            if job_name:
+                # 1순위: 완전 일치 검증
+                exact_match = next(
+                    (job["id"] for job in cached_jobs if job_name == job["name"] or job_name == job["display"]), None)
+
+                if exact_match:
+                    matched_job_id = exact_match
+                else:
+                    # 2순위: 부분 일치 검증 (검색어가 포함된 직업 중 길이가 가장 짧은 것을 우선 적용하여 오탐율 최소화)
+                    partial_matches = [
+                        job for job in cached_jobs
+                        if job_name in job["name"] or job_name in job["display"]
+                    ]
+                    if partial_matches:
+                        partial_matches.sort(key=lambda x: min(len(x["name"]), len(x["display"])))
+                        matched_job_id = partial_matches[0]["id"]
+
+            user['current_job_id'] = matched_job_id
 
         # 서브쿼리가 제거된 단순 UPSERT 쿼리
         upsert_sql = """
