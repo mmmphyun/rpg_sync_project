@@ -182,22 +182,17 @@ class SyncCmd(commands.Cog):
         if patch_channel:
             async for message in patch_channel.history(limit=None, oldest_first=True):
                 if not message.author.bot:
-                    parsed_data = parse_job_patches(message.content)
-                    if parsed_data:
-                        # UTC 기준인 message.created_at에 9시간을 더해 KST(한국 시간)로 변환
-                        kst_time = message.created_at + timedelta(hours=9)
-                        patch_date_str = kst_time.strftime('%Y-%m-%d')
+                    # 파라미터 주입을 위해 KST 시간 변환 선행 처리
+                    kst_time = message.created_at + timedelta(hours=9)
+                    patch_date_str = kst_time.strftime('%Y-%m-%d %H:%M:%S')
 
-                        # 파서가 단일 딕셔너리 또는 리스트를 반환할 경우 모두 대응
-                        if isinstance(parsed_data, list):
-                            for pd in parsed_data:
-                                pd['patch_date'] = patch_date_str
-                                sync_job_patch_to_db(pd)
-                                patch_count += 1
-                        else:
-                            parsed_data['patch_date'] = patch_date_str
-                            sync_job_patch_to_db(parsed_data)
-                            patch_count += 1
+                    # 파서에 필수 인자(content, created_at, message_id) 모두 전달
+                    parsed_data = parse_job_patches(message.content, patch_date_str, message.id)
+
+                    # 파서에서 완전한 딕셔너리를 반환하므로 즉시 DB 동기화
+                    if parsed_data:
+                        sync_job_patch_to_db(parsed_data)
+                        patch_count += 1
 
         # 3. 일러스트 동기화 (JOBS 테이블 PHOTO 업데이트)
         illust_channel = self.bot.get_channel(illust_thread_id) or await self.bot.fetch_channel(illust_thread_id)
