@@ -78,10 +78,7 @@ function renderFeed(notices) {
 
     const html = notices.map(notice => {
         const dateStr = new Date(notice.created_at).toLocaleString('ko-KR');
-        const safeContent = (notice.content || "").replace(/```([^\n]+)/g, (match, p1) => {
-            if (/^[a-zA-Z0-9]+$/.test(p1.trim())) return match;
-            return "```\n" + p1;
-        });
+        const safeContent = (notice.content || "").replace(/```/g, "");
         const parsedContent = marked.parse(notice.content || "");
 
         let imagesHtml = "";
