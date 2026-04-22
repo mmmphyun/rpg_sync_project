@@ -27,6 +27,7 @@ async def get_server_status():
 
     try:
         # 캐시가 만료되었거나 없을 때만 MC 서버로 실제 비동기 핑 전송
+        print("[캐시 만료] 실제 MC 서버로 핑을 전송합니다.")
         mc_server = await JavaServer.async_lookup(SERVER_ADDRESS)
         status = await mc_server.async_status()
 
