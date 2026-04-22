@@ -9,8 +9,7 @@ router = APIRouter()
 async def get_board_list(board_type: str, page: int = Query(1, ge=1), tag: str = None):
     limit = 5
     offset = (page - 1) * limit
-    # board_type(notice/event) 필터링은 쿼리 함수 내 logic 추가 필요 (현재는 type 필드 존재)
-    notices = get_notices_for_web(limit=limit, offset=offset, tag_filter=tag)
+    notices = get_notices_for_web(board_type=board_type, limit=limit, offset=offset, tag_filter=tag)
     return {"notices": notices, "page": page}
 
 @router.put("/{notice_id}/type")

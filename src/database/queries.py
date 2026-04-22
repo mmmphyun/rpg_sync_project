@@ -321,34 +321,27 @@ def delete_notice_logic(notice_id: int) -> list[str]:
         cursor.close()
         conn.close()
 
-def get_notices_for_web(limit: int = 5, offset: int = 0, tag_filter: str = None) -> list[dict]:
-    """조건 기반 공지사항 목록 반환 (PK 포함)"""
+
+def get_notices_for_web(board_type: str, limit: int, offset: int, tag_filter: str = None):
+    """지정된 타입(notice/event)과 조건에 맞는 게시글을 조회하여 반환"""
     conn = get_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
-
     try:
-        if tag_filter:
-            sql = """
-                SELECT notice_id, type, tag, content, image_urls, created_at 
-                FROM notices 
-                WHERE is_deleted = FALSE AND tag = %s
-                ORDER BY created_at DESC 
-                LIMIT %s OFFSET %s
-            """
-            cursor.execute(sql, (tag_filter, limit, offset))
-        else:
-            sql = """
-                SELECT notice_id, type, tag, content, image_urls, created_at 
-                FROM notices 
-                WHERE is_deleted = FALSE 
-                ORDER BY created_at DESC 
-                LIMIT %s OFFSET %s
-            """
-            cursor.execute(sql, (limit, offset))
+        # type 필터링 필수 적용
+        query = "SELECT * FROM notices WHERE type = %s AND is_deleted = FALSE"
+        params = [board_type]
 
-        return [dict(row) for row in cursor.fetchall()]
+        if tag_filter:
+            query += " AND tag = %s"
+            params.append(tag_filter)
+
+        query += " ORDER BY created_at DESC LIMIT %s OFFSET %s"
+        params.extend([limit, offset])
+
+        cursor.execute(query, tuple(params))
+        return cursor.fetchall()
     except psycopg2.Error as e:
-        print(f"공지사항 목록 조회 중 오류 발생: {e}")
+        print(f"DB Error: {e}")
         return []
     finally:
         cursor.close()
