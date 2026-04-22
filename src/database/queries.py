@@ -371,15 +371,16 @@ def get_recent_posts_for_web(limit: int = 5):
         conn.close()
 
 def get_recent_reviews_for_web(limit: int = 3):
-    """최근 작성된 직업 평가 조회 (직업명 포함)"""
+    """최근 작성된 직업 평가 조회 (직업명 및 유저 닉네임 포함)"""
     conn = get_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         query = """
-            SELECT r.rating, r.comment, r.nickname, j.display_name AS job_name, r.created_at
-            FROM reviews r
-            JOIN jobs j ON r.job_id = j.job_id
-            ORDER BY r.created_at DESC
+            SELECT jr.rating, jr.comment, u.nickname, j.display_name AS job_name, jr.created_at
+            FROM job_reviews jr
+            JOIN jobs j ON jr.job_id = j.job_id
+            JOIN users u ON jr.discord_id = u.discord_id
+            ORDER BY jr.created_at DESC
             LIMIT %s
         """
         cursor.execute(query, (limit,))

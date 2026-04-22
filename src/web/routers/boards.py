@@ -5,6 +5,12 @@ from src.bot.utils.s3_client import delete_from_r2
 
 router = APIRouter()
 
+@router.get("/recent")
+async def get_recent_boards():
+    """메인 페이지용 최신 게시글 5개 조회 (서버 상태 공지 제외)"""
+    posts = get_recent_posts_for_web(limit=5)
+    return posts
+
 @router.get("/{board_type}")
 async def get_board_list(board_type: str, page: int = Query(1, ge=1), tag: str = None):
     limit = 5
@@ -32,9 +38,3 @@ async def delete_notice(notice_id: int, admin: dict = Depends(get_admin_user)):
     for url in image_urls:
         delete_from_r2(url)
     return {"message": "success", "notice_id": notice_id}
-
-@router.get("/recent")
-async def get_recent_boards():
-    """메인 페이지용 최신 게시글 5개 조회 (서버 상태 공지 제외)"""
-    posts = get_recent_posts_for_web(limit=5)
-    return posts
