@@ -296,6 +296,27 @@ def update_notice_type(notice_id: int, new_type: str) -> int:
         cursor.close()
         conn.close()
 
+def get_notice_images_by_message_id(discord_message_id: int) -> list[str]:
+    """수정 이벤트 발생 시 기존 R2 이미지 삭제를 위한 URL 조회"""
+    sql = "SELECT image_urls FROM notices WHERE discord_message_id = %s"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(sql, (discord_message_id,))
+        result = cursor.fetchone()
+
+        if result and result[0]:
+            return result[0]
+        return []
+    except psycopg2.Error as e:
+        print(f"이미지 URL 조회 오류: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
 def delete_notice_logic(notice_id: int) -> list[str]:
     """Soft Delete 적용 후 리소스 초기화. R2 삭제를 위해 기존 이미지 URL 반환"""
     sql = """

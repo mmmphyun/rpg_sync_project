@@ -7,8 +7,8 @@ import json
 from discord.ext import commands
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.database.connection import sync_jobs_to_db, sync_job_patch_to_db
-from src.database.queries import update_job_illustrations, upsert_notice
-from src.bot.utils.s3_client import upload_to_r2
+from src.database.queries import update_job_illustrations, upsert_notice, get_notice_images_by_message_id
+from src.bot.utils.s3_client import upload_to_r2, delete_from_r2
 
 
 class EventList(commands.Cog):
@@ -132,9 +132,12 @@ class EventList(commands.Cog):
 
     async def _process_notice(self, message: discord.Message):
         try:
+            # 1. 기존 데이터 조회
+            old_image_urls = get_notice_images_by_message_id(message.id)
+
             uploaded_urls = []
 
-            # 첨부파일 존재 시 notices 폴더 지정하여 R2 업로드 진행
+            # 2. 현재 첨부파일 R2 업로드
             if message.attachments:
                 async with aiohttp.ClientSession() as session:
                     for att in message.attachments:
@@ -152,18 +155,24 @@ class EventList(commands.Cog):
                                 if public_url:
                                     uploaded_urls.append(public_url)
 
-            # DB 스키마 및 upsert_notice 쿼리 요구사항에 맞춘 딕셔너리 구성
+            # 3. DB UPSERT
             notice_data = {
                 'type': 'notice',
                 'tag': '일반 공지',
                 'content': message.content,
-                'image_urls': json.dumps(uploaded_urls),  # PostgreSQL jsonb 파싱을 위해 텍스트 직렬화
+                'image_urls': json.dumps(uploaded_urls),
                 'discord_message_id': message.id,
                 'author_id': str(message.author.id),
                 'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }
 
             affected = upsert_notice(notice_data)
+
+            # 4. UPSERT 성공 시 기존 R2 이미지 일괄 삭제
+            if affected > 0 and old_image_urls:
+                for old_url in old_image_urls:
+                    await asyncio.to_thread(delete_from_r2, old_url)
+
             print(f"[Info] Notice sync completed. Message ID: {message.id}, Affected: {affected}")
 
         except Exception as e:
