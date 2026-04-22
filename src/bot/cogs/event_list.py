@@ -1,9 +1,13 @@
 import os
 import discord
+import aiohttp
+import asyncio
+
 from discord.ext import commands
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.database.connection import sync_jobs_to_db, sync_job_patch_to_db
 from src.database.queries import update_job_illustrations
+from src.bot.utils.s3_client import upload_to_r2
 
 
 class EventList(commands.Cog):
@@ -89,11 +93,37 @@ class EventList(commands.Cog):
     async def _process_illustration(self, content: str, attachments: list[discord.Attachment]):
         try:
             job_name = parse_job_illustration(content)
-            if job_name and attachments:
-                # 테이블 스키마에 맞춰 최대 4개의 attachment URL 슬라이싱
-                image_urls = [att.url for att in attachments[:4]]
-                affected = update_job_illustrations(job_name, image_urls)
+
+            if not job_name:
+                print("[Warn] Illustration sync failed: Job name could not be parsed.")
+                return
+            if not attachments:
+                print(f"[Warn] Illustration sync failed: No attachments found for '{job_name}'.")
+                return
+
+            uploaded_urls = []
+            async with aiohttp.ClientSession() as session:
+                for att in attachments[:4]:
+                    async with session.get(att.url) as resp:
+                        if resp.status == 200:
+                            file_bytes = await resp.read()
+
+                            # boto3 동기 함수 호출로 인한 이벤트 루프 블로킹 방지
+                            public_url = await asyncio.to_thread(
+                                upload_to_r2,
+                                file_bytes,
+                                att.filename,
+                                att.content_type
+                            )
+                            if public_url:
+                                uploaded_urls.append(public_url)
+
+            if uploaded_urls:
+                affected = update_job_illustrations(job_name, uploaded_urls)
                 print(f"[Info] Illustration update completed. Job: {job_name}, Affected: {affected}")
+            else:
+                print(f"[Error] R2 upload failed for all attachments of job: {job_name}")
+
         except Exception as e:
             print(f"[Error] Illustration processing failed: {e}")
 
