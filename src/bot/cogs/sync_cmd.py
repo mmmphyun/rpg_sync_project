@@ -114,7 +114,7 @@ class SyncCmd(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def sync_users_command(self, ctx: commands.Context):
         """서버 내 전체 유저의 ID, 닉네임, 역할 및 직업을 DB와 동기화합니다."""
-        await ctx.send("유저 동기화를 시작합니다. (서버 크기에 따라 시간이 소요될 수 있습니다)")
+        await ctx.send("유저 동기화를 시작합니다.")
 
         users_data = []
         for member in ctx.guild.members:
@@ -151,7 +151,7 @@ class SyncCmd(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def sync_data_command(self, ctx: commands.Context):
         """각 쓰레드/채널의 과거 게시글을 일괄 파싱하여 DB에 적재합니다."""
-        await ctx.send("게시글 일괄 데이터 동기화를 시작합니다. 외래키 무결성을 위해 직업설명 -> 패치노트 -> 일러스트 순으로 진행됩니다.")
+        await ctx.send("게시글 일괄 데이터 동기화를 시작합니다.")
 
         try:
             patch_channel_id = int(os.getenv('JOB_PATCH_CHANNEL_ID', 0))
@@ -236,7 +236,7 @@ class SyncCmd(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def sync_notice_command(self, ctx: commands.Context):
         """디스코드 공지 채널의 2026년 4월 1일 이후 게시글을 DB에 동기화합니다."""
-        await ctx.send("공지사항 동기화를 시작합니다. 파일 업로드 상태에 따라 시간이 소요될 수 있습니다.")
+        await ctx.send("공지사항 동기화를 시작합니다.")
 
         try:
             owner_channel_id = int(os.getenv('OWNER_NOTICE_CHANNEL_ID', 0))
