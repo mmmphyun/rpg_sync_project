@@ -6,7 +6,6 @@
 // =============================================
 //  Constants & Utility Functions
 // =============================================
-// 백엔드 기본값을 "정보 없음"으로 설정했으므로 매핑 키를 업데이트합니다.
 const RANGE_CLS = { "근거리": "t-melee", "원거리": "t-ranged", "근거리, 원거리": "t-hybrid", "정보 없음": "t-unknown" };
 const POS_CLS   = { "탱": "t-tank", "딜": "t-deal", "힐": "t-heal", "유틸": "t-util", "정보 없음": "t-unknown" };
 const RES_CLS   = { "기력": "t-ki", "마나": "t-mana", "체력": "t-hp", "에너지": "t-hp", "정보 없음": "t-unknown" }; // 에너지 추가
@@ -37,6 +36,13 @@ function posBg(pos) {
 function getInitials(name) {
     const clean = name.replace(/[«»()\s]/g, "");
     return clean.slice(0, 2);
+}
+
+function formatRangeDisplay(range) {
+    if (range === "근거리, 원거리" || range === "근거리,원거리") {
+        return "근/원거리";
+    }
+    return range;
 }
 
 // =============================================
@@ -91,7 +97,7 @@ function renderTile(job, idx) {
       ${tooltip}
       <div class="champ-name">${job.name}</div>
       <div class="champ-mini-tags">
-        <span class="mini-tag ${RANGE_CLS[job.range] || "t-unknown"}">${job.range}</span>
+        <span class="mini-tag ${RANGE_CLS[job.range] || "t-unknown"}">${formatRangeDisplay(job.range)}</span>
         ${posTag(job.position)}
       </div>
       ${lim ? `<div class="champ-mini-tags">${lim}</div>` : ""}
@@ -189,7 +195,7 @@ function openSidebar(idx) {
       ${reviewSummaryHtml}
       <div class="sidebar-gate">${job.gate}${job.group && job.group !== "정보 없음" ? ` · ${job.group}` : ""}</div>
       <div class="sidebar-tags">
-        <span class="sidebar-tag ${RANGE_CLS[job.range] || "t-unknown"}">${job.range}</span>
+        <span class="sidebar-tag ${RANGE_CLS[job.range] || "t-unknown"}">${formatRangeDisplay(job.range)}</span>
         ${posTagFull(job.position)}
         <span class="sidebar-tag ${RES_CLS[job.resource] || "t-unknown"}">${job.resource}</span>
         ${job.limit ? `<span class="sidebar-tag t-limit">1인 제한</span>` : ""}
