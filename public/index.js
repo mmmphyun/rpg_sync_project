@@ -53,7 +53,7 @@ function stripMarkdown(text) {
         .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '') // 이미지
         .replace(/#{1,6}\s?/g, '') // 헤더
         .replace(/>\s?/g, '') // 인용구
-        .replace(/`{1,3}[^`]*`{1,3}/g, '') // 코드 블럭
+        .replace(/`{1,3}/g, '') // 코드 블럭
         .replace(/\n/g, ' ') // 줄바꿈을 공백으로
         .trim();
 }
