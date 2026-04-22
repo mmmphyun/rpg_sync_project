@@ -29,13 +29,13 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Middleware & Static Files
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://fossile-wiki.cloud").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET"],
+    allow_headers=["X-API-Key", "Content-Type"],
 )
 
 os.makedirs("public/images", exist_ok=True)
