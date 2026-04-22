@@ -7,7 +7,7 @@
 //  Constants & Utility Functions
 // =============================================
 // 백엔드 기본값을 "정보 없음"으로 설정했으므로 매핑 키를 업데이트합니다.
-const RANGE_CLS = { "근거리": "t-melee", "원거리": "t-ranged", "정보 없음": "t-unknown" };
+const RANGE_CLS = { "근거리": "t-melee", "원거리": "t-ranged", "근거리, 원거리": "t-hybrid", "정보 없음": "t-unknown" };
 const POS_CLS   = { "탱": "t-tank", "딜": "t-deal", "힐": "t-heal", "유틸": "t-util", "정보 없음": "t-unknown" };
 const RES_CLS   = { "기력": "t-ki", "마나": "t-mana", "체력": "t-hp", "에너지": "t-hp", "정보 없음": "t-unknown" }; // 에너지 추가
 const POS_BG    = { "탱": "bg-tank", "딜": "bg-deal", "힐": "bg-heal", "유틸": "bg-util", "정보 없음": "bg-unknown" };
@@ -61,8 +61,8 @@ function getFiltered() {
     return JOBS.filter(j => {
         for (const [key, val] of Object.entries(activeFilters)) {
             const v = j[key] || "정보 없음";
-            if (key === "position") {
-                if (!v.split("/").includes(val)) return false;
+            if (key === "position" || key === "range") {
+                if (!v.includes(val)) return false;
             } else {
                 if (v !== val) return false;
             }
@@ -104,7 +104,7 @@ function renderGrid() {
 
     const groupOrders = {
         gate: null,
-        range: ["근거리", "원거리", "정보 없음"],
+        range: ["근거리", "원거리", "근/원거리", "정보 없음"],
         position: ["탱", "딜", "힐", "유틸", "정보 없음"],
         resource: ["기력", "마나", "체력", "에너지", "정보 없음"],
     };
