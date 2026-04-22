@@ -346,3 +346,47 @@ def get_notices_for_web(board_type: str, limit: int, offset: int, tag_filter: st
     finally:
         cursor.close()
         conn.close()
+
+def get_recent_posts_for_web(limit: int = 5):
+    """서버 상태 공지를 제외한 최신 게시글 조회"""
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        # tag가 NULL인 이벤트 게시글 등도 포함하기 위해 IS DISTINCT FROM 사용
+        query = """
+            SELECT notice_id, type, tag, content, created_at 
+            FROM notices 
+            WHERE is_deleted = FALSE 
+            AND tag IS DISTINCT FROM '서버 상태 공지'
+            ORDER BY created_at DESC 
+            LIMIT %s
+        """
+        cursor.execute(query, (limit,))
+        return cursor.fetchall()
+    except psycopg2.Error as e:
+        print(f"DB Error (get_recent_posts): {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_recent_reviews_for_web(limit: int = 3):
+    """최근 작성된 직업 평가 조회 (직업명 포함)"""
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        query = """
+            SELECT r.rating, r.comment, r.nickname, j.display_name AS job_name, r.created_at
+            FROM reviews r
+            JOIN jobs j ON r.job_id = j.job_id
+            ORDER BY r.created_at DESC
+            LIMIT %s
+        """
+        cursor.execute(query, (limit,))
+        return cursor.fetchall()
+    except psycopg2.Error as e:
+        print(f"DB Error (get_recent_reviews): {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()

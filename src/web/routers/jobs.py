@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from psycopg2.extras import RealDictCursor
 from src.web.dependencies import get_required_user
+from src.database.queries import get_recent_reviews_for_web
 
 router = APIRouter()
 
@@ -70,3 +71,9 @@ def upsert_job_review(job_id: int, payload: ReviewPayload, user: dict = Depends(
     finally:
         cursor.close()
         conn.close()
+
+@router.get("/reviews/recent")
+async def get_recent_reviews():
+    """메인 페이지용 최근 직업 평가 3개 조회"""
+    reviews = get_recent_reviews_for_web(limit=3)
+    return reviews

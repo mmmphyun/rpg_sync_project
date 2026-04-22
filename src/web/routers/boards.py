@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from src.web.dependencies import get_admin_user
-from src.database.queries import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic
+from src.database.queries import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web
 from src.bot.utils.s3_client import delete_from_r2
 
 router = APIRouter()
@@ -32,3 +32,9 @@ async def delete_notice(notice_id: int, admin: dict = Depends(get_admin_user)):
     for url in image_urls:
         delete_from_r2(url)
     return {"message": "success", "notice_id": notice_id}
+
+@router.get("/recent")
+async def get_recent_boards():
+    """메인 페이지용 최신 게시글 5개 조회 (서버 상태 공지 제외)"""
+    posts = get_recent_posts_for_web(limit=5)
+    return posts
