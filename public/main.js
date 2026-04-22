@@ -7,7 +7,7 @@
 //  Constants & Utility Functions
 // =============================================
 const RANGE_CLS = { "근거리": "t-melee", "원거리": "t-ranged", "근거리, 원거리": "t-hybrid", "정보 없음": "t-unknown" };
-const POS_CLS   = { "탱": "t-tank", "딜": "t-deal", "힐": "t-heal", "유틸": "t-util", "정보 없음": "t-unknown" };
+const POS_CLS   = { "탱": "t-tank", "물리": "t-phys", "마법": "t-magic", "혼합": "t-hybrid-dmg", "힐": "t-heal", "유틸": "t-util", "정보 없음": "t-unknown" };
 const RES_CLS   = { "기력": "t-ki", "마나": "t-mana", "체력": "t-hp", "에너지": "t-hp", "정보 없음": "t-unknown" }; // 에너지 추가
 const POS_BG    = { "탱": "bg-tank", "딜": "bg-deal", "힐": "bg-heal", "유틸": "bg-util", "정보 없음": "bg-unknown" };
 
@@ -111,7 +111,7 @@ function renderGrid() {
     const groupOrders = {
         gate: null,
         range: ["근거리", "원거리", "근거리, 원거리", "정보 없음"],
-        position: ["탱", "딜", "힐", "유틸", "정보 없음"],
+        position: ["탱", "물리", "마법", "혼합", "힐", "유틸", "정보 없음"],
         resource: ["기력", "마나", "체력", "에너지", "정보 없음"],
     };
 
