@@ -20,7 +20,7 @@ async function checkAuthAndLoad() {
     try {
         const res = await fetch('/api/v1/auth/me');
         const auth = await res.json();
-        if (auth.is_logged_in && (auth.server_role === "스태프" || auth.server_role === "주인장")) {
+        if (auth.is_logged_in && (auth.server_role === "STAFF" || auth.server_role === "주인장")) {
             isAdmin = true;
         }
     } catch (e) {

@@ -1,7 +1,7 @@
 import psycopg2
 import secrets
 from psycopg2.extras import RealDictCursor
-from src.database.connection import get_connection
+from src.database.connection import get_connection, release_connection
 from datetime import datetime, timedelta
 
 
@@ -44,7 +44,7 @@ def update_job_illustrations(job_name: str, image_urls: list[str]) -> int:
         raise e
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def batch_update_profile_images(image_data: dict) -> int:
     """
@@ -82,7 +82,7 @@ def batch_update_profile_images(image_data: dict) -> int:
         raise e
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def update_job_single_column(job_name: str, column_name: str, value: str) -> int:
     # ... (allowed_columns 및 target_col 검증 로직은 기존과 동일) ...
@@ -114,7 +114,7 @@ def update_job_single_column(job_name: str, column_name: str, value: str) -> int
         raise e
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 
 def get_all_jobs_for_web() -> list[dict]:
@@ -149,7 +149,7 @@ def get_all_jobs_for_web() -> list[dict]:
         return []
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 """ 보안 로직 """
 
@@ -163,7 +163,7 @@ def check_user_exists(discord_id: str) -> bool:
         return cursor.fetchone() is not None
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def create_magic_token(discord_id: str) -> str:
     """5분 후 만료되는 일회용 매직 링크 토큰 생성 및 DB 적재"""
@@ -186,7 +186,7 @@ def create_magic_token(discord_id: str) -> str:
         raise e
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def verify_and_consume_magic_token(token: str) -> dict:
     """토큰 유효성 검증 후 즉시 폐기, 유저 정보 반환"""
@@ -219,7 +219,7 @@ def verify_and_consume_magic_token(token: str) -> dict:
         return None
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 """ 게시판 """
 
@@ -256,7 +256,7 @@ def upsert_notice(notice_data: dict) -> int:
         raise e
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def update_notice_tag(notice_id: int, new_tag: str) -> int:
     """공지 태그 수정"""
@@ -275,7 +275,7 @@ def update_notice_tag(notice_id: int, new_tag: str) -> int:
         raise e
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def update_notice_type(notice_id: int, new_type: str) -> int:
     """게시글 타입(notice/event) 변경을 통한 게시판 간 데이터 이관"""
@@ -294,7 +294,7 @@ def update_notice_type(notice_id: int, new_type: str) -> int:
         raise e
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def get_notice_images_by_message_id(discord_message_id: int) -> list[str]:
     """수정 이벤트 발생 시 기존 R2 이미지 삭제를 위한 URL 조회"""
@@ -315,7 +315,7 @@ def get_notice_images_by_message_id(discord_message_id: int) -> list[str]:
         return []
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def delete_notice_logic(notice_id: int) -> list[str]:
     """Soft Delete 적용 후 리소스 초기화. R2 삭제를 위해 기존 이미지 URL 반환"""
@@ -342,7 +342,7 @@ def delete_notice_logic(notice_id: int) -> list[str]:
         raise e
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 
 def get_notices_for_web(board_type: str, limit: int, offset: int, tag_filter: str = None):
@@ -368,7 +368,7 @@ def get_notices_for_web(board_type: str, limit: int, offset: int, tag_filter: st
         return []
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def get_recent_posts_for_web(limit: int = 5):
     """서버 상태 공지를 제외한 최신 게시글 조회"""
@@ -391,7 +391,7 @@ def get_recent_posts_for_web(limit: int = 5):
         return []
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 def get_recent_reviews_for_web(limit: int = 3):
     """최근 작성된 직업 평가 조회"""
@@ -413,4 +413,4 @@ def get_recent_reviews_for_web(limit: int = 3):
         return []
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)

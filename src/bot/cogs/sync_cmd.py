@@ -119,27 +119,42 @@ class SyncCmd(commands.Cog):
         users_data = []
         for member in ctx.guild.members:
             if not member.bot:
-                role_name = member.top_role.name if member.top_role else "유저"
-
-                # 닉네임 파싱
+                # 닉네임 파싱 (양식: 후원등급ㅣ직급ㅣ닉네임ㅣ직업명)
                 display_name = member.display_name
-                parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
+                parts = [p.strip() for p in re.split(r'[ㅣ\|]', display_name)]
 
                 job_name = None
                 actual_nickname = display_name
-                if len(parts) >= 2:
+                server_role = "유저"  # 파싱 실패 또는 누락 시 기본값
+
+                if len(parts) >= 4:
+                    # [후원등급, 직급, 닉네임, 직업명] (요소가 더 많아도 뒤에서부터 매핑)
+                    server_role = parts[-3]
                     actual_nickname = parts[-2]
-                    job_name = parts[-1].replace(" ", "")
+                    job_name = parts[-1].replace(" ", "").lower()
+                elif len(parts) == 3:
+                    # [직급, 닉네임, 직업명] (후원등급 누락 케이스)
+                    server_role = parts[-3]
+                    actual_nickname = parts[-2]
+                    job_name = parts[-1].replace(" ", "").lower()
+                elif len(parts) == 2:
+                    # [닉네임, 직업명]
+                    actual_nickname = parts[-2]
+                    job_name = parts[-1].replace(" ", "").lower()
                 elif len(parts) == 1:
+                    # [닉네임]
                     actual_nickname = parts[0]
 
+                # 빈 문자열 처리
+                if not server_role:
+                    server_role = "유저"
                 if job_name and not job_name.strip():
                     job_name = None
 
                 users_data.append({
                     "discord_id": str(member.id),
                     "nickname": actual_nickname,
-                    "server_role": role_name,
+                    "server_role": server_role,
                     "job_name": job_name
                 })
 
