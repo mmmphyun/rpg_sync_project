@@ -51,6 +51,9 @@ let currentSort = "range";
 let activeFilters = {};
 let selectedIdx = -1;
 
+let currentJobReviewsCache = null;
+let currentUserNickname = null;
+
 // =============================================
 //  Core Logic
 // =============================================
@@ -205,6 +208,7 @@ function openSidebar(idx) {
     fetch(`/api/v1/jobs/${job.job_id}/reviews`)
         .then(res => res.json())
         .then(data => {
+            currentJobReviewsCache = data;
             document.getElementById('sideAvgRating').textContent = `★ ${data.avg_rating}`;
         });
 
@@ -246,16 +250,22 @@ async function openReviewModal(jobId, jobName) {
         const auth = await authRes.json();
 
         if (auth.is_logged_in) {
+            currentUserNickname = auth.nickname;
             blocker.style.display = 'none';
             form.style.display = 'flex';
         } else {
+            currentUserNickname = null;
             blocker.style.display = 'block';
             form.style.display = 'none';
         }
     } catch (e) { console.error("Auth check failed", e); }
 
-    // 2. 리뷰 목록 로드
-    loadReviews(jobId);
+    // 2. 리뷰 목록 렌더링
+    if (currentJobReviewsCache) {
+        renderReviewList(currentJobReviewsCache);
+    } else {
+        loadReviews(jobId);
+    }
 }
 
 function closeReviewModal() {
@@ -265,6 +275,25 @@ function closeReviewModal() {
 /**
  * 리뷰 목록 렌더링
  */
+function renderReviewList(data) {
+    const listContainer = document.getElementById('reviewList');
+
+    if (!data.reviews || data.reviews.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">첫 번째 평점을 남겨보세요!</div>';
+        return;
+    }
+
+    listContainer.innerHTML = data.reviews.map(r => `
+        <div class="review-item" data-nickname="${r.nickname}" style="padding: 10px; border-bottom: 1px solid #222;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span class="review-rating" style="color:#c89b3c; font-size:0.85rem;">${'★'.repeat(r.rating)}</span>
+                <span style="color:#666; font-size:0.75rem;">${r.nickname}</span>
+            </div>
+            <div class="review-comment-text" style="color:#eee; font-size:0.9rem; line-height:1.4;">${r.comment}</div>
+        </div>
+    `).join('');
+}
+
 async function loadReviews(jobId) {
     const listContainer = document.getElementById('reviewList');
     listContainer.innerHTML = '<div style="text-align:center; color:#888;">로딩 중...</div>';
@@ -272,21 +301,8 @@ async function loadReviews(jobId) {
     try {
         const res = await fetch(`/api/v1/jobs/${jobId}/reviews`);
         const data = await res.json();
-
-        if (data.reviews.length === 0) {
-            listContainer.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">첫 번째 평점을 남겨보세요!</div>';
-            return;
-        }
-
-        listContainer.innerHTML = data.reviews.map(r => `
-            <div class="review-item" style="padding: 10px; border-bottom: 1px solid #222;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                    <span style="color:#c89b3c; font-size:0.85rem;">${'★'.repeat(r.rating)}</span>
-                    <span style="color:#666; font-size:0.75rem;">${r.nickname}</span>
-                </div>
-                <div style="color:#eee; font-size:0.9rem; line-height:1.4;">${r.comment}</div>
-            </div>
-        `).join('');
+        currentJobReviewsCache = data;
+        renderReviewList(data);
     } catch (e) {
         listContainer.innerHTML = '<div style="color:#e74c3c;">리뷰를 불러오지 못했습니다.</div>';
     }
@@ -299,23 +315,49 @@ async function submitReview(event) {
     event.preventDefault();
     const modal = document.getElementById('reviewModal');
     const jobId = modal.dataset.jobId;
-    const rating = document.getElementById('reviewRating').value;
+    const rating = parseInt(document.getElementById('reviewRating').value);
     const comment = document.getElementById('reviewComment').value;
 
     try {
         const response = await fetch(`/api/v1/jobs/${jobId}/reviews`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rating: parseInt(rating), comment: comment })
+            body: JSON.stringify({ rating: rating, comment: comment })
         });
 
         if (response.ok) {
             alert('평가가 저장되었습니다.');
             document.getElementById('reviewComment').value = '';
-            loadReviews(jobId);
-            // 사이드바 평점도 갱신
-            const avgData = await (await fetch(`/api/v1/jobs/${jobId}/reviews`)).json();
-            document.getElementById('sideAvgRating').textContent = `★ ${avgData.avg_rating}`;
+
+            const listContainer = document.getElementById('reviewList');
+            const existingReview = listContainer.querySelector(`.review-item[data-nickname="${currentUserNickname}"]`);
+
+            if (existingReview) {
+                existingReview.querySelector('.review-rating').textContent = '★'.repeat(rating);
+                existingReview.querySelector('.review-comment-text').textContent = comment;
+            } else {
+                const newReviewHtml = `
+                    <div class="review-item" data-nickname="${currentUserNickname}" style="padding: 10px; border-bottom: 1px solid #222;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span class="review-rating" style="color:#c89b3c; font-size:0.85rem;">${'★'.repeat(rating)}</span>
+                            <span style="color:#666; font-size:0.75rem;">${currentUserNickname || '나'}</span>
+                        </div>
+                        <div class="review-comment-text" style="color:#eee; font-size:0.9rem; line-height:1.4;">${comment}</div>
+                    </div>
+                `;
+                if (listContainer.querySelector('div[style*="text-align:center"]')) {
+                    listContainer.innerHTML = '';
+                }
+                listContainer.insertAdjacentHTML('afterbegin', newReviewHtml);
+            }
+
+            fetch(`/api/v1/jobs/${jobId}/reviews`)
+                .then(res => res.json())
+                .then(data => {
+                    currentJobReviewsCache = data;
+                    document.getElementById('sideAvgRating').textContent = `★ ${data.avg_rating}`;
+                });
+
         } else {
             const err = await response.json();
             alert(err.detail || '저장에 실패했습니다.');
