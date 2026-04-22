@@ -2,11 +2,12 @@ import os
 import discord
 import aiohttp
 import asyncio
+import json
 
 from discord.ext import commands
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.database.connection import sync_jobs_to_db, sync_job_patch_to_db
-from src.database.queries import update_job_illustrations
+from src.database.queries import update_job_illustrations, upsert_notice
 from src.bot.utils.s3_client import upload_to_r2
 
 
@@ -71,6 +72,8 @@ class EventList(commands.Cog):
             await self._process_patch(message.content, formatted_date, message.id)
         elif channel_id == self.illust_thread_id:
             await self._process_illustration(message.content, message.attachments)
+        elif channel_id in (self.owner_notice_channel_id, self.staff_notice_channel_id):
+            await self._process_notice(message)
 
     async def _process_description(self, content: str):
         try:
@@ -127,6 +130,44 @@ class EventList(commands.Cog):
         except Exception as e:
             print(f"[Error] Illustration processing failed: {e}")
 
+    async def _process_notice(self, message: discord.Message):
+        try:
+            uploaded_urls = []
+
+            # 첨부파일 존재 시 notices 폴더 지정하여 R2 업로드 진행
+            if message.attachments:
+                async with aiohttp.ClientSession() as session:
+                    for att in message.attachments:
+                        async with session.get(att.url) as resp:
+                            if resp.status == 200:
+                                file_bytes = await resp.read()
+
+                                public_url = await asyncio.to_thread(
+                                    upload_to_r2,
+                                    file_bytes,
+                                    att.filename,
+                                    att.content_type,
+                                    "notices"
+                                )
+                                if public_url:
+                                    uploaded_urls.append(public_url)
+
+            # DB 스키마 및 upsert_notice 쿼리 요구사항에 맞춘 딕셔너리 구성
+            notice_data = {
+                'type': 'notice',
+                'tag': '일반 공지',
+                'content': message.content,
+                'image_urls': json.dumps(uploaded_urls),  # PostgreSQL jsonb 파싱을 위해 텍스트 직렬화
+                'discord_message_id': message.id,
+                'author_id': str(message.author.id),
+                'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
+
+            affected = upsert_notice(notice_data)
+            print(f"[Info] Notice sync completed. Message ID: {message.id}, Affected: {affected}")
+
+        except Exception as e:
+            print(f"[Error] Notice processing failed: {e}")
 
 async def setup(self):
     await self.add_cog(EventList(self))
