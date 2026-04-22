@@ -191,7 +191,7 @@ def create_magic_token(discord_id: str) -> str:
 def verify_and_consume_magic_token(token: str) -> dict:
     """토큰 유효성 검증 후 즉시 폐기, 유저 정보 반환"""
     select_sql = """
-        SELECT m.discord_id, u.nickname, j.display_name AS job_name
+        SELECT m.discord_id, u.nickname, u.server_role, j.display_name AS job_name
         FROM public.magic_tokens m
         JOIN public.users u ON m.discord_id = u.discord_id
         LEFT JOIN public.jobs j ON u.current_job_id = j.job_id
@@ -265,6 +265,25 @@ def update_notice_tag(notice_id: int, new_tag: str) -> int:
 
     try:
         cursor.execute(sql, (new_tag, notice_id))
+        affected_rows = cursor.rowcount
+        conn.commit()
+        return affected_rows
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+def update_notice_type(notice_id: int, new_type: str) -> int:
+    """게시글 타입(notice/event) 변경을 통한 게시판 간 데이터 이관"""
+    sql = "UPDATE notices SET type = %s WHERE notice_id = %s AND is_deleted = FALSE"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(sql, (new_type, notice_id))
         affected_rows = cursor.rowcount
         conn.commit()
         return affected_rows
