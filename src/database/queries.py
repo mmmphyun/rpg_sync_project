@@ -328,7 +328,7 @@ def get_notices_for_web(board_type: str, limit: int, offset: int, tag_filter: st
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         # type 필터링 필수 적용
-        query = "SELECT * FROM notices WHERE type = %s AND is_deleted = FALSE"
+        query = query = "SELECT notice_id, type, tag, REPLACE(content, '@everyone', '') AS content, image_urls, is_deleted, created_at, updated_at FROM notices WHERE type = %s AND is_deleted = FALSE"
         params = [board_type]
 
         if tag_filter:
@@ -354,10 +354,10 @@ def get_recent_posts_for_web(limit: int = 5):
     try:
         # tag가 NULL인 이벤트 게시글 등도 포함하기 위해 IS DISTINCT FROM 사용
         query = """
-            SELECT notice_id, type, tag, content, created_at 
+            SELECT notice_id, type, tag, REPLACE(content, '@everyone', '') AS content, created_at
             FROM notices 
             WHERE is_deleted = FALSE 
-            AND tag IS DISTINCT FROM '서버 상태 공지'
+            AND (tag IS NULL OR tag NOT LIKE '%서버 상태 공지%')
             ORDER BY created_at DESC 
             LIMIT %s
         """
@@ -371,7 +371,7 @@ def get_recent_posts_for_web(limit: int = 5):
         conn.close()
 
 def get_recent_reviews_for_web(limit: int = 3):
-    """최근 작성된 직업 평가 조회 (직업명 및 유저 닉네임 포함)"""
+    """최근 작성된 직업 평가 조회"""
     conn = get_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
