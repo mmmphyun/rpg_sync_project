@@ -328,7 +328,7 @@ def get_notices_for_web(board_type: str, limit: int, offset: int, tag_filter: st
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         # type 필터링 필수 적용
-        query = query = "SELECT notice_id, type, tag, REPLACE(content, '@everyone', '') AS content, image_urls, is_deleted, created_at, updated_at FROM notices WHERE type = %s AND is_deleted = FALSE"
+        query = query = "SELECT notice_id, type, tag, REPLACE(content, '@everyone', '') AS content, image_urls, is_deleted, created_at FROM notices WHERE type = %s AND is_deleted = FALSE"
         params = [board_type]
 
         if tag_filter:
@@ -357,11 +357,11 @@ def get_recent_posts_for_web(limit: int = 5):
             SELECT notice_id, type, tag, REPLACE(content, '@everyone', '') AS content, created_at
             FROM notices 
             WHERE is_deleted = FALSE 
-            AND (tag IS NULL OR tag NOT LIKE '%서버 상태 공지%')
+            AND (tag IS NULL OR tag NOT LIKE %s)
             ORDER BY created_at DESC 
             LIMIT %s
         """
-        cursor.execute(query, (limit,))
+        cursor.execute(query, ('%서버 상태 공지%', limit))
         return cursor.fetchall()
     except psycopg2.Error as e:
         print(f"DB Error (get_recent_posts): {e}")
