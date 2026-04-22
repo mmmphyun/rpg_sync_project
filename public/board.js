@@ -132,6 +132,7 @@ function renderPagination(currentPage, isLastPage) {
 // =============================================
 //  Admin API Calls
 // =============================================
+let currentEditNoticeId = null
 
 async function changeNoticeType(id, targetType) {
     if (!confirm(`이 게시글을 ${targetType === 'event' ? '이벤트' : '공지사항'} 게시판으로 이동하시겠습니까?`)) return;
@@ -142,14 +143,38 @@ async function changeNoticeType(id, targetType) {
     } catch (e) { alert("통신 오류가 발생했습니다."); }
 }
 
-async function promptTagChange(id, currentTag) {
-    const newTag = prompt("변경할 태그를 입력하세요 (예: 일반 공지, 직업 공지, 서버 상태 공지, 시스템 공지)", currentTag);
-    if (!newTag || newTag === currentTag) return;
+function promptTagChange(id, currentTag) {
+    currentEditNoticeId = id;
+    const select = document.getElementById("newTagSelect");
+
+    const options = Array.from(select.options);
+    const exists = options.some(opt => opt.value === currentTag);
+    if (exists) select.value = currentTag;
+    else select.selectedIndex = 0;
+
+    document.getElementById("tagModal").classList.add("open");
+}
+
+function closeTagModal() {
+    document.getElementById("tagModal").classList.remove("open");
+    currentEditNoticeId = null;
+}
+
+async function submitTagChange() {
+    if (!currentEditNoticeId) return;
+    const newTag = document.getElementById("newTagSelect").value;
+
     try {
-        const res = await fetch(`${API_BASE}/${id}/tag?target_tag=${encodeURIComponent(newTag)}`, { method: 'PUT' });
-        if (res.ok) loadFeed(currentPage);
-        else alert("권한이 없거나 처리 중 오류가 발생했습니다.");
-    } catch (e) { alert("통신 오류가 발생했습니다."); }
+        const res = await fetch(`${API_BASE}/${currentEditNoticeId}/tag?target_tag=${encodeURIComponent(newTag)}`, { method: 'PUT' });
+        if (res.ok) {
+            closeTagModal();
+            loadFeed(currentPage);
+        } else {
+            alert("권한이 없거나 처리 중 오류가 발생했습니다.");
+        }
+    } catch (e) {
+        alert("통신 오류가 발생했습니다.");
+    }
 }
 
 async function deleteNotice(id) {

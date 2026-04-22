@@ -50,6 +50,23 @@
 
 <div class="lightbox" id="lightbox"><img src="" alt=""></div>
 
+<!-- 모달 -->
+<div class="review-modal-overlay" id="tagModal">
+    <div class="review-modal-content" style="width: 320px; padding: 20px;">
+        <h3 style="color: #fff; margin-bottom: 15px; font-size: 1.1rem;">태그 변경</h3>
+        <select id="newTagSelect" style="width: 100%; padding: 10px; margin-bottom: 20px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px; font-size: 0.9rem;">
+            <option value="일반 공지">일반 공지</option>
+            <option value="직업 공지">직업 공지</option>
+            <option value="서버 상태 공지">서버 상태 공지</option>
+            <option value="시스템 공지">시스템 공지</option>
+        </select>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button onclick="closeTagModal()" style="padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer;">취소</button>
+            <button onclick="submitTagChange()" style="padding: 8px 16px; background: #3498db; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">변경 적용</button>
+        </div>
+    </div>
+</div>
+
 <script>
   window.BOARD_TYPE = "{{ board_type }}";
 </script>
