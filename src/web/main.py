@@ -28,12 +28,24 @@ app.include_router(boards.router, prefix="/api/v1/boards", tags=["Boards"])
 
 @app.get("/")
 async def serve_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"request": request}
+    )
 
 @app.get("/notice")
 async def serve_notice(request: Request):
-    return templates.TemplateResponse("board.html", {"request": request, "board_type": "notice"})
+    return templates.TemplateResponse(
+        request=request,
+        name="board.html",
+        context={"request": request, "board_type": "notice"}
+    )
 
 @app.get("/event")
 async def serve_event(request: Request):
-    return templates.TemplateResponse("board.html", {"request": request, "board_type": "event"})
+    return templates.TemplateResponse(
+        request=request,
+        name="board.html",
+        context={"request": request, "board_type": "event"}
+    )
