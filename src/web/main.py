@@ -38,6 +38,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+os.makedirs("public/images", exist_ok=True)
+app.mount("/images", StaticFiles(directory="public/images"), name="images")
 app.mount("/static", StaticFiles(directory="public"), name="static")
 templates = Jinja2Templates(directory="src/web/templates")
 
