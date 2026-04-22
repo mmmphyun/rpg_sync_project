@@ -304,7 +304,7 @@ def get_notice_images_by_message_id(discord_message_id: int) -> list[str]:
     cursor = conn.cursor()
 
     try:
-        cursor.execute(sql, (discord_message_id,))
+        cursor.execute(sql, (str(discord_message_id),))
         result = cursor.fetchone()
 
         if result and result[0]:

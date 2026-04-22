@@ -166,7 +166,7 @@ class EventList(commands.Cog):
                 'tag': '일반 공지',
                 'content': clean_content,
                 'image_urls': json.dumps(uploaded_urls),
-                'discord_message_id': message.id,
+                'discord_message_id': str(message.id),
                 'author_id': str(message.author.id),
                 'created_at': message.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }
