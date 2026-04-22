@@ -104,7 +104,7 @@ function renderGrid() {
 
     const groupOrders = {
         gate: null,
-        range: ["근거리", "원거리", "근/원거리", "정보 없음"],
+        range: ["근거리", "원거리", "근거리, 원거리", "정보 없음"],
         position: ["탱", "딜", "힐", "유틸", "정보 없음"],
         resource: ["기력", "마나", "체력", "에너지", "정보 없음"],
     };
