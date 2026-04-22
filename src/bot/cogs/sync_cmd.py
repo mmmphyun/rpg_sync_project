@@ -1,19 +1,20 @@
 import discord
-from discord import app_commands
-from discord.ext import commands
-
-from datetime import timedelta
-
-from src.database.queries import update_job_single_column, update_job_illustrations, batch_update_profile_images
-from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
-from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
-from src.bot.utils.s3_client import upload_to_r2
-from src.database.queries import check_user_exists, create_magic_token
-
 import os
 import re
 import asyncio
 import aiohttp
+import json
+
+from discord import app_commands
+from discord.ext import commands
+
+from datetime import timedelta, datetime, timezone
+
+from src.database.queries import update_job_single_column, update_job_illustrations, batch_update_profile_images, upsert_notice
+from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
+from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
+from src.bot.utils.s3_client import upload_to_r2
+from src.database.queries import check_user_exists, create_magic_token
 
 class SyncCmd(commands.Cog):
     def __init__(self, bot):
@@ -152,15 +153,17 @@ class SyncCmd(commands.Cog):
         """각 쓰레드/채널의 과거 게시글을 일괄 파싱하여 DB에 적재합니다."""
         await ctx.send("게시글 일괄 데이터 동기화를 시작합니다. 외래키 무결성을 위해 직업설명 -> 패치노트 -> 일러스트 순으로 진행됩니다.")
 
-        target_ids_str = os.getenv('TARGET_CHANNEL_IDS', '')
-        id_list = [int(c_id.strip().replace('"', '').replace("'", ""))
-                   for c_id in target_ids_str.split(',') if c_id.strip().isdigit()]
-
-        if len(id_list) < 3:
-            await ctx.send("환경 변수(TARGET_CHANNEL_IDS)에 3개의 채널 ID가 모두 설정되지 않아 중단합니다.")
+        try:
+            patch_channel_id = int(os.getenv('JOB_PATCH_CHANNEL_ID', 0))
+            desc_thread_id = int(os.getenv('JOB_DESC_THREAD_ID', 0))
+            illust_thread_id = int(os.getenv('JOB_ILLUST_THREAD_ID', 0))
+        except ValueError:
+            await ctx.send("환경 변수에 채널 ID가 올바르게 설정되지 않아 중단합니다.")
             return
 
-        patch_channel_id, desc_thread_id, illust_thread_id = id_list[0], id_list[1], id_list[2]
+        if not all([patch_channel_id, desc_thread_id, illust_thread_id]):
+            await ctx.send("필수 채널 ID가 누락되어 중단합니다.")
+            return
 
         # 1. 직업 설명 동기화 (JOBS 테이블 생성)
         desc_channel = self.bot.get_channel(desc_thread_id) or await self.bot.fetch_channel(desc_thread_id)
@@ -229,6 +232,82 @@ class SyncCmd(commands.Cog):
 
                 await ctx.send(
                     f"일괄 데이터 동기화 완료\n- 파싱된 직업: {desc_count}건\n- 적재된 패치노트: {patch_count}건\n- 연결된 일러스트: {illust_count}건")
+
+    @commands.command(name="공지동기화")
+    @commands.has_permissions(administrator=True)
+    async def sync_notice_command(self, ctx: commands.Context):
+        """디스코드 공지 채널의 2026년 4월 1일 이후 게시글을 DB에 동기화합니다."""
+        await ctx.send("공지사항 동기화를 시작합니다. 파일 업로드 상태에 따라 시간이 소요될 수 있습니다.")
+
+        try:
+            owner_channel_id = int(os.getenv('OWNER_NOTICE_CHANNEL_ID', 0))
+            staff_channel_id = int(os.getenv('STAFF_NOTICE_CHANNEL_ID', 0))
+        except ValueError:
+            await ctx.send("환경 변수에 공지 채널 ID가 올바르게 설정되지 않았습니다.")
+            return
+
+        if not owner_channel_id and not staff_channel_id:
+            await ctx.send("동기화할 공지 채널이 설정되지 않아 중단합니다.")
+            return
+
+        target_channels = []
+        if owner_channel_id:
+            ch = self.bot.get_channel(owner_channel_id) or await self.bot.fetch_channel(owner_channel_id)
+            if ch: target_channels.append(ch)
+        if staff_channel_id:
+            ch = self.bot.get_channel(staff_channel_id) or await self.bot.fetch_channel(staff_channel_id)
+            if ch: target_channels.append(ch)
+
+        # 2026년 4월 1일 KST 기준 타임존 설정
+        kst_tz = timezone(timedelta(hours=9))
+        cutoff_date = datetime(2026, 4, 1, tzinfo=kst_tz)
+
+        sync_count = 0
+
+        async with aiohttp.ClientSession() as session:
+            for channel in target_channels:
+                # after 파라미터를 사용하여 지정 날짜 이후의 메시지만 가져옴
+                async for message in channel.history(limit=None, after=cutoff_date, oldest_first=True):
+                    if message.author.bot:
+                        continue
+
+                    uploaded_urls = []
+                    if message.attachments:
+                        for att in message.attachments:
+                            async with session.get(att.url) as resp:
+                                if resp.status == 200:
+                                    file_bytes = await resp.read()
+                                    public_url = await asyncio.to_thread(
+                                        upload_to_r2,
+                                        file_bytes,
+                                        att.filename,
+                                        att.content_type,
+                                        "notices"  # 공지사항용 폴더 지정
+                                    )
+                                    if public_url:
+                                        uploaded_urls.append(public_url)
+
+                    # Discord UTC 시간을 KST로 변환
+                    created_at_kst = message.created_at.astimezone(kst_tz)
+
+                    notice_data = {
+                        "type": "notice",
+                        "tag": "일반 공지",
+                        "content": message.content,
+                        "image_urls": json.dumps(uploaded_urls),
+                        "discord_message_id": str(message.id),
+                        "author_id": str(message.author.id),
+                        "created_at": created_at_kst
+                    }
+
+                    try:
+                        affected = await asyncio.to_thread(upsert_notice, notice_data)
+                        if affected > 0:
+                            sync_count += 1
+                    except Exception as e:
+                        print(f"[Notice Sync Error] Msg ID {message.id}: {e}")
+
+        await ctx.send(f"공지사항 동기화 완료: 총 {sync_count}건의 데이터가 적재/갱신되었습니다.")
 
     @commands.command(name="이미지일괄적용")
     @commands.has_permissions(administrator=True)

@@ -10,19 +10,16 @@ class EventList(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        # TARGET_CHANNEL_ID 맵핑 규칙: 0=패치노트, 1=직업설명, 2=일러스트
-        target_ids_str = os.getenv('TARGET_CHANNEL_IDS', '')
         try:
-            # 설정 값 정제 및 int 캐스팅 (IndexError 방지를 위해 할당 전 검증 처리)
-            id_list = [int(c_id.strip().replace('"', '').replace("'", ""))
-                       for c_id in target_ids_str.split(',') if c_id.strip().isdigit()]
-
-            self.patch_channel_id = id_list[0] if len(id_list) > 0 else None
-            self.desc_thread_id = id_list[1] if len(id_list) > 1 else None
-            self.illust_thread_id = id_list[2] if len(id_list) > 2 else None
-        except Exception as e:
+            self.patch_channel_id = int(os.getenv('JOB_PATCH_CHANNEL_ID', 0)) or None
+            self.desc_thread_id = int(os.getenv('JOB_DESC_THREAD_ID', 0)) or None
+            self.illust_thread_id = int(os.getenv('JOB_ILLUST_THREAD_ID', 0)) or None
+            self.owner_notice_channel_id = int(os.getenv('OWNER_NOTICE_CHANNEL_ID', 0)) or None
+            self.staff_notice_channel_id = int(os.getenv('STAFF_NOTICE_CHANNEL_ID', 0)) or None
+        except ValueError as e:
             print(f"[Critical] Failed to parse target channels: {e}")
             self.patch_channel_id = self.desc_thread_id = self.illust_thread_id = None
+            self.owner_notice_channel_id = self.staff_notice_channel_id = None
 
         print(
             f"[System] Targets Loaded - Patch: {self.patch_channel_id}, Desc: {self.desc_thread_id}, Illust: {self.illust_thread_id}")

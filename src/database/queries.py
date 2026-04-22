@@ -220,3 +220,117 @@ def verify_and_consume_magic_token(token: str) -> dict:
     finally:
         cursor.close()
         conn.close()
+
+def upsert_notice(notice_data: dict) -> int:
+    """공지 데이터 적재 및 변경분 갱신 (Soft delete 처리된 건 무시)"""
+    sql = """
+        INSERT INTO notices (type, tag, content, image_urls, discord_message_id, author_id, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (discord_message_id) 
+        DO UPDATE SET 
+            content = EXCLUDED.content,
+            image_urls = EXCLUDED.image_urls
+        WHERE notices.is_deleted = FALSE;
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(sql, (
+            notice_data.get('type', 'notice'),
+            notice_data.get('tag', '일반 공지'),
+            notice_data['content'],
+            notice_data.get('image_urls', '[]'),
+            notice_data['discord_message_id'],
+            notice_data['author_id'],
+            notice_data['created_at']
+        ))
+        affected_rows = cursor.rowcount
+        conn.commit()
+        return affected_rows
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+def update_notice_tag(notice_id: int, new_tag: str) -> int:
+    """공지 태그 수정"""
+    sql = "UPDATE notices SET tag = %s WHERE notice_id = %s AND is_deleted = FALSE"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(sql, (new_tag, notice_id))
+        affected_rows = cursor.rowcount
+        conn.commit()
+        return affected_rows
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+def delete_notice_logic(notice_id: int) -> list[str]:
+    """Soft Delete 적용 후 리소스 초기화. R2 삭제를 위해 기존 이미지 URL 반환"""
+    sql = """
+        UPDATE notices 
+        SET is_deleted = TRUE, content = '', image_urls = '[]'::jsonb 
+        WHERE notice_id = %s AND is_deleted = FALSE
+        RETURNING image_urls
+    """
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(sql, (notice_id,))
+        result = cursor.fetchone()
+        conn.commit()
+
+        if result and result[0]:
+            return result[0]
+        return []
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_notices_for_web(limit: int = 5, offset: int = 0, tag_filter: str = None) -> list[dict]:
+    """조건 기반 공지사항 목록 반환 (PK 포함)"""
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        if tag_filter:
+            sql = """
+                SELECT notice_id, type, tag, content, image_urls, created_at 
+                FROM notices 
+                WHERE is_deleted = FALSE AND tag = %s
+                ORDER BY created_at DESC 
+                LIMIT %s OFFSET %s
+            """
+            cursor.execute(sql, (tag_filter, limit, offset))
+        else:
+            sql = """
+                SELECT notice_id, type, tag, content, image_urls, created_at 
+                FROM notices 
+                WHERE is_deleted = FALSE 
+                ORDER BY created_at DESC 
+                LIMIT %s OFFSET %s
+            """
+            cursor.execute(sql, (limit, offset))
+
+        return [dict(row) for row in cursor.fetchall()]
+    except psycopg2.Error as e:
+        print(f"공지사항 목록 조회 중 오류 발생: {e}")
+        return []
+    finally:
+        cursor.close()
+        conn.close()
