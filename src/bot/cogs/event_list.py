@@ -32,10 +32,16 @@ class EventList(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """이벤트 라우팅: 신규 등록"""
-        print(f"[Debug] 신규 메시지 감지 - 채널ID: {message.channel.id}, 봇여부: {message.author.bot}, 내용: {message.content[:20]}")
-
         if message.author.bot:
             return
+
+        if message.channel.id not in (
+                self.patch_channel_id, self.desc_thread_id, self.illust_thread_id,
+                self.owner_notice_channel_id, self.staff_notice_channel_id
+        ):
+            return
+
+        print(f"[Debug] 타겟 채널 메시지 감지 - 채널ID: {message.channel.id}, 내용: {message.content[:20]}")
         await self._route_event(message)
 
     @commands.Cog.listener()
