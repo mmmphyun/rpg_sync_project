@@ -99,7 +99,7 @@ def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
     return jobs_data
 
 
-def parse_job_patches(raw_text: str) -> Optional[Dict[str, str]]:
+def parse_job_patches(raw_text: str, created_at: str, message_id: int) -> Optional[Dict[str, str]]:
     """
     [직업 패치노트 채널] 파서
     포맷:
@@ -125,6 +125,8 @@ def parse_job_patches(raw_text: str) -> Optional[Dict[str, str]]:
         clean_job_id = re.sub(r"\s+", "", job_name)
         return {
             "name": clean_job_id,
+            "patch_date": created_at,
+            "message_id": message_id,
             "notes": "\n".join(notes).strip()
         }
     return None

@@ -63,7 +63,8 @@ class EventList(commands.Cog):
         if channel_id == self.desc_thread_id:
             await self._process_description(message.content)
         elif channel_id == self.patch_channel_id:
-            await self._process_patch(message.content)
+            formatted_date = message.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            await self._process_patch(message.content, formatted_date, message.id)
         elif channel_id == self.illust_thread_id:
             await self._process_illustration(message.content, message.attachments)
 
@@ -76,9 +77,9 @@ class EventList(commands.Cog):
         except Exception as e:
             print(f"[Error] Description parsing failed: {e}")
 
-    async def _process_patch(self, content: str):
+    async def _process_patch(self, content: str, created_at: str, message_id: int):
         try:
-            parsed_data = parse_job_patches(content)
+            parsed_data = parse_job_patches(content, created_at, message_id)
             if parsed_data:
                 sync_job_patch_to_db(parsed_data)
                 print(f"[Info] Patch note sync completed for job: {parsed_data.get('name')}")

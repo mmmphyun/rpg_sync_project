@@ -57,19 +57,23 @@ def sync_jobs_to_db(jobs_data: list[dict]):
 def sync_job_patch_to_db(patch_data: dict):
     """
     파싱된 패치노트를 DB에 삽입.
-    JOBS 테이블의 NAME 컬럼으로 매핑하여 JOB_ID 외래키를 조회 후 적재함.
+    수정(Edit) 이벤트 발생 시 중복 적재 방지를 위해 DISCORD_MESSAGE_ID 기준 UPSERT 수행.
+    부분 일치 검색을 허용하되, 완전 일치 직업명을 우선 매핑함.
     """
     sql = """
-        INSERT INTO JOB_PATCHES (JOB_ID, PATCH_DATE, NOTES)
-        SELECT JOB_ID, %(patch_date)s, %(notes)s
+        INSERT INTO JOB_PATCHES (JOB_ID, PATCH_DATE, NOTES, DISCORD_MESSAGE_ID)
+        SELECT JOB_ID, %(patch_date)s, %(notes)s, %(message_id)s
         FROM JOBS
-        WHERE NAME = %(name)s
-          AND NOT EXISTS (
-              SELECT 1 
-              FROM JOB_PATCHES jp 
-              WHERE jp.JOB_ID = JOBS.JOB_ID 
-                AND jp.NOTES = %(notes)s
-          )
+        WHERE NULLIF(%(name)s, '') IS NOT NULL 
+          AND REPLACE(NAME, ' ', '') LIKE CONCAT('%%', %(name)s, '%%')
+        ORDER BY 
+            CASE WHEN REPLACE(NAME, ' ', '') = %(name)s THEN 1 ELSE 2 END ASC,
+            LENGTH(NAME) ASC
+        LIMIT 1
+        ON CONFLICT (DISCORD_MESSAGE_ID) 
+        DO UPDATE SET 
+            NOTES = EXCLUDED.NOTES,
+            PATCH_DATE = EXCLUDED.PATCH_DATE
     """
 
     conn = get_connection()
