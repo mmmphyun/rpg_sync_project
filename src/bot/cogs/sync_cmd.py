@@ -143,7 +143,7 @@ class SyncCmd(commands.Cog):
                     "job_name": job_name
                 })
 
-        success_count = sync_users_to_db(users_data)
+        success_count = await asyncio.to_thread(sync_users_to_db, users_data)
         await ctx.send(f"유저 동기화 완료: 총 {success_count}명의 데이터가 최신화되었습니다.")
 
 
@@ -173,7 +173,7 @@ class SyncCmd(commands.Cog):
                 if not message.author.bot:
                     parsed_data = parse_job_descriptions(message.content)
                     if parsed_data:
-                        sync_jobs_to_db(parsed_data)
+                        await asyncio.to_thread(sync_jobs_to_db, parsed_data)
                         desc_count += len(parsed_data)
 
         # 2. 패치노트 동기화 (JOB_PATCHES 테이블 생성)
@@ -191,7 +191,7 @@ class SyncCmd(commands.Cog):
 
                     # 파서에서 완전한 딕셔너리를 반환하므로 즉시 DB 동기화
                     if parsed_data:
-                        sync_job_patch_to_db(parsed_data)
+                        await asyncio.to_thread(sync_job_patch_to_db, parsed_data)
                         patch_count += 1
 
         # 3. 일러스트 동기화 (JOBS 테이블 PHOTO 업데이트)
@@ -221,7 +221,7 @@ class SyncCmd(commands.Cog):
                                             uploaded_urls.append(public_url)
 
                             if uploaded_urls:
-                                update_job_illustrations(job_name, uploaded_urls)
+                                await asyncio.to_thread(update_job_illustrations, job_name, uploaded_urls)
                                 illust_count += 1
 
         await ctx.send(
@@ -324,7 +324,7 @@ class SyncCmd(commands.Cog):
             await ctx.send("[System] 적용할 이미지 파일이 없습니다.")
             return
 
-        success_count = batch_update_profile_images(image_data)
+        success_count = await asyncio.to_thread(batch_update_profile_images, image_data)
         await ctx.send(f"[Success] 프로필 이미지 일괄 적용 완료 (적용 건수: {success_count}건)")
 
 
