@@ -46,7 +46,10 @@ class EventList(commands.Cog):
         channel_id = payload.channel_id
 
         # 대상 채널(쓰레드)이 아니면 조기 반환
-        if channel_id not in (self.patch_channel_id, self.desc_thread_id, self.illust_thread_id):
+        if channel_id not in (
+                self.patch_channel_id, self.desc_thread_id, self.illust_thread_id,
+                self.owner_notice_channel_id, self.staff_notice_channel_id
+        ):
             return
 
         try:
@@ -156,10 +159,12 @@ class EventList(commands.Cog):
                                     uploaded_urls.append(public_url)
 
             # 3. DB UPSERT
+            clean_content = message.content.replace('```', '')
+
             notice_data = {
                 'type': 'notice',
                 'tag': '일반 공지',
-                'content': message.content,
+                'content': clean_content,
                 'image_urls': json.dumps(uploaded_urls),
                 'discord_message_id': message.id,
                 'author_id': str(message.author.id),
