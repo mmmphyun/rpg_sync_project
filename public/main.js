@@ -51,7 +51,7 @@ let currentSort = "range";
 let activeFilters = {};
 let selectedIdx = -1;
 
-let currentJobReviewsCache = null;
+let currentJobReviewsPromise = null;
 let currentUserNickname = null;
 
 // =============================================
@@ -205,11 +205,15 @@ function openSidebar(idx) {
       </div>` : ""}
       ${gallery}`;
 
-    fetch(`/api/v1/jobs/${job.job_id}/reviews`)
-        .then(res => res.json())
+    currentJobReviewsPromise = fetch(`/api/v1/jobs/${job.job_id}/reviews`)
+        .then(res => res.json());
+
+    currentJobReviewsPromise
         .then(data => {
-            currentJobReviewsCache = data;
             document.getElementById('sideAvgRating').textContent = `★ ${data.avg_rating}`;
+        })
+        .catch(e => {
+            document.getElementById('sideAvgRating').textContent = `평가 없음`;
         });
 
     sidebar.classList.add("open");
@@ -244,6 +248,8 @@ async function openReviewModal(jobId, jobName) {
     modal.dataset.jobId = jobId;
     modal.classList.add('open');
 
+    listContainer.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">리뷰를 불러오는 중입니다...</div>';
+
     // 1. 로그인 상태 확인 (작성 폼 제어)
     try {
         const authRes = await fetch('/api/v1/auth/me');
@@ -261,8 +267,13 @@ async function openReviewModal(jobId, jobName) {
     } catch (e) { console.error("Auth check failed", e); }
 
     // 2. 리뷰 목록 렌더링
-    if (currentJobReviewsCache) {
-        renderReviewList(currentJobReviewsCache);
+    if (currentJobReviewsPromise) {
+        try {
+            const data = await currentJobReviewsPromise;
+            renderReviewList(data);
+        } catch (e) {
+            listContainer.innerHTML = '<div style="color:#e74c3c; text-align:center; padding:20px;">리뷰를 불러오지 못했습니다.</div>';
+        }
     } else {
         loadReviews(jobId);
     }
@@ -351,12 +362,10 @@ async function submitReview(event) {
                 listContainer.insertAdjacentHTML('afterbegin', newReviewHtml);
             }
 
-            fetch(`/api/v1/jobs/${jobId}/reviews`)
-                .then(res => res.json())
-                .then(data => {
-                    currentJobReviewsCache = data;
-                    document.getElementById('sideAvgRating').textContent = `★ ${data.avg_rating}`;
-                });
+            currentJobReviewsPromise = fetch(`/api/v1/jobs/${jobId}/reviews`).then(res => res.json());
+            currentJobReviewsPromise.then(data => {
+                document.getElementById('sideAvgRating').textContent = `★ ${data.avg_rating}`;
+            });
 
         } else {
             const err = await response.json();
