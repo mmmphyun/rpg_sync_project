@@ -221,6 +221,8 @@ def verify_and_consume_magic_token(token: str) -> dict:
         cursor.close()
         conn.close()
 
+""" 게시판 """
+
 def upsert_notice(notice_data: dict) -> int:
     """공지 데이터 적재 및 변경분 갱신 (Soft delete 처리된 건 무시)"""
     sql = """

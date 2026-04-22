@@ -140,6 +140,8 @@ def parse_job_illustration(raw_text: str) -> Optional[str]:
     """
     match = re.search(r"<<\s*(.*?)\s*>>", raw_text)
     if match:
+        raw_extracted = match.group(1).strip()
+        job_name = raw_extracted.split(':')[-1]
         # DB 조회를 위해 공백이 제거된 ID 형태 반환
         return re.sub(r"\s+", "", match.group(1).strip())
     return None
