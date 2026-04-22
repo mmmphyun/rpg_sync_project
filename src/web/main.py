@@ -106,3 +106,12 @@ async def serve_event(request: Request):
         name="board.html",
         context={"request": request, "board_type": "event"}
     )
+
+@app.get("/tips", response_class=HTMLResponse)
+async def serve_tips(request: Request):
+    """팁 게시판 더미 페이지 서빙"""
+    return templates.TemplateResponse(
+        request=request,
+        name="tips.html",
+        context={"request": request}
+    )
