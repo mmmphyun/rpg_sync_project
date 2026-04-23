@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from src.database.queries import verify_and_consume_magic_token
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from src.config import JWT_SECRET, JWT_ALGORITHM
-from src.web.main import limiter
+from src.web.limiter import limiter
 
 router = APIRouter()
 

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from psycopg2.extras import RealDictCursor
 from src.web.dependencies import get_required_user
 from src.database.queries import get_recent_reviews_for_web
-from src.web.main import limiter
+from src.web.limiter import limiter
 
 router = APIRouter()
 

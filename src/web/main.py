@@ -8,21 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from src.web.limiter import limiter
 
 from src.database.queries import get_all_jobs_for_web
 from src.web.routers import auth, jobs, boards, server
-
-def get_real_ip(request: Request) -> str:
-    if "cf-connecting-ip" in request.headers:
-        return request.headers["cf-connecting-ip"]
-    elif "x-forwarded-for" in request.headers:
-        return request.headers["x-forwarded-for"].split(",")[0].strip()
-    return get_remote_address(request)
-
-limiter = Limiter(key_func=get_real_ip)
 
 app = FastAPI(title="Fossile Server Web Dashboard")
 
