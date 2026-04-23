@@ -5,11 +5,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from datetime import datetime, timedelta
 from src.database.queries import verify_and_consume_magic_token
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from src.config import JWT_SECRET, JWT_ALGORITHM
 
 router = APIRouter()
-
-JWT_SECRET = os.getenv("JWT_SECRET", "production_jwt_secret_key")
-JWT_ALGORITHM = "HS256"
 
 @router.get("/login", response_class=HTMLResponse)
 def auto_login_form(token: str):

@@ -19,7 +19,7 @@
 <div class="content-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
 
     <div class="page-title-area" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: #fff; margin: 0;">직업 선택</h2>
+        <h2 style="color: #fff; margin: 0;">직업 종류</h2>
         <div class="meta-info" style="display: flex; align-items: center; gap: 15px;">
             <span class="job-count" id="jobCount" style="color: #8b8b8b; font-size: 0.9rem;"></span>
             <img src="https://visitor-badge.laobi.icu/badge?page_id=jaeunify.do-it-minecraft-fossile.jobs" alt="방문자수" style="height:20px; opacity:0.6;">
@@ -63,7 +63,7 @@
 </footer>
 
 <script>
-  window.INITIAL_JOBS_DATA = {{ jobs_json | safe }};
+  window.INITIAL_JOBS_DATA = {{ jobs_json | tojson }};
 </script>
 <script src="/static/main.js?v=1.0.5"></script>
 <script src="/static/index.js?v=1.0.1"></script>

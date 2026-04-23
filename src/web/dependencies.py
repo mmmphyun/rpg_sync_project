@@ -1,10 +1,9 @@
 import os
 import jwt
+
 from fastapi import Cookie, HTTPException, status, Depends
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-
-JWT_SECRET = os.getenv("JWT_SECRET", "production_jwt_secret_key")
-JWT_ALGORITHM = "HS256"
+from src.config import JWT_SECRET, JWT_ALGORITHM
 
 def get_required_user(forum_session: str = Cookie(None)):
     if not forum_session:

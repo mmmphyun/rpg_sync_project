@@ -38,6 +38,14 @@ function getInitials(name) {
     return clean.slice(0, 2);
 }
 
+function escapeHTML(str) {
+    if (!str) return "";
+    return String(str).replace(/[&<>'"]/g, match => {
+        const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+        return escapeMap[match];
+    });
+}
+
 function formatRangeDisplay(range) {
     if (range === "근거리, 원거리" || range === "근거리,원거리") {
         return "근/원거리";
@@ -301,12 +309,12 @@ function renderReviewList(data) {
     }
 
     listContainer.innerHTML = data.reviews.map(r => `
-        <div class="review-item" data-nickname="${r.nickname}" style="padding: 10px; border-bottom: 1px solid #222;">
+        <div class="review-item" data-nickname="${escapeHTML(r.nickname)}" style="padding: 10px; border-bottom: 1px solid #222;">
             <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                 <span class="review-rating" style="color:#c89b3c; font-size:0.85rem;">${'★'.repeat(r.rating)}</span>
-                <span style="color:#666; font-size:0.75rem;">${r.nickname}</span>
+                <span style="color:#666; font-size:0.75rem;">${escapeHTML(r.nickname)}</span>
             </div>
-            <div class="review-comment-text" style="color:#eee; font-size:0.9rem; line-height:1.4;">${r.comment}</div>
+            <div class="review-comment-text" style="color:#eee; font-size:0.9rem; line-height:1.4;">${escapeHTML(r.comment)}</div>
         </div>
     `).join('');
 }
@@ -354,12 +362,12 @@ async function submitReview(event) {
                 existingReview.querySelector('.review-comment-text').textContent = comment;
             } else {
                 const newReviewHtml = `
-                    <div class="review-item" data-nickname="${currentUserNickname}" style="padding: 10px; border-bottom: 1px solid #222;">
+                    <div class="review-item" data-nickname="${escapeHTML(currentUserNickname)}" style="padding: 10px; border-bottom: 1px solid #222;">
                         <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                             <span class="review-rating" style="color:#c89b3c; font-size:0.85rem;">${'★'.repeat(rating)}</span>
-                            <span style="color:#666; font-size:0.75rem;">${currentUserNickname || '나'}</span>
+                            <span style="color:#666; font-size:0.75rem;">${escapeHTML(currentUserNickname) || '나'}</span>
                         </div>
-                        <div class="review-comment-text" style="color:#eee; font-size:0.9rem; line-height:1.4;">${comment}</div>
+                        <div class="review-comment-text" style="color:#eee; font-size:0.9rem; line-height:1.4;">${escapeHTML(comment)}</div>
                     </div>
                 `;
                 if (listContainer.querySelector('div[style*="text-align:center"]')) {
