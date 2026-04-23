@@ -39,6 +39,22 @@ app.add_middleware(
     allow_headers=["X-API-Key", "Content-Type"],
 )
 
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+
+    # 클릭재킹 방어
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+
+    # MIME 스니핑 방어
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    # 강제 HTTPS 접속 처리
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+    return response
+
 os.makedirs("public/images", exist_ok=True)
 app.mount("/images", StaticFiles(directory="public/images"), name="images")
 app.mount("/static", StaticFiles(directory="public"), name="static")
