@@ -1,8 +1,9 @@
 import os
 import json
+import logging
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -115,4 +116,16 @@ async def serve_tips(request: Request):
         request=request,
         name="tips.html",
         context={"request": request}
+    )
+
+# 로깅 (서버 터미널만 상세 에러 기록)
+logger = logging.getLogger("uvicorn.error")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Internal Server Error: {str(exc)}", exc_info=True)
+
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}
     )

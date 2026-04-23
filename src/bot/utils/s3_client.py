@@ -18,7 +18,11 @@ def upload_to_r2(file_bytes: bytes, filename: str, content_type: str, folder_nam
     """
     s3 = get_r2_client()
     bucket_name = os.getenv('R2_BUCKET_NAME')
-    public_domain = os.getenv('R2_PUBLIC_DOMAIN', '').rstrip('/')
+    domain_env = os.getenv('R2_PUBLIC_DOMAIN') or os.getenv('R2_PUBLIC_DOMAIN_DEV')
+    if not domain_env:
+        raise ValueError("R2 도메인 환경 변수가 설정되지 않았습니다.")
+
+    public_domain = domain_env.rstrip('/')
 
     ext = filename.split('.')[-1] if '.' in filename else 'png'
     unique_filename = f"{folder_name}/{uuid.uuid4().hex}.{ext}"
@@ -42,7 +46,11 @@ def delete_from_r2(image_url: str) -> bool:
 
     s3 = get_r2_client()
     bucket_name = os.getenv('R2_BUCKET_NAME')
-    public_domain = os.getenv('R2_PUBLIC_DOMAIN', '').rstrip('/')
+    domain_env = os.getenv('R2_PUBLIC_DOMAIN') or os.getenv('R2_PUBLIC_DOMAIN_DEV')
+    if not domain_env:
+        raise ValueError("R2 도메인 환경 변수가 설정되지 않았습니다.")
+
+    public_domain = domain_env.rstrip('/')
 
     try:
         object_key = image_url.replace(f"{public_domain}/", "")
