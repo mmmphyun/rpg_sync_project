@@ -145,7 +145,10 @@ def get_all_jobs_for_web() -> list[dict]:
         jobs = cursor.fetchall()
         return [dict(row) for row in jobs]
     except psycopg2.Error as e:
-        print(f"조회 중 오류 발생: {e}")
+        print(f"[DB Error] 쿼리 실행 오류: {e}", flush=True)
+        return []
+    except Exception as e:
+        print(f"[System Error] 기타 오류 발생: {e}", flush=True)
         return []
     finally:
         cursor.close()
