@@ -92,12 +92,10 @@ async def serve_jobs(request: Request):
             "players": row.get('players', [])
         })
 
-    jobs_json = json.dumps(formatted_jobs)
-
     return templates.TemplateResponse(
         request=request,
         name="jobs.html",
-        context={"request": request, "jobs_json": jobs_json}
+        context={"request": request, "jobs_data": formatted_jobs}
     )
 
 @app.get("/notice")
