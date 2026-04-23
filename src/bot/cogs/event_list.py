@@ -164,9 +164,15 @@ class EventList(commands.Cog):
                 print(f"[Warn] Illustration sync failed: No attachments found for '{job_name}'.")
                 return
 
+            ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+
             uploaded_urls = []
             async with aiohttp.ClientSession() as session:
                 for att in attachments[:4]:
+                    if att.content_type not in ALLOWED_MIME_TYPES:
+                        print(f"[Warn] 허용되지 않은 파일 형식 차단: {att.filename} ({att.content_type})")
+                        continue
+
                     async with session.get(att.url) as resp:
                         if resp.status == 200:
                             file_bytes = await resp.read()
@@ -195,12 +201,18 @@ class EventList(commands.Cog):
             # 1. 기존 데이터 조회
             old_image_urls = get_notice_images_by_message_id(message.id)
 
+            ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+
             uploaded_urls = []
 
             # 2. 현재 첨부파일 R2 업로드
             if message.attachments:
                 async with aiohttp.ClientSession() as session:
                     for att in message.attachments:
+                        if att.content_type not in ALLOWED_MIME_TYPES:
+                            print(f"[Warn] 허용되지 않은 파일 형식 차단: {att.filename} ({att.content_type})")
+                            continue
+
                         async with session.get(att.url) as resp:
                             if resp.status == 200:
                                 file_bytes = await resp.read()
