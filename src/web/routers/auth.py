@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from src.database.queries import verify_and_consume_magic_token
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from src.config import JWT_SECRET, JWT_ALGORITHM
+from src.web.main import limiter
 
 router = APIRouter()
 
@@ -29,7 +30,8 @@ def auto_login_form(token: str):
     return HTMLResponse(content=html_content)
 
 @router.post("/verify")
-def verify_magic_link(token: str = Form(...)):
+@limiter.limit("5/minute")
+def verify_magic_link(request: Request, token: str = Form(...)):
     user_data = verify_and_consume_magic_token(token)
 
     if not user_data:

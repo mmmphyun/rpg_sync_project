@@ -1,10 +1,11 @@
 import os
 import psycopg2
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel, Field
 from psycopg2.extras import RealDictCursor
 from src.web.dependencies import get_required_user
 from src.database.queries import get_recent_reviews_for_web
+from src.web.main import limiter
 
 router = APIRouter()
 
@@ -19,13 +20,15 @@ def get_db_connection():
     return psycopg2.connect(db_url)
 
 @router.get("/reviews/recent")
-async def get_recent_reviews():
+@limiter.limit("60/minute")
+async def get_recent_reviews(request: Request):
     """메인 페이지용 최근 직업 평가 3개 조회"""
     reviews = get_recent_reviews_for_web(limit=3)
     return reviews
 
 @router.get("/{job_id}/reviews")
-def get_job_reviews(job_id: int):
+@limiter.limit("60/minute")
+def get_job_reviews(request: Request, job_id: int):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
@@ -54,7 +57,8 @@ def get_job_reviews(job_id: int):
         conn.close()
 
 @router.post("/{job_id}/reviews", status_code=status.HTTP_200_OK)
-def upsert_job_review(job_id: int, payload: ReviewPayload, user: dict = Depends(get_required_user)):
+@limiter.limit("5/minute")
+def upsert_job_review(request: Request, job_id: int, payload: ReviewPayload, user: dict = Depends(get_required_user)):
     discord_id = user.get("sub")
 
     conn = get_db_connection()
