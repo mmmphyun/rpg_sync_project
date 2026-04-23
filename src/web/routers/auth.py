@@ -53,7 +53,7 @@ def verify_magic_link(token: str = Form(...)):
         httponly=True,
         secure=True,
         max_age=7 * 24 * 60 * 60,
-        samesite="lax"
+        samesite="strict"
     )
     return redirect
 
@@ -83,6 +83,6 @@ def logout_user(response: Response):
         path="/",
         httponly=True,
         secure=True,
-        samesite="lax"
+        samesite="strict"
     )
     return {"message": "success"}
