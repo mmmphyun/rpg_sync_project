@@ -124,6 +124,7 @@ function renderTile(job, idx) {
 
 function renderGrid() {
     const jobs = getFiltered();
+    jobs.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
     document.getElementById("jobCount").textContent = jobs.length + "개 직업";
 
     const groupOrders = {
