@@ -41,17 +41,18 @@ def sync_jobs_to_db(jobs_data: list[dict]):
     PostgreSQL의 INSERT ... ON CONFLICT 구문을 사용합니다.
     """
     upsert_sql = """
-        INSERT INTO JOBS (NAME, DISPLAY_NAME, GATE, JOB_GROUP, DESCRIPTION, RESOURCE_TYPE, IS_LIMIT, REQ_CONDITION)
-        VALUES (%(name)s, %(display_name)s, %(gate)s, %(job_group)s, %(description)s, %(resource_type)s, %(is_limit)s, %(req_condition)s)
+        INSERT INTO JOBS (NAME, DISPLAY_NAME, GATE, JOB_GROUP, DESCRIPTION, RESOURCE_TYPE, TYPE, IS_LIMIT, REQ_CONDITION)
+        VALUES (%(name)s, %(display_name)s, %(gate)s, %(job_group)s, %(description)s, %(resource_type)s, %(job_type)s, %(is_limit)s, %(req_condition)s)
         ON CONFLICT (NAME) DO UPDATE SET
             DISPLAY_NAME = EXCLUDED.DISPLAY_NAME,
             GATE = EXCLUDED.GATE,
             JOB_GROUP = EXCLUDED.JOB_GROUP,
             DESCRIPTION = EXCLUDED.DESCRIPTION,
             RESOURCE_TYPE = EXCLUDED.RESOURCE_TYPE,
+            TYPE = EXCLUDED.TYPE,
             IS_LIMIT = EXCLUDED.IS_LIMIT,
             REQ_CONDITION = EXCLUDED.REQ_CONDITION
-    """
+        """
 
     conn = get_connection()
     cursor = conn.cursor()

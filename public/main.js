@@ -68,11 +68,19 @@ let selectedIdx = -1;
 let currentJobReviewsPromise = null;
 let currentUserNickname = null;
 
+let currentSearchQuery = "";
+
 // =============================================
 //  Core Logic
 // =============================================
 function getFiltered() {
     return JOBS.filter(j => {
+        if (currentSearchQuery) {
+            const nameMatch = j.name.toLowerCase().includes(currentSearchQuery.toLowerCase());
+            const searchNameMatch = j.searchName && j.searchName.toLowerCase().includes(currentSearchQuery.toLowerCase());
+
+            if (!nameMatch && !searchNameMatch) return false;
+        }
         for (const [key, val] of Object.entries(activeFilters)) {
             const v = j[key] || "정보 없음";
             if (key === "position" || key === "range") {
@@ -88,20 +96,22 @@ function getFiltered() {
 function renderTile(job, idx) {
     const sel = idx === selectedIdx ? " selected" : "";
 
-    // DB의 이미지는 URL로 저장되므로 resources/ 경로 대신 직접 사용 (이미지가 없는 경우 initials)
     const portrait = job.img
         ? `<img src="${job.img}" alt="${job.name}">`
         : getInitials(job.name);
 
     const lim = job.limit ? `<span class="mini-tag t-limit">1인</span>` : "";
 
-    // API에 players 배열, mobility 등 누락된 기능은 차후 DB 확장 시 연동
     const hasPlayers = job.players && job.players.length > 0;
     const dot = hasPlayers ? `<div class="active-dot"></div>` : "";
     const tooltip = hasPlayers ? `<div class="player-tooltip">${job.players.join(", ")}</div>` : "";
 
+    let typeClass = "";
+    if (job.type === "영웅") typeClass = "type-hero";
+    else if (job.type === "빌런") typeClass = "type-villain";
+
     return `<div class="champ-tile${sel}" data-idx="${idx}">
-      <div class="champ-portrait ${posBg(job.position)}">${portrait}${dot}</div>
+      <div class="champ-portrait ${posBg(job.position)} ${typeClass}">${portrait}${dot}</div>
       ${tooltip}
       <div class="champ-name">${job.name}</div>
       <div class="champ-mini-tags">
@@ -129,13 +139,11 @@ function renderGrid() {
     if (key === "gate") {
         const gateMap = new Map();
         jobs.forEach(j => {
-            // DB에서 "게이트 -C", "고대 게이트" 형식으로 그대로 넘어옴
             const gateKey = j.gate || "정보 없음";
             if (!gateMap.has(gateKey)) gateMap.set(gateKey, []);
             gateMap.get(gateKey).push(j);
         });
 
-        // 게이트 이름 정렬 로직 (간소화)
         const gates = [...gateMap.keys()].sort((a, b) => a.localeCompare(b, "ko"));
 
         gates.forEach(g => {
@@ -433,6 +441,15 @@ document.addEventListener("click", e => {
         document.getElementById("lightbox").classList.remove("open");
     }
 });
+
+const searchInput = document.getElementById("searchInput");
+if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+        currentSearchQuery = e.target.value.trim();
+        closeSidebar(); // 검색어 입력 시 열려있는 상세정보 창 닫기 (UX 표준)
+        renderGrid();
+    });
+}
 
 // =============================================
 //  Initialize (SSR Hydration)

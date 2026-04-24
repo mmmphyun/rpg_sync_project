@@ -85,7 +85,6 @@ def batch_update_profile_images(image_data: dict) -> int:
         release_connection(conn)
 
 def update_job_single_column(job_name: str, column_name: str, value: str) -> int:
-    # ... (allowed_columns 및 target_col 검증 로직은 기존과 동일) ...
     allowed_columns = {
         "range": "RANGE_TYPE", "position": "POSITION", "resource": "RESOURCE_TYPE",
         "img": "IMG", "photo1": "PHOTO_1", "photo2": "PHOTO_2",
@@ -98,7 +97,6 @@ def update_job_single_column(job_name: str, column_name: str, value: str) -> int
 
     clean_job_name = job_name.replace(" ", "")
 
-    # PostgreSQL 파라미터 바인딩은 %s 사용
     sql = f"UPDATE JOBS SET {target_col} = %s WHERE NAME = %s"
 
     conn = get_connection()
@@ -121,7 +119,7 @@ def get_all_jobs_for_web() -> list[dict]:
     sql = """
             SELECT 
                 j.JOB_ID, j.NAME, j.DISPLAY_NAME, j.GATE, j.JOB_GROUP, j.DESCRIPTION, 
-                j.RANGE_TYPE, j.POSITION, j.RESOURCE_TYPE, j.IS_LIMIT, j.REQ_CONDITION, 
+                j.RANGE_TYPE, j.POSITION, j.RESOURCE_TYPE, j.TYPE, j.IS_LIMIT, j.REQ_CONDITION, 
                 j.IMG, j.PHOTO_1, j.PHOTO_2, j.PHOTO_3, j.PHOTO_4,
                 COALESCE(
                     (SELECT json_agg(json_build_object('date', jp.PATCH_DATE, 'notes', jp.NOTES)) 

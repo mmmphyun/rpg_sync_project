@@ -11,7 +11,7 @@ def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
     포맷:
     ## 게이트명 [ 그룹명 ]
     ### 직업명
-    설명(마나, 기력 등의 코스트 키워드가 포함되면 자동으로 인식)
+    설명(마나, 기력 등의 코스트 키워드, 영웅 또는 빌런의 타입 키워드가 포함되면 자동으로 인식)
     << 1인 제한, 2차 각성 필요 등의 조건 >>
     """
     jobs_data = []
@@ -36,6 +36,13 @@ def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
                     resource_type = res
                     break
 
+            # 타입 식별 (Hero/Villain)
+            job_type = "정보 없음"
+            if "영웅" in desc_str:
+                job_type = "영웅"
+            elif "빌런" in desc_str:
+                job_type = "빌런"
+
             # 조건(req_condition) 파싱 및 설명문 정제
             req_condition = "정보 없음"
             condition_match = re.search(r"<<(.*?)>>", desc_str)
@@ -58,6 +65,7 @@ def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
                 "job_group": current_group,
                 "description": desc_str,
                 "resource_type": resource_type,
+                "job_type": job_type,
                 "is_limit": is_limit,
                 "req_condition": req_condition
             })

@@ -84,6 +84,7 @@ async def serve_jobs(request: Request):
             "range": row.get('range_type'),
             "position": row.get('position'),
             "resource": row.get('resource_type'),
+            "type": row.get('type'),
             "img": row.get('img', ''),
             "photos": photos,
             "limit": True if row.get('is_limit') == 'Y' else False,
