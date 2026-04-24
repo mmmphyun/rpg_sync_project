@@ -429,26 +429,38 @@
     100% { background-position: 0% 50%; }
 }
 
-.type-hero, .type-villain {
+.type-hero.champ-portrait,
+.type-villain.champ-portrait {
+    border-color: transparent !important;
     position: relative;
 }
 
-.type-hero::after, .type-villain::after {
+.type-hero.champ-portrait::before,
+.type-villain.champ-portrait::before {
     content: '';
     position: absolute;
-    inset: -3px;
-    border-radius: inherit;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
     background-size: 300% 300%;
     animation: borderGradient 3s ease infinite;
-    z-index: -1;
+    z-index: -2;
 }
 
-.type-hero::after {
+.type-hero.champ-portrait::before {
     background-image: linear-gradient(60deg, #3498db, #8e44ad, #3498db);
 }
 
-.type-villain::after {
+.type-villain.champ-portrait::before {
     background-image: linear-gradient(60deg, #e74c3c, #c0392b, #e74c3c);
+}
+
+.type-hero.champ-portrait::after,
+.type-villain.champ-portrait::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px; right: 2px; bottom: 2px;
+    border-radius: 6px;
+    background-color: inherit;
+    z-index: -1;
 }
 
 /* ==========================================================================
