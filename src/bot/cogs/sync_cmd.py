@@ -414,3 +414,6 @@ class SyncCmd(commands.Cog):
                         print(f"[Notice Sync Error] Msg ID {message.id}: {e}")
 
         await ctx.send(f"공지사항 동기화 완료: 총 {sync_count}건의 데이터가 적재/갱신되었습니다.")
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(SyncCmd(bot))
