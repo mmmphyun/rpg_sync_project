@@ -12,7 +12,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from src.web.limiter import limiter
 
-from src.database.queries import get_all_jobs_for_web
+from src.database.jobs import get_all_jobs_for_web
 from src.web.routers import auth, jobs, boards, server
 
 app = FastAPI(title="Fossile Server Web Dashboard")

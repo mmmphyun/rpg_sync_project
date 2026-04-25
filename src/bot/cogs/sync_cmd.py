@@ -11,11 +11,12 @@ from discord.ext import commands
 
 from datetime import timedelta, datetime, timezone
 
-from src.database.queries import update_job_single_column, update_job_illustrations, batch_update_profile_images, upsert_notice
+from src.database.jobs import update_job_single_column, update_job_illustrations, batch_update_profile_images
+from src.database.board import upsert_notice
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.bot.utils.s3_client import upload_to_r2
-from src.database.queries import check_user_exists, create_magic_token
+from src.database.auth import check_user_exists, create_magic_token
 
 VALID_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 

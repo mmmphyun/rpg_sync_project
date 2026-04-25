@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from src.web.dependencies import get_admin_user
-from src.database.queries import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web
+from src.database.board import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web
 from src.bot.utils.s3_client import delete_from_r2
 from src.web.limiter import limiter
 
