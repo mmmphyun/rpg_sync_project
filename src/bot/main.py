@@ -9,7 +9,7 @@ load_dotenv()
 
 class RPGSyncBot(commands.Bot):
     def __init__(self):
-        # Intents 설정: 메시지 내용과 멤버 정보(닉네임 변경 감지용) 접근 권한 필요
+        # Intents 설정: 메시지 내용과 멤버 정보 접근 권한 필요
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
@@ -27,7 +27,9 @@ class RPGSyncBot(commands.Bot):
             if filename.endswith('.py') and not filename.startswith('__'):
                 cog_path = f'src.bot.cogs.{filename[:-3]}'
                 try:
-                    await self.load_extension(cog_path)
+                    await bot.load_extension("src.bot.cogs.auth.auth_cmd")
+                    await bot.load_extension("src.bot.cogs.jobs.job_cmd")
+                    await bot.load_extension("src.bot.cogs.system.bulk_sync_cmd")
                     print(f"Loaded extension: {cog_path}")
                 except Exception as e:
                     print(f"Failed to load extension {cog_path}: {e}")
