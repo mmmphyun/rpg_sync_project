@@ -138,11 +138,10 @@ class JobCmd(BaseCog):
 
     @commands.command(name="스킬등록")
     @commands.has_permissions(administrator=True)
-    async def register_skill_command(self, ctx: commands.Context, job_name: str, weapon_name: str, command_key: str,
-                                     skill_name: str, *, details: str):
+    async def register_skill_command(self, ctx: commands.Context, job_name: str, weapon_type: str, weapon_name: str,
+                                     command_key: str, skill_name: str, *, details: str):
         """
         직업 무기 및 스킬 정보 등록/수정 (UPSERT)
-        Format: !스킬등록 <직업명> <무기명> <커맨드> <스킬명> <설명|쿨타임|코스트|계수|피해타입|이동기Y/N>
         """
         try:
             parts = [p.strip() for p in details.split('|')]
@@ -158,12 +157,12 @@ class JobCmd(BaseCog):
 
             success = await asyncio.to_thread(
                 upsert_weapon_and_skill,
-                job_name, weapon_name, command_key, skill_name,
+                job_name, weapon_type, weapon_name, command_key, skill_name,
                 description, cooldown, cost_value, coefficient_combined, is_mobility
             )
 
             if success:
-                await ctx.send(f"[Success] `{job_name}` - `{weapon_name}`의 `{skill_name}` 스킬 정보 갱신 완료")
+                await ctx.send(f"[Success] `{job_name}` - `{weapon_name}({weapon_type})`의 `{skill_name}` 스킬 정보 갱신 완료")
 
         except ValueError as ve:
             await ctx.send(f"[Error] {str(ve)}")
@@ -175,8 +174,8 @@ class JobCmd(BaseCog):
         if isinstance(error, commands.MissingRequiredArgument):
             error_msg = (
                 "[Error] 필수 입력값이 누락되었습니다.\n"
-                "사용법: `!스킬등록 <직업명> <무기명> <커맨드> <스킬명> <설명|쿨타임|코스트|계수|피해타입|이동기Y/N>`\n"
-                "예시: `!스킬등록 다크메이지 스태프 우클릭 다크볼 적에게 암흑구를 발사|3초|10|지력 * 1.5|마법|N`"
+                "사용법: `!스킬등록 <직업명> <무기종류> <무기명> <커맨드> <스킬명> <설명|쿨타임|코스트|계수|피해타입|이동기Y/N>`\n"
+                "예시: `!스킬등록 다크메이지 지팡이 초보자스태프 우클릭 다크볼 적에게 암흑구를 발사|3초|10|지력 * 1.5|마법|N`"
             )
             await ctx.send(error_msg)
         elif isinstance(error, commands.MissingPermissions):

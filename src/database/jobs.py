@@ -114,22 +114,43 @@ def update_job_single_column(job_name: str, column_name: str, value: str) -> int
 
 def get_all_jobs_for_web() -> list[dict]:
     sql = """
+            WITH WeaponSkills AS (
+                SELECT 
+                    s.weapon_id,
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'command_key', s.command_key,
+                            'skill_name', s.skill_name,
+                            'description', s.description,
+                            'cooldown', s.cooldown,
+                            'cost_value', s.cost_value,
+                            'coefficient', s.coefficient,
+                            'is_mobility', s.is_mobility
+                        ) ORDER BY s.command_key
+                    ) as skills
+                FROM skills s
+                GROUP BY s.weapon_id
+            ),
+            JobWeapons AS (
+                SELECT 
+                    w.job_name,
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'weapon_name', w.weapon_name,
+                            'weapon_type', w.weapon_type,
+                            'skills', COALESCE(ws.skills, '[]'::jsonb)
+                        )
+                    ) as weapons
+                FROM weapons w
+                LEFT JOIN WeaponSkills ws ON w.id = ws.weapon_id
+                GROUP BY w.job_name
+            )
             SELECT 
-                j.JOB_ID, j.NAME, j.DISPLAY_NAME, j.GATE, j.JOB_GROUP, j.DESCRIPTION, 
-                j.RANGE_TYPE, j.POSITION, j.RESOURCE_TYPE, j.TYPE, j.IS_LIMIT, j.REQ_CONDITION, 
-                j.IMG, j.PHOTO_1, j.PHOTO_2, j.PHOTO_3, j.PHOTO_4,
-                COALESCE(
-                    (SELECT json_agg(json_build_object('date', jp.PATCH_DATE, 'notes', jp.NOTES)) 
-                     FROM JOB_PATCHES jp WHERE jp.JOB_ID = j.JOB_ID), 
-                    '[]'::json
-                ) AS patches,
-                COALESCE(
-                    (SELECT json_agg(u.NICKNAME) 
-                     FROM USERS u WHERE u.CURRENT_JOB_ID = j.JOB_ID), 
-                    '[]'::json
-                ) AS players
-            FROM JOBS j
-            ORDER BY j.GATE, j.DISPLAY_NAME
+                j.*,
+                COALESCE(jw.weapons, '[]'::jsonb) as weapons
+            FROM jobs j
+            LEFT JOIN JobWeapons jw ON j.name = jw.job_name
+            ORDER BY j.name;
         """
 
     conn = get_connection()
@@ -140,10 +161,7 @@ def get_all_jobs_for_web() -> list[dict]:
         jobs = cursor.fetchall()
         return [dict(row) for row in jobs]
     except psycopg2.Error as e:
-        print(f"[DB Error] 쿼리 실행 오류: {e}", flush=True)
-        return []
-    except Exception as e:
-        print(f"[System Error] 기타 오류 발생: {e}", flush=True)
+        print(f"[DB Error] get_all_jobs_for_web 쿼리 실행 오류: {e}", flush=True)
         return []
     finally:
         cursor.close()
