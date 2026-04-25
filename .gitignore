@@ -1,6 +1,7 @@
 # Environments
 .env
-.env.dev
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -33,6 +34,9 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Docker Local Data
+dev_db_data/
 
 # OS Files
 .DS_Store
