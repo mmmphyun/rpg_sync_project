@@ -123,6 +123,31 @@ def delete_notice_logic(notice_id: int) -> list[str]:
         cursor.close()
         release_connection(conn)
 
+def delete_notice_by_message_id(discord_message_id: str) -> list[str]:
+    """discord_message_id 기반 Soft Delete 적용 후 R2 삭제를 위한 기존 이미지 URL 반환"""
+    sql = """
+        UPDATE notices 
+        SET is_deleted = TRUE, content = '', image_urls = '[]'::jsonb 
+        WHERE discord_message_id = %s AND is_deleted = FALSE
+        RETURNING image_urls
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (discord_message_id,))
+        result = cursor.fetchone()
+        conn.commit()
+
+        if result and result[0]:
+            return result[0]
+        return []
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"[DB Error] delete_notice_by_message_id 오류: {e}")
+        return []
+    finally:
+        cursor.close()
+        release_connection(conn)
 
 def get_notices_for_web(board_type: str, limit: int, offset: int, tag_filter: str = None):
     """지정된 타입(notice/event)과 조건에 맞는 게시글을 조회하여 반환"""

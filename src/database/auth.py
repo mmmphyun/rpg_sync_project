@@ -71,3 +71,39 @@ def verify_and_consume_magic_token(token: str) -> dict:
     finally:
         cursor.close()
         release_connection(conn)
+
+def delete_user_from_db(discord_id: str) -> int:
+    """서버 퇴장 유저 삭제"""
+    sql = "DELETE FROM users WHERE discord_id = %s"
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (discord_id,))
+        affected_rows = cursor.rowcount
+        conn.commit()
+        return affected_rows
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"[DB Error] delete_user_from_db 오류: {e}")
+        return 0
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+def update_user_voice_exit(discord_id: str) -> int:
+    """음성 채널 퇴장 시간 갱신 (CURRENT_TIMESTAMP 사용)"""
+    sql = "UPDATE users SET last_voice_exit = CURRENT_TIMESTAMP WHERE discord_id = %s"
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (discord_id,))
+        affected_rows = cursor.rowcount
+        conn.commit()
+        return affected_rows
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"[DB Error] update_user_voice_exit 오류: {e}")
+        return 0
+    finally:
+        cursor.close()
+        release_connection(conn)
