@@ -21,20 +21,21 @@ class RPGSyncBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        # cogs 폴더 내의 확장 모듈(Cogs) 동적 로드
-        cogs_dir = './src/bot/cogs'
-        for filename in os.listdir(cogs_dir):
-            if filename.endswith('.py') and not filename.startswith('__'):
-                cog_path = f'src.bot.cogs.{filename[:-3]}'
-                try:
-                    await bot.load_extension("src.bot.cogs.auth.auth_cmd")
-                    await bot.load_extension("src.bot.cogs.jobs.job_cmd")
-                    await bot.load_extension("src.bot.cogs.system.bulk_sync_cmd")
-                    print(f"Loaded extension: {cog_path}")
-                except Exception as e:
-                    print(f"Failed to load extension {cog_path}: {e}")
+        """봇 구동 시 필요한 확장 모듈을 로드하고 명령어를 동기화합니다."""
+        extensions = [
+            "src.bot.cogs.auth.auth_cmd",
+            "src.bot.cogs.jobs.job_cmd",
+            "src.bot.cogs.system.bulk_sync_cmd"
+        ]
 
-        # 로드된 슬래시 명령어 디스코드 서버와 동기화
+        for ext in extensions:
+            try:
+                await self.load_extension(ext)
+                print(f"Loaded extension: {ext}")
+            except Exception as e:
+                print(f"Failed to load extension {ext}: {e}")
+
+        # 슬래시 명령어 동기화
         try:
             synced = await self.tree.sync()
             print(f"Synced {len(synced)} command(s)")

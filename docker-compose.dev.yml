@@ -24,8 +24,9 @@ services:
     volumes:
       - ./public:/app/public
       - ./src/web/templates:/app/src/web/templates
+      - ./src:/app/src
     command: >
-      sh -c "sleep 3 && uvicorn src.web.main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "python -m src.bot.main & sleep 3 && uvicorn src.web.main:app --host 0.0.0.0 --port 8000 --reload"
 
 volumes:
   dev_db_data:
