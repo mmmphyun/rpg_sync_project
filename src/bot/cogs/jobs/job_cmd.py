@@ -155,6 +155,12 @@ class JobCmd(BaseCog):
             coefficient_combined = f"{parts[3]} ({parts[4]})"
             is_mobility = parts[5].upper()
 
+            if len(weapon_name) > 100:
+                raise ValueError("무기명은 100자를 초과할 수 없습니다.")
+            if len(command_key) > 50:
+                raise ValueError("커맨드는 50자를 초과할 수 없습니다.")
+            if len(skill_name) > 100:
+                raise ValueError("스킬명은 100자를 초과할 수 없습니다.")
             if is_mobility not in ('Y', 'N'):
                 raise ValueError("이동기 여부는 'Y' 또는 'N'으로만 입력해야 합니다.")
 

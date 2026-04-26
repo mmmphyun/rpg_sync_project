@@ -14,7 +14,7 @@ def initialize_pool():
             # Thread-safe connection pool 생성 (min=1, max=20)
             _db_pool = pool.ThreadedConnectionPool(1, 20, dsn=os.getenv("DATABASE_URL"))
         except Exception as e:
-            print(f"Database pool initialization error: {e}")
+            print("[Critical] Database pool initialization failed. Check configuration.")
             raise
 
 def get_connection():
