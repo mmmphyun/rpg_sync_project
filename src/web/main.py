@@ -90,7 +90,8 @@ async def serve_jobs(request: Request):
             "limit": True if row.get('is_limit') == 'Y' else False,
             "req_condition": row.get('req_condition'),
             "patches": row.get('patches', []),
-            "players": row.get('players', [])
+            "players": row.get('players', []),
+            "weapons": row.get('weapons', [])
         })
 
     return templates.TemplateResponse(

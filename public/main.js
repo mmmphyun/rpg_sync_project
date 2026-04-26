@@ -10,6 +10,27 @@ const RANGE_CLS = { "근거리": "t-melee", "원거리": "t-ranged", "근거리,
 const POS_CLS   = { "탱": "t-tank", "물리": "t-phys", "마법": "t-magic", "혼합": "t-hybrid-dmg", "힐": "t-heal", "유틸": "t-util", "정보 없음": "t-unknown" };
 const RES_CLS   = { "기력": "t-ki", "마나": "t-mana", "체력": "t-hp", "에너지": "t-hp", "정보 없음": "t-unknown" }; // 에너지 추가
 const POS_BG    = { "탱": "bg-tank", "딜": "bg-deal", "힐": "bg-heal", "유틸": "bg-util", "정보 없음": "bg-unknown" };
+const WEAPON_ICONS = {
+    "대검": "ra ra-large-weapon",
+    "카타나": "ra ra-sword",
+    "검": "ra ra-sword",
+    "단검": "ra ra-daggers",
+    "활": "ra ra-bow",
+    "석궁": "ra ra-crossbow",
+    "지팡이": "ra ra-wand",
+    "도끼": "ra ra-axe",
+    "망치": "ra ra-hammer",
+    "부채": "ra ra-feather-wing",
+    "건틀릿": "ra ra-hand",
+    "저격총": "ra ra-musket",
+    "소총": "ra ra-musket",
+    "권총": "ra ra-revolver",
+    "표창": "ra ra-kunai",
+    "창": "ra ra-spear",
+    "방패": "ra ra-shield",
+    "낫": "ra ra-scythe",
+    "게임패드": "fa-solid fa-gamepad"
+};
 
 function posTag(pos) {
     if (!pos) return "";
@@ -51,6 +72,10 @@ function formatRangeDisplay(range) {
         return "근/원거리";
     }
     return range;
+}
+
+function getWeaponIconClass(type) {
+    return WEAPON_ICONS[type] || "ra ra-sword"; // 매핑 안 된 무기는 기본 검 아이콘
 }
 
 // =============================================
@@ -179,6 +204,75 @@ function renderGrid() {
     app.innerHTML = html;
 }
 
+function renderWeaponsSection(jobIdx, activeWeaponIdx) {
+    const job = JOBS[jobIdx];
+    const weapons = job.weapons || [];
+
+    if (weapons.length === 0) {
+        return `<div style="padding: 15px; color: #888; text-align: center; background: #16161e; border-radius: 6px; margin-top: 15px;">등록된 무기 및 스킬 정보가 없습니다.</div>`;
+    }
+
+    const activeWeapon = weapons[activeWeaponIdx];
+
+    // 1. 무기 선택 아이콘 그리드
+    let tabsHtml = `<div style="display: flex; gap: 10px; margin-top: 20px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;">`;
+    weapons.forEach((w, wIdx) => {
+        const isAct = wIdx === activeWeaponIdx;
+        const iconCls = getWeaponIconClass(w.weapon_type);
+
+        tabsHtml += `
+            <div onclick="changeWeapon(${jobIdx}, ${wIdx})"
+                 style="flex: 1; min-width: 60px; text-align: center; padding: 10px 5px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+                        background: ${isAct ? '#2a2a35' : '#16161e'};
+                        border: 1px solid ${isAct ? '#c89b3c' : '#222'};">
+                <i class="${iconCls}" style="font-size: 24px; color: ${isAct ? '#c89b3c' : '#666'};"></i>
+                <div style="font-size: 0.7rem; margin-top: 6px; color: ${isAct ? '#ddd' : '#888'}; letter-spacing: -0.5px;">
+                    ${escapeHTML(w.weapon_name)}
+                </div>
+            </div>
+        `;
+    });
+    tabsHtml += `</div>`;
+
+    // 2. 선택된 무기의 스킬 리스트 (최대 5개)
+    let skillsHtml = `<div><h4 style="color: #eee; margin-bottom: 10px; font-size: 0.95rem;">보유 스킬</h4>`;
+    if (activeWeapon.skills && activeWeapon.skills.length > 0) {
+        const displaySkills = activeWeapon.skills.slice(0, 5); // 5개 제한
+        displaySkills.forEach(s => {
+            skillsHtml += `
+                <div style="background: #1a1a24; border: 1px solid #2a2a35; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #2a2a35; padding-bottom: 6px; margin-bottom: 8px;">
+                        <strong style="color: #c89b3c; font-size: 0.9rem;">[${escapeHTML(s.command_key)}] ${escapeHTML(s.skill_name)}</strong>
+                        <div style="font-size: 0.75rem; color: #888;">
+                            <span style="margin-right: 8px;">⏱ ${escapeHTML(s.cooldown)}</span>
+                            <span>💧 ${escapeHTML(s.cost_value)}</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 8px;">
+                        ${escapeHTML(s.description)}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #888; display: flex; justify-content: space-between;">
+                        <span>🗡 계수: <span style="color: #aaa;">${escapeHTML(s.coefficient)}</span></span>
+                        ${s.is_mobility === 'Y' ? `<span style="color: #3498db;">🏃 이동기</span>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        skillsHtml += `<div style="color:#888; font-size:0.85rem; text-align:center; padding: 15px; background: #16161e; border-radius: 6px;">스킬이 등록되지 않았습니다.</div>`;
+    }
+    skillsHtml += `</div>`;
+
+    return tabsHtml + skillsHtml;
+}
+
+window.changeWeapon = function(jobIdx, weaponIdx) {
+    const container = document.getElementById("weaponsAndSkillsContainer");
+    if (container) {
+        container.innerHTML = renderWeaponsSection(jobIdx, weaponIdx);
+    }
+};
+
 function openSidebar(idx) {
     const job = JOBS[idx];
     selectedIdx = idx;
@@ -226,7 +320,9 @@ function openSidebar(idx) {
           <div class="patch-notes">${p.notes.replace(/\n/g, "<br>")}</div>
         </div>`).join("")}
       </div>` : ""}
-      ${gallery}`;
+      ${gallery}
+      <div id="weaponsAndSkillsContainer">
+        ${renderWeaponsSection(idx, 0)} </div>`;
 
     currentJobReviewsPromise = fetch(`/api/v1/jobs/${job.job_id}/reviews`)
         .then(res => res.json());
