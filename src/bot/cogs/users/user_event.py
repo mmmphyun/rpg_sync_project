@@ -3,7 +3,7 @@ import re
 import asyncio
 from discord.ext import commands
 
-from bot.cogs.core.base_cog import BaseCog
+from src.bot.cogs.core.base_cog import BaseCog
 from src.database.connection import sync_users_to_db
 from src.database.auth import delete_user_from_db, update_user_voice_exit
 

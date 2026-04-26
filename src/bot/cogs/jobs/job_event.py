@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 from discord.ext import commands
 
-from bot.cogs.core.base_cog import BaseCog
+from src.bot.cogs.core.base_cog import BaseCog
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.database.connection import sync_jobs_to_db, sync_job_patch_to_db
 from src.database.jobs import update_job_illustrations

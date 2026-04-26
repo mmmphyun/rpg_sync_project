@@ -5,7 +5,7 @@ import asyncio
 import json
 from discord.ext import commands
 
-from bot.cogs.core.base_cog import BaseCog
+from src.bot.cogs.core.base_cog import BaseCog
 from src.database.board import upsert_notice, get_notice_images_by_message_id, delete_notice_by_message_id
 from src.bot.utils.s3_client import upload_to_r2, delete_from_r2
 
