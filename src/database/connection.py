@@ -1,6 +1,6 @@
 import os
 import psycopg2
-from psycopg2 import pool
+from psycopg2 import pool, OperationalError
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,16 +17,42 @@ def initialize_pool():
             print(f"Database pool initialization error: {e}")
             raise
 
+
 def get_connection():
-    """PostgreSQL DB 연결 객체를 반환합니다."""
+    """
+    PostgreSQL DB 연결 객체를 반환합니다.
+    풀에서 꺼낸 커넥션의 유효성을 검증하고, 끊어진 경우 폐기 후 재시도합니다.
+    """
     global _db_pool
     if _db_pool is None:
         initialize_pool()
-    try:
-        return _db_pool.getconn()
-    except Exception as e:
-        print(f"Database connection error: {e}")
-        raise
+
+    max_retries = 3
+    for attempt in range(max_retries):
+        conn = None
+        try:
+            conn = _db_pool.getconn()
+
+            # 세션 생존 여부 확인
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.close()
+
+            return conn
+
+        except OperationalError:
+            # DB 측 타임아웃 등으로 연결이 끊어진 경우: 풀에서 완전 제거
+            if conn:
+                _db_pool.putconn(conn, close=True)
+            print(f"[Warning] Stale connection dropped. Retrying... ({attempt + 1}/{max_retries})")
+
+        except Exception as e:
+            print(f"Database connection error: {e}")
+            if conn:
+                _db_pool.putconn(conn, close=True)
+            raise
+
+    raise Exception("[Critical] Failed to acquire a valid DB connection after retries.")
 
 def release_connection(conn):
     """커넥션을 종료하지 않고 풀로 반환"""
