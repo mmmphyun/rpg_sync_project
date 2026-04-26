@@ -114,5 +114,5 @@ class JobEvent(BaseCog):
         except Exception as e:
             print(f"[Error] Illustration processing failed: {e}")
 
-async def setup(self):
-    await self.add_cog(JobEvent(self))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(JobEvent(bot))

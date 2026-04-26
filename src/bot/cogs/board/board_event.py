@@ -140,5 +140,5 @@ class BoardEvent(BaseCog):
         except Exception as e:
             print(f"[Error] Notice processing failed: {e}")
 
-async def setup(self):
-    await self.add_cog(BoardEvent(self))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(BoardEvent(bot))

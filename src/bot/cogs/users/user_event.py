@@ -87,5 +87,5 @@ class UserEvent(BaseCog):
             except Exception as e:
                 print(f"[Error] 음성 채널 퇴장 시간 기록 실패: {e}")
 
-async def setup(self):
-    await self.add_cog(UserEvent(self))
+async def setup(bot: commands.Bot):
+    await bot.add_cog(UserEvent(bot))
