@@ -18,7 +18,6 @@ class BoardEvent(BaseCog):
             return
 
         if message.channel.id not in (
-                self.patch_channel_id, self.desc_thread_id, self.illust_thread_id,
                 self.owner_notice_channel_id, self.staff_notice_channel_id
         ):
             return
@@ -29,16 +28,15 @@ class BoardEvent(BaseCog):
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
         """캐시되지 않은 기존 메시지(포스트 본문)가 수정될 때 트리거"""
-        print(f"[Debug] 수정 이벤트 감지 - 채널ID: {payload.channel_id}, 메시지ID: {payload.message_id}")
-
         channel_id = payload.channel_id
 
         # 대상 채널(쓰레드)이 아니면 조기 반환
         if channel_id not in (
-                self.patch_channel_id, self.desc_thread_id, self.illust_thread_id,
                 self.owner_notice_channel_id, self.staff_notice_channel_id
         ):
             return
+
+        print(f"[Debug] 수정 이벤트 감지 - 채널ID: {payload.channel_id}, 메시지ID: {payload.message_id}")
 
         try:
             # 채널 및 메시지 객체를 API를 통해 직접 Fetch
@@ -74,14 +72,7 @@ class BoardEvent(BaseCog):
         """채널/쓰레드 식별자에 기반한 핸들러 분기"""
         channel_id = message.channel.id
 
-        if channel_id == self.desc_thread_id:
-            await self._process_description(message.content)
-        elif channel_id == self.patch_channel_id:
-            formatted_date = message.created_at.strftime('%Y-%m-%d %H:%M:%S')
-            await self._process_patch(message.content, formatted_date, message.id)
-        elif channel_id == self.illust_thread_id:
-            await self._process_illustration(message.content, message.attachments)
-        elif channel_id in (self.owner_notice_channel_id, self.staff_notice_channel_id):
+        if channel_id in (self.owner_notice_channel_id, self.staff_notice_channel_id):
             await self._process_notice(message)
 
     async def _process_notice(self, message: discord.Message):
