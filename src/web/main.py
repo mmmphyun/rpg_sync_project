@@ -12,7 +12,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from src.web.limiter import limiter
 
-from src.database.queries import get_all_jobs_for_web
+from src.database.jobs import get_all_jobs_for_web
 from src.web.routers import auth, jobs, boards, server
 
 app = FastAPI(title="Fossile Server Web Dashboard")
@@ -90,7 +90,8 @@ async def serve_jobs(request: Request):
             "limit": True if row.get('is_limit') == 'Y' else False,
             "req_condition": row.get('req_condition'),
             "patches": row.get('patches', []),
-            "players": row.get('players', [])
+            "players": row.get('players', []),
+            "weapons": row.get('weapons', [])
         })
 
     return templates.TemplateResponse(

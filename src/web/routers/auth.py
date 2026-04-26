@@ -3,7 +3,7 @@ import jwt
 from fastapi import APIRouter, Request, Form, Response, Cookie, status, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from datetime import datetime, timedelta
-from src.database.queries import verify_and_consume_magic_token
+from src.database.auth import verify_and_consume_magic_token
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from src.config import JWT_SECRET, JWT_ALGORITHM
 from src.web.limiter import limiter

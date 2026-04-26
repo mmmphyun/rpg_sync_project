@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: rpg-db-dev
+    environment:
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: rpg_dev_db
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - dev_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  rpg-sync-app:
+    build: .
+    container_name: rpg-sync-dev
+    depends_on:
+      - db
+    ports:
+      - "80:8000"
+    env_file:
+      - .env.dev
+    volumes:
+      - ./public:/app/public
+      - ./src/web/templates:/app/src/web/templates
+      - ./src:/app/src
+    command: >
+      sh -c "python -m src.bot.main & sleep 3 && uvicorn src.web.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  dev_db_data:

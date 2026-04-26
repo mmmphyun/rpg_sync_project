@@ -8,7 +8,8 @@ import re
 from discord.ext import commands
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.database.connection import sync_jobs_to_db, sync_job_patch_to_db, sync_users_to_db
-from src.database.queries import update_job_illustrations, upsert_notice, get_notice_images_by_message_id
+from src.database.jobs import update_job_illustrations
+from src.database.board import upsert_notice, get_notice_images_by_message_id
 from src.bot.utils.s3_client import upload_to_r2, delete_from_r2
 
 

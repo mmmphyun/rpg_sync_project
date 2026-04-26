@@ -4,209 +4,19 @@ import re
 import asyncio
 import aiohttp
 import json
-import mimetypes
-
-from discord import app_commands
+from datetime import timedelta, datetime, timezone
 from discord.ext import commands
 
-from datetime import timedelta, datetime, timezone
+from src.bot.cogs.core.base_cog import BaseCog
 
-from src.database.jobs import update_job_single_column, update_job_illustrations, batch_update_profile_images
+from src.database.jobs import update_job_illustrations
 from src.database.board import upsert_notice
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
+
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.bot.utils.s3_client import upload_to_r2
-from src.database.auth import check_user_exists, create_magic_token
 
-VALID_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
-
-def is_valid_image(filename: str) -> bool:
-    ext = os.path.splitext(filename)[1].lower()
-    return ext in VALID_IMAGE_EXTENSIONS
-
-class SyncCmd(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
-    async def cog_command_error(self, ctx: commands.Context, error: Exception):
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("❌ 이 명령어를 실행할 관리자 권한이 없습니다.")
-        elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send(f"❌ 실행 중 오류가 발생했습니다: {error.original}")
-        else:
-            print(f"[명령어 에러] {error}")
-
-    @app_commands.command(name="위키", description="위키 로그인을 위한 1회용 인증 링크를 발급합니다.")
-    async def forum_login(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
-
-        discord_id = str(interaction.user.id)
-
-        try:
-            user_exists = await asyncio.to_thread(check_user_exists, discord_id)
-
-            if not user_exists:
-                role_name = interaction.user.top_role.name if interaction.user.top_role else "유저"
-                display_name = interaction.user.display_name
-                parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
-
-                job_name = None
-                actual_nickname = display_name
-                if len(parts) >= 2:
-                    actual_nickname = parts[-2]
-                    job_name = parts[-1].replace(" ", "")
-                elif len(parts) == 1:
-                    actual_nickname = parts[0]
-
-                if job_name and not job_name.strip():
-                    job_name = None
-
-                user_data = [{
-                    "discord_id": discord_id,
-                    "nickname": actual_nickname,
-                    "server_role": role_name,
-                    "job_name": job_name
-                }]
-
-                sync_result = await asyncio.to_thread(sync_users_to_db, user_data)
-                if sync_result == 0:
-                    await interaction.followup.send("유저 정보를 서버에 등록하는 중 오류가 발생했습니다. 관리자에게 문의하세요.", ephemeral=True)
-                    return
-
-            # 3. 토큰 발급 및 메시지 전송
-            token = await asyncio.to_thread(create_magic_token, discord_id)
-            domain = os.getenv("WEB_DOMAIN", "https://fossile-wiki.cloud")
-            login_url = f"{domain}/api/v1/auth/login?token={token}"
-
-            await interaction.followup.send(
-                f"**인증 링크가 발급되었습니다.**\n"
-                f"5분 안에 아래 링크를 클릭하여 접속하세요. 이 링크는 본인만 볼 수 있으며 1회만 사용 가능합니다.\n\n"
-                f"[Fossile Wiki 로그인]({login_url})",
-                ephemeral=True
-            )
-        except Exception as e:
-            print(f"토큰 발급 에러: {e}")
-            await interaction.followup.send("인증 링크 발급 중 시스템 오류가 발생했습니다.", ephemeral=True)
-
-    @commands.command(name="직업수정")
-    @commands.has_permissions(administrator=True)
-    async def update_job_command(self, ctx: commands.Context, job_name: str, column: str, *, value: str | None = None):
-        """
-        Usage: !직업수정 <직업명> <항목> [<값/메시지ID>]
-        """
-        try:
-            if column == "img":
-                if not ctx.message.attachments:
-                    await ctx.send("[Error] img 속성 수정 시 프로필 이미지를 첨부해야 합니다.")
-                    return
-
-                attachment = ctx.message.attachments[0]
-                if not is_valid_image(attachment.filename):
-                    await ctx.send(f"[Error] 지원하지 않는 파일 포맷입니다. (허용: {', '.join(VALID_IMAGE_EXTENSIONS)})")
-                    return
-
-                file_bytes = await attachment.read()
-                content_type, _ = mimetypes.guess_type(attachment.filename)
-
-                r2_url = await asyncio.to_thread(
-                    upload_to_r2,
-                    file_bytes,
-                    attachment.filename,
-                    content_type or "image/png",
-                    "jobs_profile"
-                )
-
-                if not r2_url:
-                    await ctx.send("[Error] R2 스토리지 업로드에 실패했습니다.")
-                    return
-
-                affected = update_job_single_column(job_name, column, r2_url)
-                if affected > 0:
-                    await ctx.send(f"[Success] `{job_name}` 프로필 이미지 적용 완료\nURL: {r2_url}")
-                else:
-                    await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
-                return
-
-
-            elif column == "illustration":
-                if not value or "discord.com/channels/" not in value:
-                    await ctx.send("[Error] illustration 수정 시 유효한 디스코드 메시지 링크를 입력해야 합니다.")
-                    return
-
-                try:
-                    parts = value.split("/")
-                    channel_id = int(parts[-2])
-                    message_id = int(parts[-1])
-
-                    target_channel = ctx.guild.get_channel(channel_id) or ctx.guild.get_thread(channel_id)
-                    if not target_channel:
-                        await ctx.send("[Error] 대상 채널 또는 쓰레드에 봇이 접근할 수 없습니다.")
-                        return
-
-                    target_message = await target_channel.fetch_message(message_id)
-                except (ValueError, IndexError, discord.NotFound, discord.Forbidden):
-                    await ctx.send("[Error] 메시지 링크 검증 실패 또는 대상 메시지를 읽을 수 없습니다.")
-                    return
-
-                valid_attachments = [att for att in target_message.attachments if is_valid_image(att.filename)]
-                if not valid_attachments:
-                    await ctx.send("[Error] 대상 메시지에 유효한 이미지 첨부파일이 존재하지 않습니다.")
-                    return
-
-                target_attachments = valid_attachments[:4]
-                uploaded_urls = []
-
-                for att in target_attachments:
-                    file_bytes = await att.read()
-                    content_type, _ = mimetypes.guess_type(att.filename)
-                    url = await asyncio.to_thread(
-                        upload_to_r2,
-                        file_bytes,
-                        att.filename,
-                        content_type or "image/png",
-                        "jobs_illustration"
-                    )
-                    if url:
-                        uploaded_urls.append(url)
-
-                if not uploaded_urls:
-                    await ctx.send("[Error] 이미지 업로드 처리에 실패했습니다.")
-                    return
-
-                affected = update_job_illustrations(job_name, uploaded_urls)
-                if affected > 0:
-                    await ctx.send(f"[Success] `{job_name}` 일러스트({len(uploaded_urls)}장) 적용 완료")
-                else:
-                    await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
-                return
-
-            if value is None:
-                await ctx.send("[Error] 텍스트 항목 수정 시 value 값을 입력해야 합니다.")
-                return
-
-            affected = update_job_single_column(job_name, column, value)
-            if affected > 0:
-                await ctx.send(f"[Success] `{job_name}`의 `{column}` 항목 업데이트 완료")
-            else:
-                await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
-
-        except ValueError:
-            await ctx.send("[Error] 지원하지 않는 항목입니다. (지원: range, position, resource, img, illustration 등)")
-        except Exception as e:
-            await ctx.send(f"[Error] 처리 중 예외 발생: {str(e)}")
-
-    @update_job_command.error
-    async def update_job_error(self, ctx: commands.Context, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            error_msg = (
-                "[Error] 필수 입력값이 누락되었습니다.\n"
-                "사용법: `!직업수정 <직업명> <항목> [<값/메시지ID>]`\n"
-                "* 텍스트 항목 예시: `!직업수정 다크메이지 range 원거리`\n"
-                "* 이미지 항목 예시: `!직업수정 다크메이지 img` (이미지 파일 첨부 필수)"
-            )
-            await ctx.send(error_msg)
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("[Error] 명령어 실행 권한이 없습니다.")
+class BulkSyncCmd(BaseCog):
 
     @commands.command(name="유저동기화")
     @commands.has_permissions(administrator=True)
@@ -258,7 +68,6 @@ class SyncCmd(commands.Cog):
 
         success_count = await asyncio.to_thread(sync_users_to_db, users_data)
         await ctx.send(f"유저 동기화 완료: 총 {success_count}명의 데이터가 최신화되었습니다.")
-
 
     @commands.command(name="데이터동기화")
     @commands.has_permissions(administrator=True)
@@ -417,4 +226,4 @@ class SyncCmd(commands.Cog):
         await ctx.send(f"공지사항 동기화 완료: 총 {sync_count}건의 데이터가 적재/갱신되었습니다.")
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(SyncCmd(bot))
+    await bot.add_cog(BulkSyncCmd(bot))
