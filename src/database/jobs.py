@@ -144,12 +144,22 @@ def get_all_jobs_for_web() -> list[dict]:
                 FROM weapons w
                 LEFT JOIN WeaponSkills ws ON w.weapon_id = ws.weapon_id
                 GROUP BY w.job_id
+            ),
+            JobPlayers AS (
+                SELECT 
+                    current_job_id as job_id,
+                    jsonb_agg(nickname) as players
+                FROM users
+                WHERE current_job_id IS NOT NULL
+                GROUP BY current_job_id
             )
             SELECT 
                 j.*,
-                COALESCE(jw.weapons, '[]'::jsonb) as weapons
+                COALESCE(jw.weapons, '[]'::jsonb) as weapons,
+                COALESCE(jp.players, '[]'::jsonb) as players
             FROM jobs j
             LEFT JOIN JobWeapons jw ON j.job_id = jw.job_id
+            LEFT JOIN JobPlayers jp ON j.job_id = jp.job_id
             ORDER BY j.name;
         """
 
