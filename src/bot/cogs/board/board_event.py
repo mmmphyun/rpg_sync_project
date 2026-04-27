@@ -18,7 +18,7 @@ class BoardEvent(BaseCog):
             return
 
         if message.channel.id not in (
-                self.owner_notice_channel_id, self.staff_notice_channel_id
+                self.owner_notice_channel_id, self.staff_notice_channel_id, self.system_patch_channel_id
         ):
             return
 
@@ -32,7 +32,7 @@ class BoardEvent(BaseCog):
 
         # 대상 채널(쓰레드)이 아니면 조기 반환
         if channel_id not in (
-                self.owner_notice_channel_id, self.staff_notice_channel_id
+                self.owner_notice_channel_id, self.staff_notice_channel_id, self.system_patch_channel_id
         ):
             return
 
@@ -53,7 +53,7 @@ class BoardEvent(BaseCog):
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
         """공지/이벤트 게시글 삭제 감지 및 Soft Delete 적용"""
-        if payload.channel_id not in (self.owner_notice_channel_id, self.staff_notice_channel_id):
+        if payload.channel_id not in (self.owner_notice_channel_id, self.staff_notice_channel_id, self.system_patch_channel_id):
             return
 
         try:
@@ -73,9 +73,11 @@ class BoardEvent(BaseCog):
         channel_id = message.channel.id
 
         if channel_id in (self.owner_notice_channel_id, self.staff_notice_channel_id):
-            await self._process_notice(message)
+            await self._process_notice(message, default_tag='일반 공지')
+        elif channel_id == self.system_patch_channel_id:
+            await self._process_notice(message, default_tag='업데이트')
 
-    async def _process_notice(self, message: discord.Message):
+    async def _process_notice(self, message: discord.Message, default_tag: str = '일반 공지'):
         try:
             # 1. 기존 데이터 조회
             old_image_urls = get_notice_images_by_message_id(message.id)
@@ -111,7 +113,7 @@ class BoardEvent(BaseCog):
 
             notice_data = {
                 'type': 'notice',
-                'tag': '일반 공지',
+                'tag': default_tag,
                 'content': clean_content,
                 'image_urls': json.dumps(uploaded_urls),
                 'discord_message_id': str(message.id),

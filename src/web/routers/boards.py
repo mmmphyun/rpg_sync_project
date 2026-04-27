@@ -1,5 +1,3 @@
-import html
-
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
 from src.web.dependencies import get_admin_user
 from src.database.board import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web, update_notice_title, update_notice_title_by_id
@@ -42,7 +40,7 @@ async def change_notice_tag(request: Request, notice_id: int, target_tag: str, a
 @router.patch("/{notice_id}/title")
 @limiter.limit("10/minute")
 async def change_notice_title(request: Request, notice_id: int, title: str = Body(..., embed=True), admin: dict = Depends(get_admin_user)):
-    safe_title = html.escape(title.strip()) if title else None
+    safe_title = title.strip() if title else None
 
     if safe_title and len(safe_title) > 200:
         raise HTTPException(status_code=400, detail="제목은 200자를 초과할 수 없습니다.")
