@@ -12,6 +12,13 @@ let currentTag = "";
 let isAdmin = false;
 let currentEditNoticeId = null;
 
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[tag] || tag));
+}
+
 // =============================================
 //  Core Logic
 // =============================================
@@ -43,7 +50,6 @@ async function loadFeed(page) {
 
         let isLastPage = data.notices.length < 5;
 
-        // 페이지네이션 버그 픽스: 정확히 5개가 로드되었을 경우 다음 페이지가 존재하는지 백그라운드 체크
         if (data.notices.length === 5) {
             let nextUrl = `${API_BASE}/${BOARD_TYPE}?page=${page + 1}`;
             if (currentTag) nextUrl += `&tag=${encodeURIComponent(currentTag)}`;
@@ -81,6 +87,9 @@ function renderFeed(notices) {
         const safeContent = (notice.content || "").replace(/```/g, "");
         const parsedContent = marked.parse(notice.content || "");
 
+        const safeTitle = notice.title ? escapeHTML(notice.title) : "";
+        const titleHtml = `<h3 id="notice-title-${notice.notice_id}" style="margin: 0; color: #fff; font-size: 1.25rem; ${safeTitle ? 'margin-bottom: 10px;' : 'display: none;'}">${safeTitle}</h3>`;
+
         let imagesHtml = "";
         if (notice.image_urls && notice.image_urls.length > 0) {
             imagesHtml = `<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:15px;">
@@ -92,12 +101,14 @@ function renderFeed(notices) {
         if (isAdmin) {
             const oppositeType = BOARD_TYPE === 'notice' ? 'event' : 'notice';
             const oppositeLabel = BOARD_TYPE === 'notice' ? '이벤트로 이관' : '공지로 이관';
+            const escapedCurrentTitle = safeTitle.replace(/'/g, "\\'");
 
             // Onclick 이벤트 내 파라미터 매핑
             adminPanel = `
                 <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #333; display: flex; gap: 10px; justify-content: flex-end;">
                     <button onclick="changeNoticeType(${notice.notice_id}, '${oppositeType}')" style="background: #27ae60; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">${oppositeLabel}</button>
                     ${BOARD_TYPE === 'notice' ? `<button id="tag-btn-${notice.notice_id}" onclick="promptTagChange(${notice.notice_id}, '${notice.tag}')" style="background: #3498db; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">태그 변경</button>` : ''}
+                    <button onclick="openTitleModal(${notice.notice_id}, '${escapedCurrentTitle}')" style="background: #f39c12; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">제목 수정</button>
                     <button onclick="deleteNotice(${notice.notice_id})" style="background: #e74c3c; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">삭제</button>
                 </div>
             `;
@@ -112,6 +123,7 @@ function renderFeed(notices) {
                     </span>
                     <span style="color: #666; font-size: 0.8rem;">${dateStr}</span>
                 </div>
+                ${titleHtml}
                 <div style="color: #ccc; line-height: 1.6; font-size: 0.95rem;">
                     ${parsedContent}
                 </div>
@@ -168,7 +180,6 @@ async function changeNoticeType(id, targetType) {
     try {
         const res = await fetch(`${API_BASE}/${id}/type?target_type=${targetType}`, { method: 'PUT' });
         if (res.ok) {
-            // API 재호출 제거, 화면에서 즉시 뜯어내기
             removeCardFromDOM(id);
         } else alert("권한이 없거나 처리 중 오류가 발생했습니다.");
     } catch (e) { alert("통신 오류가 발생했습니다."); }
@@ -227,6 +238,63 @@ async function deleteNotice(id) {
             removeCardFromDOM(id);
         } else alert("권한이 없거나 삭제 중 오류가 발생했습니다.");
     } catch (e) { alert("통신 오류가 발생했습니다."); }
+}
+
+// =============================================
+//  Modal Controls (Title)
+// =============================================
+let currentEditTitleNoticeId = null;
+
+function openTitleModal(id, currentTitle) {
+    currentEditTitleNoticeId = id;
+    document.getElementById("newTitleInput").value = currentTitle || "";
+    document.getElementById("titleModal").classList.add("open");
+}
+
+function closeTitleModal() {
+    document.getElementById("titleModal").classList.remove("open");
+    currentEditTitleNoticeId = null;
+    document.getElementById("newTitleInput").value = "";
+}
+
+async function submitTitleChange() {
+    if (!currentEditTitleNoticeId) return;
+
+    const newTitle = document.getElementById("newTitleInput").value;
+
+    try {
+        const res = await fetch(`${API_BASE}/${currentEditTitleNoticeId}/title`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: newTitle })
+        });
+
+        if (res.ok) {
+            const titleEl = document.getElementById(`notice-title-${currentEditTitleNoticeId}`);
+            if (titleEl) {
+                if (newTitle.trim() === "") {
+                    titleEl.style.display = "none";
+                    titleEl.innerText = "";
+                } else {
+                    titleEl.innerText = newTitle;
+                    titleEl.style.display = "block";
+                    titleEl.style.marginBottom = "10px";
+                }
+            }
+
+            const editBtn = document.querySelector(`button[onclick^="openTitleModal(${currentEditTitleNoticeId}"]`);
+            if (editBtn) {
+                const escapedNewTitle = newTitle.replace(/'/g, "\\'");
+                editBtn.setAttribute("onclick", `openTitleModal(${currentEditTitleNoticeId}, '${escapedNewTitle}')`);
+            }
+
+            closeTitleModal();
+        } else {
+            alert("권한이 없거나 처리 중 오류가 발생했습니다.");
+        }
+    } catch (e) {
+        alert("통신 오류가 발생했습니다.");
+    }
 }
 
 // =============================================

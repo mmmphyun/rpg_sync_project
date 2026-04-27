@@ -37,6 +37,25 @@ def upsert_notice(notice_data: dict) -> int:
         cursor.close()
         release_connection(conn)
 
+def update_notice_title(message_id: str, title: str) -> bool:
+    """메시지 ID를 기준으로 공지 제목을 수동 업데이트"""
+    sql = "UPDATE notices SET title = %s WHERE discord_message_id = %s AND is_deleted = FALSE;"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (title, message_id))
+        affected = cursor.rowcount
+        conn.commit()
+        return affected > 0
+    except Exception as e:
+        conn.rollback()
+        print(f"[DB Error] 제목 업데이트 실패: {e}")
+        return False
+    finally:
+        cursor.close()
+        release_connection(conn)
+
 def update_notice_tag(notice_id: int, new_tag: str) -> int:
     """공지 태그 수정"""
     sql = "UPDATE notices SET tag = %s WHERE notice_id = %s AND is_deleted = FALSE"

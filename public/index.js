@@ -3,6 +3,13 @@
  * 메인 대시보드 구성 요소 및 데이터 바인딩 관리
  */
 
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[tag] || tag));
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initDashboard();
 });
@@ -76,6 +83,7 @@ async function loadLatestPosts() {
         container.innerHTML = posts.map(post => {
             const dateStr = new Date(post.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
             const tagLabel = post.type === 'notice' ? `[${post.tag}]` : '[이벤트]';
+            const safeTitle = post.title ? escapeHTML(post.title) : "";
             const cleanText = stripMarkdown(post.content);
             const snippet = cleanText.length > 35 ? cleanText.substring(0, 35) + '...' : cleanText;
             const targetUrl = post.type === 'notice' ? '/notice' : '/event';
@@ -86,7 +94,9 @@ async function loadLatestPosts() {
                         <span style="color: #c89b3c; font-size: 0.8rem; font-weight: bold;">${tagLabel}</span>
                         <span style="color: #666; font-size: 0.75rem;">${dateStr}</span>
                     </div>
-                    <div style="color: #ccc; font-size: 0.85rem; line-height: 1.4;">${snippet}</div>
+                    <div style="color: #ccc; font-size: 0.85rem; line-height: 1.4;">
+                        ${post.title ? `<strong>${snippet}</strong>` : snippet}
+                    </div>
                 </li>
             `;
         }).join('');

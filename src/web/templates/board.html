@@ -67,6 +67,22 @@
     </div>
 </div>
 
+<div class="review-modal-overlay" id="titleModal">
+    <div class="review-modal-content" style="width: 350px;">
+        <div class="review-modal-header">
+            <h3>제목 수정</h3>
+            <button class="review-modal-close" onclick="closeTitleModal()">&times;</button>
+        </div>
+        <div style="padding: 20px;">
+            <input type="text" id="newTitleInput" placeholder="제목 입력 (비워두면 자동 요약)" style="width: 100%; padding: 10px; margin-bottom: 20px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px; box-sizing: border-box;">
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="closeTitleModal()" style="padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer;">취소</button>
+                <button onclick="submitTitleChange()" style="padding: 8px 16px; background: #f39c12; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">변경 적용</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
   window.BOARD_TYPE = "{{ board_type }}";
 </script>

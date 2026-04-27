@@ -26,6 +26,7 @@ class RPGSyncBot(commands.Bot):
             "src.bot.cogs.auth.auth_cmd",
             "src.bot.cogs.jobs.job_cmd",
             "src.bot.cogs.jobs.job_event",
+            "src.bot.cogs.board.board_cmd",
             "src.bot.cogs.board.board_event",
             "src.bot.cogs.users.user_event",
             "src.bot.cogs.system.bulk_sync_cmd"

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from src.web.dependencies import get_admin_user
-from src.database.board import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web
+from src.database.board import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web, update_notice_title
 from src.bot.utils.s3_client import delete_from_r2
 from src.web.limiter import limiter
 
@@ -35,6 +35,19 @@ async def change_notice_tag(request: Request, notice_id: int, target_tag: str, a
     affected = update_notice_tag(notice_id, target_tag)
     if affected == 0:
         raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
+    return {"message": "success", "notice_id": notice_id}
+
+@router.patch("/{notice_id}/title")
+@limiter.limit("10/minute")
+async def change_notice_title(request: Request, notice_id: int, title: str = Body(..., embed=True), admin: dict = Depends(get_admin_user)):
+    safe_title = html.escape(title.strip()) if title else None
+
+    if safe_title and len(safe_title) > 200:
+        raise HTTPException(status_code=400, detail="제목은 200자를 초과할 수 없습니다.")
+
+    affected = update_notice_title(str(notice_id), safe_title)
+    if not affected:
+        raise HTTPException(status_code=404, detail="게시글을 업데이트할 수 없습니다.")
     return {"message": "success", "notice_id": notice_id}
 
 @router.delete("/{notice_id}")
