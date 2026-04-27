@@ -83,9 +83,11 @@ async function loadLatestPosts() {
         container.innerHTML = posts.map(post => {
             const dateStr = new Date(post.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
             const tagLabel = post.type === 'notice' ? `[${post.tag}]` : '[이벤트]';
-            const safeTitle = post.title ? escapeHTML(post.title) : "";
+            const hasCustomTitle = post.title && post.title.trim().length > 0;
+            const safeTitle = hasCustomTitle ? escapeHTML(post.title) : null;
             const cleanText = stripMarkdown(post.content);
-            const snippet = cleanText.length > 35 ? cleanText.substring(0, 35) + '...' : cleanText;
+            const bodySnippet = cleanText.length > 35 ? cleanText.substring(0, 35) + '...' : cleanText;
+            const displayText = safeTitle || bodySnippet;
             const targetUrl = post.type === 'notice' ? '/notice' : '/event';
 
             return `
@@ -95,7 +97,7 @@ async function loadLatestPosts() {
                         <span style="color: #666; font-size: 0.75rem;">${dateStr}</span>
                     </div>
                     <div style="color: #ccc; font-size: 0.85rem; line-height: 1.4;">
-                        ${post.title ? `<strong>${snippet}</strong>` : snippet}
+                        ${hasCustomTitle ? `<strong style="color: #fff;">${displayText}</strong>` : displayText}
                     </div>
                 </li>
             `;
@@ -156,11 +158,14 @@ async function updateUserAuthUI() {
         const session = await response.json();
 
         if (session.is_logged_in) {
+            const isAdminRole = session.server_role === "STAFF" || session.server_role === "주인장";
+            const nickColor = isAdminRole ? "#27ae60" : "#fff";
+
             area.innerHTML = `
                 <div class="user-card logged-in">
                     <div class="user-meta" style="display: flex; gap: 8px; align-items: center;">
                         <span class="user-job-tag" style="color: #c89b3c; font-size: 0.75rem; border: 1px solid #c89b3c; padding: 2px 6px; border-radius: 4px;">${session.job_name}</span>
-                        <span class="user-nick" style="font-weight: bold;">${session.nickname}</span>
+                        <span class="user-nick" style="font-weight: bold; color: ${nickColor};">${session.nickname}</span>
                         <button onclick="logout()" style="background: none; border: none; color: #8b8b8b; font-size: 0.7rem; cursor: pointer; margin-left: 8px;">로그아웃</button>
                     </div>
                 </div>

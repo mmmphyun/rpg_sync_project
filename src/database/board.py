@@ -56,6 +56,25 @@ def update_notice_title(message_id: str, title: str) -> bool:
         cursor.close()
         release_connection(conn)
 
+def update_notice_title_by_id(notice_id: int, title: str) -> int:
+    """PK(notice_id)를 기준으로 공지 제목을 업데이트 (웹 UI용)"""
+    sql = "UPDATE notices SET title = %s WHERE notice_id = %s AND is_deleted = FALSE;"
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (title, notice_id))
+        affected = cursor.rowcount
+        conn.commit()
+        return affected
+    except Exception as e:
+        conn.rollback()
+        print(f"[DB Error] 웹 제목 업데이트 실패: {e}")
+        return 0
+    finally:
+        cursor.close()
+        release_connection(conn)
+
 def update_notice_tag(notice_id: int, new_tag: str) -> int:
     """공지 태그 수정"""
     sql = "UPDATE notices SET tag = %s WHERE notice_id = %s AND is_deleted = FALSE"
@@ -174,7 +193,7 @@ def get_notices_for_web(board_type: str, limit: int, offset: int, tag_filter: st
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         # type 필터링 필수 적용
-        query = query = "SELECT notice_id, type, tag, REPLACE(content, '@everyone', '') AS content, image_urls, is_deleted, created_at FROM notices WHERE type = %s AND is_deleted = FALSE"
+        query = "SELECT notice_id, type, tag, title, REPLACE(content, '@everyone', '') AS content, image_urls, is_deleted, created_at FROM notices WHERE type = %s AND is_deleted = FALSE"
         params = [board_type]
 
         if tag_filter:
@@ -200,13 +219,13 @@ def get_recent_posts_for_web(limit: int = 5):
     try:
         # tag가 NULL인 이벤트 게시글 등도 포함하기 위해 IS DISTINCT FROM 사용
         query = """
-            SELECT notice_id, type, tag, REPLACE(content, '@everyone', '') AS content, created_at
-            FROM notices 
-            WHERE is_deleted = FALSE 
-            AND (tag IS NULL OR tag NOT LIKE %s)
-            ORDER BY created_at DESC 
-            LIMIT %s
-        """
+                    SELECT notice_id, type, tag, title, REPLACE(content, '@everyone', '') AS content, created_at
+                    FROM notices 
+                    WHERE is_deleted = FALSE 
+                    AND (tag IS NULL OR tag NOT LIKE %s)
+                    ORDER BY created_at DESC 
+                    LIMIT %s
+                """
         cursor.execute(query, ('%서버 상태 공지%', limit))
         return cursor.fetchall()
     except psycopg2.Error as e:

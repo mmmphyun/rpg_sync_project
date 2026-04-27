@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+import html
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
 from src.web.dependencies import get_admin_user
-from src.database.board import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web, update_notice_title
+from src.database.board import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web, update_notice_title, update_notice_title_by_id
 from src.bot.utils.s3_client import delete_from_r2
 from src.web.limiter import limiter
 
@@ -45,7 +47,7 @@ async def change_notice_title(request: Request, notice_id: int, title: str = Bod
     if safe_title and len(safe_title) > 200:
         raise HTTPException(status_code=400, detail="제목은 200자를 초과할 수 없습니다.")
 
-    affected = update_notice_title(str(notice_id), safe_title)
+    affected = update_notice_title_by_id(notice_id, safe_title)
     if not affected:
         raise HTTPException(status_code=404, detail="게시글을 업데이트할 수 없습니다.")
     return {"message": "success", "notice_id": notice_id}
