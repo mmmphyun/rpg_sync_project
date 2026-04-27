@@ -158,6 +158,7 @@ class BulkSyncCmd(BaseCog):
         try:
             owner_channel_id = int(os.getenv('OWNER_NOTICE_CHANNEL_ID', 0))
             staff_channel_id = int(os.getenv('STAFF_NOTICE_CHANNEL_ID', 0))
+            patch_channel_id = int(os.getenv('SYSTEM_PATCH_CHANNEL_ID', 0))
         except ValueError:
             await ctx.send("환경 변수에 공지 채널 ID가 올바르게 설정되지 않았습니다.")
             return
@@ -172,6 +173,9 @@ class BulkSyncCmd(BaseCog):
             if ch: target_channels.append(ch)
         if staff_channel_id:
             ch = self.bot.get_channel(staff_channel_id) or await self.bot.fetch_channel(staff_channel_id)
+            if ch: target_channels.append(ch)
+        if patch_channel_id:
+            ch = self.bot.get_channel(patch_channel_id) or await self.bot.fetch_channel(patch_channel_id)
             if ch: target_channels.append(ch)
 
         # 2026년 4월 1일 KST 기준 타임존 설정
