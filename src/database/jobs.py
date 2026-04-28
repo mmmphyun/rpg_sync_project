@@ -112,56 +112,62 @@ def update_job_single_column(job_name: str, column_name: str, value: str) -> int
         release_connection(conn)
 
 
-def get_all_jobs_for_web() -> list[dict]:
+def get_all_jobs_for_web():
+    """
+    웹 대시보드용 전체 직업 데이터 조회.
+    무기 및 무기별 스킬(폼 정보 포함)을 조인하여 반환.
+    """
     sql = """
-            WITH WeaponSkills AS (
-                SELECT 
-                    s.weapon_id,
-                    jsonb_agg(
-                        jsonb_build_object(
-                            'command_key', s.command_key,
-                            'skill_name', s.skill_name,
-                            'description', s.description,
-                            'cooldown', s.cooldown,
-                            'cost_value', s.cost_value,
-                            'coefficient', s.coefficient,
-                            'is_mobility', s.is_mobility
-                        ) ORDER BY s.command_key
-                    ) as skills
-                FROM skills s
-                GROUP BY s.weapon_id
-            ),
-            JobWeapons AS (
-                SELECT 
-                    w.job_id,
-                    jsonb_agg(
-                        jsonb_build_object(
-                            'weapon_name', w.weapon_name,
-                            'weapon_type', w.weapon_type,
-                            'skills', COALESCE(ws.skills, '[]'::jsonb)
-                        )
-                    ) as weapons
-                FROM weapons w
-                LEFT JOIN WeaponSkills ws ON w.weapon_id = ws.weapon_id
-                GROUP BY w.job_id
-            ),
-            JobPlayers AS (
-                SELECT 
-                    current_job_id as job_id,
-                    jsonb_agg(nickname) as players
-                FROM users
-                WHERE current_job_id IS NOT NULL
-                GROUP BY current_job_id
-            )
+        WITH WeaponSkills AS (
             SELECT 
-                j.*,
-                COALESCE(jw.weapons, '[]'::jsonb) as weapons,
-                COALESCE(jp.players, '[]'::jsonb) as players
-            FROM jobs j
-            LEFT JOIN JobWeapons jw ON j.job_id = jw.job_id
-            LEFT JOIN JobPlayers jp ON j.job_id = jp.job_id
-            ORDER BY j.name;
-        """
+                weapon_id,
+                jsonb_agg(
+                    jsonb_build_object(
+                        'skill_id', skill_id,
+                        'skill_name', skill_name,
+                        'command_key', command_key,
+                        'description', description,
+                        'cooldown', cooldown,
+                        'cost_value', cost_value,
+                        'coefficient', coefficient,
+                        'is_mobility', is_mobility,
+                        'form_name', form_name -- 신규 추가
+                    )
+                ) as skills
+            FROM skills
+            GROUP BY weapon_id
+        ),
+        JobWeapons AS (
+            SELECT 
+                w.job_id,
+                jsonb_agg(
+                    jsonb_build_object(
+                        'weapon_name', w.weapon_name,
+                        'weapon_type', w.weapon_type,
+                        'skills', COALESCE(ws.skills, '[]'::jsonb)
+                    )
+                ) as weapons
+            FROM weapons w
+            LEFT JOIN WeaponSkills ws ON w.weapon_id = ws.weapon_id
+            GROUP BY w.job_id
+        ),
+        JobPlayers AS (
+            SELECT 
+                current_job_id as job_id,
+                jsonb_agg(nickname) as players
+            FROM users
+            WHERE current_job_id IS NOT NULL
+            GROUP BY current_job_id
+        )
+        SELECT 
+            j.*,
+            COALESCE(jw.weapons, '[]'::jsonb) as weapons,
+            COALESCE(jp.players, '[]'::jsonb) as players
+        FROM jobs j
+        LEFT JOIN JobWeapons jw ON j.job_id = jw.job_id
+        LEFT JOIN JobPlayers jp ON j.job_id = jp.job_id
+        ORDER BY j.name;
+    """
 
     conn = get_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -171,7 +177,7 @@ def get_all_jobs_for_web() -> list[dict]:
         jobs = cursor.fetchall()
         return [dict(row) for row in jobs]
     except psycopg2.Error as e:
-        print(f"[DB Error] get_all_jobs_for_web 쿼리 실행 오류: {e}", flush=True)
+        print(f"[DB Error] get_all_jobs_for_web: {e}")
         return []
     finally:
         cursor.close()

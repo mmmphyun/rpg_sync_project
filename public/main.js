@@ -8,28 +8,32 @@
 // =============================================
 const RANGE_CLS = { "근거리": "t-melee", "원거리": "t-ranged", "근거리, 원거리": "t-hybrid", "정보 없음": "t-unknown" };
 const POS_CLS   = { "탱": "t-tank", "물리": "t-phys", "마법": "t-magic", "혼합": "t-hybrid-dmg", "힐": "t-heal", "유틸": "t-util", "정보 없음": "t-unknown" };
-const RES_CLS   = { "기력": "t-ki", "마나": "t-mana", "체력": "t-hp", "에너지": "t-hp", "정보 없음": "t-unknown" }; // 에너지 추가
+const RES_CLS   = { "기력": "t-ki", "마나": "t-mana", "체력": "t-hp", "에너지": "t-en", "정보 없음": "t-unknown" };
 const POS_BG    = { "탱": "bg-tank", "딜": "bg-deal", "힐": "bg-heal", "유틸": "bg-util", "정보 없음": "bg-unknown" };
 const WEAPON_ICONS = {
-    "대검": "ra ra-large-weapon",
-    "카타나": "ra ra-sword",
+    "대검": "ra ra-relic-blade",
+    "카타나": "ra ra-dripping-sword",
     "검": "ra ra-sword",
-    "단검": "ra ra-daggers",
-    "활": "ra ra-bow",
+    "단검": "ra ra-bone-knife",
+    "활": "ra ra-supersonic-arrow",
     "석궁": "ra ra-crossbow",
-    "지팡이": "ra ra-wand",
-    "도끼": "ra ra-axe",
-    "망치": "ra ra-hammer",
+    "지팡이": "ra ra-crystal-wand",
+    "도끼": "ra ra-battered-axe",
+    "망치": "ra ra-flat-hammer",
     "부채": "ra ra-feather-wing",
-    "건틀릿": "ra ra-hand",
-    "저격총": "ra ra-musket",
-    "소총": "ra ra-musket",
+    "건틀릿": "ra ra-blaster",
+    "저격총": "ra ra-rifle",
+    "소총": "ra ra-bullets",
+    "산탄총": "ra ra-shotgun-shell",
     "권총": "ra ra-revolver",
-    "표창": "ra ra-kunai",
-    "창": "ra ra-spear",
-    "방패": "ra ra-shield",
+    "표창": "ra-shuriken",
+    "창": "ra ra-spear-head",
+    "방패": "ra ra-heavy-shield",
     "낫": "ra ra-scythe",
-    "게임패드": "fa-solid fa-gamepad"
+    "게임패드": "fa-solid fa-gamepad",
+    "삼지창": "ra ra-trident",
+    "사슬": "ra ra-chain",
+    "없음": "ra ra-cancel"
 };
 
 function posTag(pos) {
