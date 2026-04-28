@@ -109,8 +109,8 @@ class TipEvent(BaseCog):
 
             raw_text = str(message.clean_content)
 
-            # 코드블럭 제거 (줄바꿈 포함)
-            clean_content = re.sub(r'```.*?```', '', raw_text, flags=re.DOTALL).strip()
+            # 코드블럭 제거
+            clean_content = raw_text.replace('```', '').strip()
 
             # 유튜브 링크 추출
             youtube_urls = self._extract_youtube_urls(clean_content)

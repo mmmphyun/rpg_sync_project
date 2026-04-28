@@ -187,7 +187,7 @@ def update_tip_by_id(tip_id: int, title: str, content: str) -> int:
 
 def delete_tip_by_id(tip_id: int) -> int:
     """팁 게시글 Soft Delete"""
-    sql = "UPDATE tips SET is_deleted = TRUE, updated_at = CURRENT_TIMESTAMP WHERE tip_id = %s;"
+    sql = "UPDATE tips SET is_deleted = TRUE, title = NULL, content = NULL, updated_at = CURRENT_TIMESTAMP WHERE tip_id = %s;"
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -221,7 +221,7 @@ def update_comment_by_id(comment_id: int, content: str) -> int:
 
 def delete_comment_by_id(comment_id: int) -> int:
     """댓글 Soft Delete"""
-    sql = "UPDATE tip_comments SET is_deleted = TRUE, updated_at = CURRENT_TIMESTAMP WHERE comment_id = %s;"
+    sql = "UPDATE tip_comments SET is_deleted = TRUE, content = NULL, updated_at = CURRENT_TIMESTAMP WHERE comment_id = %s;"
     conn = get_connection()
     cursor = conn.cursor()
     try:

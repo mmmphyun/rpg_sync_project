@@ -88,6 +88,17 @@ function renderTips(tips) {
         // 본문 마크다운 파싱 적용
         const parsedContent = marked.parse(tip.content, { breaks: true });
 
+        const commentSection = (tip.category === "QNA") ? `
+            <hr style="border: 0; border-top: 1px solid #2a2a3a; margin: 20px 0;">
+            <div id="comment-area-${tip.tip_id}">
+                <div id="comment-list-${tip.tip_id}" style="margin-bottom: 15px;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="comment-input-${tip.tip_id}" placeholder="댓글을 남겨보세요" style="flex-grow: 1; padding: 8px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px;" onkeypress="if(event.key==='Enter') submitComment(${tip.tip_id})">
+                    <button onclick="submitComment(${tip.tip_id})" style="padding: 8px 16px; background: #3498db; color: #fff; border: none; border-radius: 4px; cursor: pointer;">등록</button>
+                </div>
+            </div>
+        ` : '';
+
         return `
             <div class="tip-card" style="background: #15151e; border: 1px solid #2a2a3a; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
                 <div class="tip-header" style="padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #1a1a24;">
@@ -101,15 +112,7 @@ function renderTips(tips) {
                 <div id="tip-body-${tip.tip_id}" style="display: none; padding: 20px; border-top: 1px solid #2a2a3a; color: #ccc;">
                     <div class="tip-content">${parsedContent}</div>
                     ${youtubeHtml}
-
-                    <hr style="border: 0; border-top: 1px solid #2a2a3a; margin: 20px 0;">
-                    <div id="comment-area-${tip.tip_id}">
-                        <div id="comment-list-${tip.tip_id}" style="margin-bottom: 15px;"></div>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="comment-input-${tip.tip_id}" placeholder="댓글을 남겨보세요" style="flex-grow: 1; padding: 8px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px;" onkeypress="if(event.key==='Enter') submitComment(${tip.tip_id})">
-                            <button onclick="submitComment(${tip.tip_id})" style="padding: 8px 16px; background: #3498db; color: #fff; border: none; border-radius: 4px; cursor: pointer;">등록</button>
-                        </div>
-                    </div>
+                    ${commentSection}
                 </div>
             </div>
         `;
@@ -129,7 +132,9 @@ function toggleAccordion(tipId) {
     if (body.style.display === 'none' || body.style.display === '') {
         body.style.display = 'block';
         openAccordionIds.add(tipId);
-        loadComments(tipId);
+        if (category === 'QNA') {
+            loadComments(tipId);
+        }
     } else {
         body.style.display = 'none';
         openAccordionIds.delete(tipId);
