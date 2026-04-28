@@ -109,7 +109,8 @@ class BoardEvent(BaseCog):
                                     uploaded_urls.append(public_url)
 
             # 3. DB UPSERT
-            clean_content = message.content.replace('```', '')
+            raw_text = str(message.clean_content)
+            clean_content = raw_text.replace('```', '')
 
             notice_data = {
                 'type': 'notice',

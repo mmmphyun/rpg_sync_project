@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>팁 게시판 - Fossile Wiki</title>
   <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
-<body class="page-jobs" style="min-height: 100vh; display: flex; flex-direction: column;">
-
+<body class="page-jobs">
 <header class="dash-header">
     <div class="header-container">
         <h1 class="logo" onclick="location.href='/'">Fossile Wiki</h1>
@@ -15,22 +15,48 @@
     </div>
 </header>
 
-<div class="content-container" style="flex: 1; max-width: 900px; width: 100%; margin: 0 auto; padding: 100px 20px; text-align: center;">
-    <h2 style="color: #fff; margin-bottom: 20px;">팁 게시판</h2>
-    <div style="padding: 50px; background: #13132b; border: 1px solid #1e1e3a; border-radius: 12px; color: #888;">
-        <p style="font-size: 1.2rem; margin: 0; color: #c89b3c; font-weight: bold;">&lt; 개발 예정 &gt;</p>
-        <p style="margin-top: 10px; font-size: 0.9rem;">유저 간 팁을 공유할 수 있는 공간을 준비 중입니다.</p>
+<div class="content-container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <div class="page-title-area" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="color: #fff; margin: 0;">팁 게시판</h2>
+        <button id="writeTipBtn" onclick="openWriteModal()" style="display: none; padding: 8px 16px; background: #3498db; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Q&A 작성하기</button>
+    </div>
+
+    <div class="filter-bar" style="border-radius: 8px; margin-bottom: 20px;">
+        <span class="filter-label">카테고리</span>
+        <button class="filter-btn tag-btn active" data-category="BUILD">추천 빌드</button>
+        <button class="filter-btn tag-btn" data-category="GUILD">길드 모집</button>
+        <button class="filter-btn tag-btn" data-category="QNA">팁 & Q&A</button>
+    </div>
+
+    <div id="feedArea" style="display: flex; flex-direction: column; gap: 15px;">
+        </div>
+
+    <div id="paginationArea" style="display: flex; justify-content: center; gap: 8px; margin-top: 30px; padding-bottom: 40px;">
     </div>
 </div>
 
 <footer class="dash-footer">
     <div class="footer-container">
         <p>&copy; 2026 Fossile Wiki. All rights reserved.</p>
-        <p class="attribution">아이디어 및 초기 소스 제공: 나나</p>
     </div>
 </footer>
 
-<script src="/static/index.js?v=1.0.1"></script>
+<div class="review-modal-overlay" id="writeModal">
+    <div class="review-modal-content" style="width: 500px; padding: 20px;">
+        <div class="review-modal-header" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+            <h3 style="color: #fff; margin: 0;">Q&A 작성</h3>
+            <button onclick="closeWriteModal()" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <input type="text" id="tipTitleInput" placeholder="제목을 입력하세요" style="width: 100%; padding: 10px; margin-bottom: 15px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px; box-sizing: border-box;">
+        <textarea id="tipContentInput" placeholder="본문 내용을 입력하세요 (마크다운 지원)" style="width: 100%; height: 200px; padding: 10px; margin-bottom: 20px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px; box-sizing: border-box; resize: vertical;"></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button onclick="closeWriteModal()" style="padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer;">취소</button>
+            <button onclick="submitTip()" style="padding: 8px 16px; background: #3498db; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">등록하기</button>
+        </div>
+    </div>
+</div>
 
+<script src="/static/index.js?v=1.0.1"></script>
+<script src="/static/tips.js?v=1.0.0"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@ import json
 import logging
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -13,7 +13,7 @@ from slowapi.errors import RateLimitExceeded
 from src.web.limiter import limiter
 
 from src.database.jobs import get_all_jobs_for_web
-from src.web.routers import auth, jobs, boards, server
+from src.web.routers import auth, jobs, boards, server, tips
 
 app = FastAPI(title="Fossile Server Web Dashboard")
 
@@ -55,9 +55,10 @@ templates = Jinja2Templates(directory="src/web/templates")
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["Jobs"])
 app.include_router(boards.router, prefix="/api/v1/boards", tags=["Boards"])
-app.include_router(server.router)
+app.include_router(server.router, prefix="/api/v1/server", tags=["Server"])
+app.include_router(tips.router, prefix="/api/v1/tips", tags=["Tips"])
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def serve_index(request: Request):
     return templates.TemplateResponse(
         request=request,
@@ -118,7 +119,13 @@ async def serve_event(request: Request):
 
 @app.get("/tips", response_class=HTMLResponse)
 async def serve_tips(request: Request):
-    """팁 게시판 더미 페이지 서빙"""
+    """팁 게시판 서빙 (게스트 접근 차단)"""
+    token = request.cookies.get("forum_session")
+
+    if not token:
+        # 로그인 쿠키가 없으면 메인 페이지로 강제 리다이렉트
+        return RedirectResponse(url="/?alert=login_required", status_code=302)
+
     return templates.TemplateResponse(
         request=request,
         name="tips.html",

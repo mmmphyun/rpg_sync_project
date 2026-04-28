@@ -14,6 +14,8 @@ class BaseCog(commands.Cog):
             self.owner_notice_channel_id = int(os.getenv('OWNER_NOTICE_CHANNEL_ID', 0)) or None
             self.staff_notice_channel_id = int(os.getenv('STAFF_NOTICE_CHANNEL_ID', 0)) or None
             self.system_patch_channel_id = int(os.getenv('SYSTEM_PATCH_CHANNEL_ID', 0)) or None
+            self.build_forum_id = int(os.getenv('BUILD_FORUM_ID', 0)) or None
+            self.guild_forum_id = int(os.getenv('GUILD_FORUM_ID', 0)) or None
         except ValueError as e:
             print(f"[Critical] BaseCog env parse error: {e}")
             self.patch_channel_id = self.desc_thread_id = self.illust_thread_id = None

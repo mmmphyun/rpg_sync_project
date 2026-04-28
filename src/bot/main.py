@@ -13,6 +13,7 @@ class RPGSyncBot(commands.Bot):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.members = True
+        intents.guilds = True
 
         super().__init__(
             command_prefix="!",
@@ -28,6 +29,7 @@ class RPGSyncBot(commands.Bot):
             "src.bot.cogs.jobs.job_event",
             "src.bot.cogs.board.board_cmd",
             "src.bot.cogs.board.board_event",
+            "src.bot.cogs.board.tip_event",
             "src.bot.cogs.users.user_event",
             "src.bot.cogs.system.bulk_sync_cmd"
         ]
@@ -35,20 +37,20 @@ class RPGSyncBot(commands.Bot):
         for ext in extensions:
             try:
                 await self.load_extension(ext)
-                print(f"Loaded extension: {ext}")
+                print(f"Loaded extension: {ext}", flush=True)
             except Exception as e:
-                print(f"Failed to load extension {ext}: {e}")
+                print(f"Failed to load extension {ext}: {e}", flush=True)
 
         # 슬래시 명령어 동기화
         try:
             synced = await self.tree.sync()
-            print(f"Synced {len(synced)} command(s)")
+            print(f"Synced {len(synced)} command(s)", flush=True)
         except Exception as e:
-            print(f"Failed to sync commands: {e}")
+            print(f"Failed to sync commands: {e}", flush=True)
 
     async def on_ready(self):
-        print(f'Logged in as {self.user} (ID: {self.user.id})')
-        print('------')
+        print(f'Logged in as {self.user} (ID: {self.user.id})', flush=True)
+        print('------', flush=True)
 
 
 if __name__ == '__main__':
