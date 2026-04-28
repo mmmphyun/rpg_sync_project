@@ -144,7 +144,11 @@ function toggleAccordion(tipId) {
 function openWriteModal() {
     currentEditingId = null;
     document.getElementById('writeModal').style.display = 'flex';
-    document.querySelector('#writeModal h3').innerText = "Q&A 작성";
+    document.querySelector('#writeModal h3').innerText = "작성하기";
+
+    document.getElementById('tipPrefixInput').value = '질문';
+    document.getElementById('tipTitleInput').value = '';
+    document.getElementById('tipContentInput').value = '';
 
     const submitBtn = document.querySelector('#writeModal button[onclick="submitTip()"]');
     if (submitBtn) submitBtn.innerText = "등록하기";
@@ -154,7 +158,16 @@ function openEditModal(event, tipId, title, content) {
     event.stopPropagation();
 
     currentEditingId = tipId;
-    document.getElementById('tipTitleInput').value = title;
+
+    const match = title.match(/^\[(질문|팁)\]\s*(.*)$/);
+    if (match) {
+        document.getElementById('tipPrefixInput').value = match[1];
+        document.getElementById('tipTitleInput').value = match[2];
+    } else {
+        document.getElementById('tipPrefixInput').value = '질문';
+        document.getElementById('tipTitleInput').value = title;
+    }
+
     document.getElementById('tipContentInput').value = content;
     document.getElementById('writeModal').style.display = 'flex';
     document.querySelector('#writeModal h3').innerText = "게시글 수정";
@@ -170,16 +183,19 @@ function closeWriteModal() {
 }
 
 async function submitTip() {
-    const title = document.getElementById('tipTitleInput').value.trim();
+    const prefix = document.getElementById('tipPrefixInput').value;
+    const rawTitle = document.getElementById('tipTitleInput').value.trim();
     const content = document.getElementById('tipContentInput').value.trim();
 
-    const method = currentEditingId ? 'PATCH' : 'POST';
-    const url = currentEditingId ? `/api/v1/tips/${currentEditingId}` : '/api/v1/tips/';
-
-    if (!title || !content) {
+    if (!rawTitle || !content) {
         alert("제목과 본문을 모두 입력해주세요.");
         return;
     }
+
+    const title = `[${prefix}] ${rawTitle}`;
+
+    const method = currentEditingId ? 'PATCH' : 'POST';
+    const url = currentEditingId ? `/api/v1/tips/${currentEditingId}` : '/api/v1/tips/';
 
     try {
         const response = await fetch(url, {
