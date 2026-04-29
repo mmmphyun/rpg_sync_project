@@ -96,13 +96,14 @@ def update_notice_tag(notice_id: int, new_tag: str) -> int:
 
 def update_notice_type(notice_id: int, new_type: str) -> int:
     """게시글 타입(notice/event) 변경을 통한 게시판 간 데이터 이관"""
-    sql = "UPDATE notices SET type = %s WHERE notice_id = %s AND is_deleted = FALSE"
+    new_tag = '이벤트' if new_type == 'event' else '일반 공지'
+    sql = "UPDATE notices SET type = %s, tag = %s WHERE notice_id = %s AND is_deleted = FALSE"
 
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute(sql, (new_type, notice_id))
+        cursor.execute(sql, (new_type, new_tag, notice_id))
         affected_rows = cursor.rowcount
         conn.commit()
         return affected_rows
