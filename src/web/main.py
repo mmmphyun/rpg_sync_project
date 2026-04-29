@@ -1,5 +1,5 @@
 import os
-import json
+import time
 import logging
 
 from fastapi import FastAPI, Request
@@ -32,7 +32,20 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
+    """
+    [Security & Monitoring] 보안 헤더 삽입 및 API 처리 시간 로깅 미들웨어
+    """
+    start_time = time.time()
+
     response = await call_next(request)
+
+    process_time = time.time() - start_time
+    if process_time > 0.5:
+        print(f"[Warning] Slow API Call: [{request.method}] {request.url.path} - {process_time:.4f}s")
+    else:
+        print(f"[Info] [{request.method}] {request.url.path} - {process_time:.4f}s")
+
+    response.headers["X-Process-Time"] = str(process_time)
 
     # 클릭재킹 방어
     response.headers["X-Frame-Options"] = "DENY"
