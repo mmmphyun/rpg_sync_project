@@ -102,10 +102,14 @@ function renderFeed(notices) {
             const oppositeType = BOARD_TYPE === 'notice' ? 'event' : 'notice';
             const oppositeLabel = BOARD_TYPE === 'notice' ? '이벤트로 이관' : '공지로 이관';
             const escapedCurrentTitle = safeTitle.replace(/'/g, "\\'");
+            const popupBtn = BOARD_TYPE === 'event'
+                ? `<button onclick="setAsPopup(${notice.notice_id})" style="background: #8e44ad; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">팝업 등록</button>`
+                : '';
 
             // Onclick 이벤트 내 파라미터 매핑
             adminPanel = `
                 <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #333; display: flex; gap: 10px; justify-content: flex-end;">
+                    ${popupBtn}
                     <button onclick="changeNoticeType(${notice.notice_id}, '${oppositeType}')" style="background: #27ae60; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">${oppositeLabel}</button>
                     ${BOARD_TYPE === 'notice' ? `<button id="tag-btn-${notice.notice_id}" onclick="promptTagChange(${notice.notice_id}, '${notice.tag}')" style="background: #3498db; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">태그 변경</button>` : ''}
                     <button onclick="openTitleModal(${notice.notice_id}, '${escapedCurrentTitle}')" style="background: #f39c12; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">제목 수정</button>
@@ -239,6 +243,19 @@ async function deleteNotice(id) {
         } else alert("권한이 없거나 삭제 중 오류가 발생했습니다.");
     } catch (e) { alert("통신 오류가 발생했습니다."); }
 }
+
+window.setAsPopup = async function(id) {
+    if (!confirm('이 이벤트를 메인 페이지 팝업으로 등록하시겠습니까?\n(기존 팝업은 일반 이벤트로 변경됩니다)')) return;
+    try {
+        const res = await fetch(`${API_BASE}/${id}/popup`, { method: 'PATCH' });
+        if (res.ok) {
+            alert('팝업으로 등록되었습니다.');
+            loadFeed(currentPage); // 태그가 [팝업]으로 바뀐 것을 화면에 반영
+        } else {
+            alert("권한이 없거나 처리 중 오류가 발생했습니다.");
+        }
+    } catch (e) { alert("통신 오류가 발생했습니다."); }
+};
 
 // =============================================
 //  Modal Controls (Title)
