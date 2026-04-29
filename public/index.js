@@ -70,41 +70,43 @@ function stripMarkdown(text) {
  * 사이드바 최신 글 요약 로드
  */
 async function loadLatestPosts() {
-    const container = document.getElementById('latest-posts');
     try {
-        const response = await fetch('/api/v1/boards/recent');
-        if (!response.ok) throw new Error('Network response error');
+        const response = await fetch('/api/v1/boards/recent?limit=5');
         const posts = await response.json();
+        const listEl = document.getElementById('latest-posts');
 
-        if (posts.length === 0) {
-            container.innerHTML = '<li class="placeholder">최근 업데이트가 없습니다.</li>';
+        if (!posts || posts.length === 0) {
+            listEl.innerHTML = '<li class="placeholder">최근 등록된 업데이트가 없습니다.</li>';
             return;
         }
 
-        container.innerHTML = posts.map(post => {
-            const dateStr = new Date(post.created_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
-            const tagLabel = post.type === 'notice' ? `[${post.tag}]` : '[이벤트]';
-            const hasCustomTitle = post.title && post.title.trim().length > 0;
-            const safeTitle = hasCustomTitle ? escapeHTML(post.title) : null;
-            const cleanText = stripMarkdown(post.content);
-            const bodySnippet = cleanText.length > 35 ? cleanText.substring(0, 35) + '...' : cleanText;
-            const displayText = safeTitle || bodySnippet;
-            const targetUrl = post.type === 'notice' ? '/notice' : '/event';
+        listEl.innerHTML = posts.map(post => {
+            const dateStr = new Date(post.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+            const isEvent = post.type === 'event';
+            const tagColor = isEvent ? '#e74c3c' : '#3498db';
+            const tagText = post.tag || (isEvent ? '이벤트' : '공지');
+
+            // 타입에 따른 대상 URL 생성 및 ID 파라미터 첨부
+            const targetUrl = isEvent ? `/event?id=${post.notice_id}` : `/notice?id=${post.notice_id}`;
+
+            let displayTitle = post.title;
+            if (!displayTitle) {
+                displayTitle = post.content && post.content.length > 35
+                    ? post.content.substring(0, 35) + '...'
+                    : (post.content || '제목 없음');
+            }
 
             return `
-                <li style="cursor: pointer; padding: 10px 0; border-bottom: 1px solid #1e1e3a;" onclick="location.href='${targetUrl}'">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <span style="color: #c89b3c; font-size: 0.8rem; font-weight: bold;">${tagLabel}</span>
-                        <span style="color: #666; font-size: 0.75rem;">${dateStr}</span>
-                    </div>
-                    <div style="color: #ccc; font-size: 0.85rem; line-height: 1.4;">
-                        ${hasCustomTitle ? `<strong style="color: #fff;">${displayText}</strong>` : displayText}
-                    </div>
+                <li class="summary-item" onclick="location.href='${targetUrl}'" style="cursor: pointer; transition: background 0.2s;">
+                    <span class="tag" style="background: ${tagColor}20; color: ${tagColor}; border: 1px solid ${tagColor}40; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-right: 8px; flex-shrink: 0;">${escapeHTML(tagText)}</span>
+                    <span class="title" style="flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; color: #ddd;">${escapeHTML(displayTitle)}</span>
+                    <span class="date" style="font-size: 0.75rem; color: #666; margin-left: 10px; flex-shrink: 0;">${dateStr}</span>
                 </li>
             `;
         }).join('');
-    } catch (error) {
-        container.innerHTML = '<li class="placeholder" style="color: #e74c3c;">업데이트를 불러오지 못했습니다.</li>';
+    } catch (e) {
+        console.error('최신 업데이트 로드 실패:', e);
+        document.getElementById('latest-posts').innerHTML = '<li class="placeholder" style="color: #e74c3c;">데이터를 불러오지 못했습니다.</li>';
     }
 }
 
