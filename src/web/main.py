@@ -81,7 +81,7 @@ async def serve_index(request: Request):
 
 @app.get("/jobs", response_class=HTMLResponse)
 @limiter.limit("30/minute")
-async def serve_jobs(request: Request):
+def serve_jobs(request: Request):
     jobs_data = get_all_jobs_for_web()
 
     formatted_jobs = []
