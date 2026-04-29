@@ -267,53 +267,59 @@ class BulkSyncCmd(BaseCog):
 
                 for thread in all_threads:
                     try:
-                        # 포럼 쓰레드의 시작 메시지(본문) 패치
-                        starter_message = await thread.fetch_message(thread.id)
-                    except discord.NotFound:
-                        continue
-                    except Exception as e:
-                        print(f"[Tip Sync Warning] Failed to fetch starter msg for thread {thread.id}: {e}")
-                        continue
+                        # 실무 적용: fetch_message 단일 호출 폐기, history 제너레이터를 사용하여 쓰레드 내 모든 메시지 순회 및 병합
+                        full_content_lines = []
+                        uploaded_urls = []
+                        youtube_urls = []
 
-                    if starter_message.author.bot:
-                        continue
+                        async for msg in thread.history(limit=None, oldest_first=True):
+                            if msg.author.bot:
+                                continue
 
-                    uploaded_urls = []
-                    if starter_message.attachments:
-                        for att in starter_message.attachments:
-                            async with session.get(att.url) as resp:
-                                if resp.status == 200:
-                                    file_bytes = await resp.read()
-                                    public_url = await asyncio.to_thread(
-                                        upload_to_r2,
-                                        file_bytes,
-                                        att.filename,
-                                        att.content_type,
-                                        "tips"
-                                    )
-                                    if public_url:
-                                        uploaded_urls.append(public_url)
+                            if msg.author.id != thread.owner_id:
+                                continue
 
-                    youtube_urls = youtube_regex.findall(starter_message.content)
+                            if msg.content.strip():
+                                full_content_lines.append(msg.content.strip())
 
-                    tip_data = {
-                        "category": category,
-                        "title": thread.name,
-                        "content": starter_message.content,
-                        "image_urls": json.dumps(uploaded_urls),
-                        "youtube_urls": json.dumps(youtube_urls),
-                        "discord_thread_id": str(thread.id),
-                        "author_id": str(thread.owner_id)
-                    }
+                            if msg.attachments:
+                                for att in msg.attachments:
+                                    async with session.get(att.url) as resp:
+                                        if resp.status == 200:
+                                            file_bytes = await resp.read()
+                                            public_url = await asyncio.to_thread(
+                                                upload_to_r2,
+                                                file_bytes,
+                                                att.filename,
+                                                att.content_type,
+                                                "tips"
+                                            )
+                                            if public_url:
+                                                uploaded_urls.append(public_url)
 
-                    try:
+                            youtube_urls.extend(youtube_regex.findall(msg.content))
+
+                        if not full_content_lines and not uploaded_urls:
+                            continue
+
+                        tip_data = {
+                            "category": category,
+                            "title": thread.name,
+                            "content": "\n\n".join(full_content_lines),
+                            "image_urls": json.dumps(uploaded_urls),
+                            "youtube_urls": json.dumps(list(set(youtube_urls))),
+                            "discord_thread_id": str(thread.id),
+                            "author_id": str(thread.owner_id)
+                        }
+
                         affected = await asyncio.to_thread(upsert_tip, tip_data)
                         if affected > 0:
                             sync_count += 1
+
                     except Exception as e:
                         print(f"[Tip Sync Error] Thread ID {thread.id}: {e}")
 
-        await ctx.send(f"팁 게시판 동기화 완료: 총 {sync_count}건의 쓰레드가 적재/갱신되었습니다.")
+                await ctx.send(f"팁 게시판 동기화 완료: 총 {sync_count}건의 쓰레드가 적재/갱신되었습니다.")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(BulkSyncCmd(bot))
