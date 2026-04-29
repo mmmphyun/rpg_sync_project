@@ -234,3 +234,47 @@ def get_recent_posts_for_web(limit: int = 5):
     finally:
         cursor.close()
         release_connection(conn)
+
+def set_popup_event(notice_id: int) -> bool:
+    """
+    기존 팝업 태그를 모두 '이벤트'로 초기화하고, 특정 게시글 하나만 '팝업'으로 지정합니다.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # 1. 기존 팝업 해제 (데이터 클렌징)
+        cursor.execute("UPDATE notices SET tag = '이벤트' WHERE type = 'event' AND tag = '팝업'")
+        # 2. 새로운 팝업 지정
+        cursor.execute("UPDATE notices SET tag = '팝업' WHERE notice_id = %s AND is_deleted = FALSE", (notice_id,))
+        conn.commit()
+        return True
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"[DB Error] 팝업 지정 실패: {e}")
+        return False
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+def get_popup_event_for_web():
+    """
+    메인 페이지 팝업용 이벤트 게시글 조회 (이미지와 제목 반환)
+    """
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        query = """
+            SELECT notice_id, title, image_urls 
+            FROM notices 
+            WHERE type = 'event' AND tag = '팝업' AND is_deleted = FALSE 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        """
+        cursor.execute(query)
+        return cursor.fetchone()
+    except psycopg2.Error as e:
+        print(f"DB Error (get_popup_event_for_web): {e}")
+        return None
+    finally:
+        cursor.close()
+        release_connection(conn)

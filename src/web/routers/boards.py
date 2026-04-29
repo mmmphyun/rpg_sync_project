@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Body
 from src.web.dependencies import get_admin_user
-from src.database.board import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web, update_notice_title, update_notice_title_by_id
+from src.database.board import get_notices_for_web, update_notice_type, update_notice_tag, delete_notice_logic, get_recent_posts_for_web, update_notice_title_by_id
+from src.database.board import get_popup_event_for_web, set_popup_event
 from src.bot.utils.s3_client import delete_from_r2
 from src.web.limiter import limiter
+from src.web.routers.auth import get_current_user
 
 router = APIRouter()
 
@@ -12,6 +14,28 @@ async def get_recent_boards(request: Request):
     """메인 페이지용 최신 게시글 5개 조회 (서버 상태 공지 제외)"""
     posts = get_recent_posts_for_web(limit=5)
     return posts
+
+@router.get("/popup")
+@limiter.limit("30/minute")
+async def get_popup(request: Request):
+    """메인 페이지용 팝업 이벤트 데이터 반환"""
+    popup_data = get_popup_event_for_web()
+    if popup_data:
+        return popup_data
+    return {"message": "현재 등록된 팝업이 없습니다."}
+
+@router.patch("/{notice_id}/popup")
+@limiter.limit("5/minute")
+async def update_popup_status(request: Request, notice_id: int, user: dict = Depends(get_current_user)):
+    """관리자 전용: 특정 이벤트를 팝업으로 지정"""
+    if user.get("server_role") not in ("주인장", "STAFF"):
+        raise HTTPException(status_code=403, detail="권한이 없습니다.")
+
+    success = set_popup_event(notice_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="팝업 지정에 실패했습니다.")
+
+    return {"message": "팝업이 성공적으로 지정되었습니다."}
 
 @router.get("/{board_type}")
 @limiter.limit("60/minute")
