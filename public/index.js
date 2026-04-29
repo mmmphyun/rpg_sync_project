@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initDashboard() {
+    if (document.getElementById('eventPopupModal')) loadEventPopup();
     // 모든 페이지 공통 실행
     updateUserAuthUI();
 
@@ -22,7 +23,6 @@ function initDashboard() {
     if (document.getElementById('status-indicator')) updateServerStatus();
     if (document.getElementById('latest-posts')) loadLatestPosts();
     if (document.getElementById('recent-reviews')) loadRecentReviews();
-    if (document.getElementById('eventPopupModal')) loadEventPopup();
 }
 
 /**
@@ -202,51 +202,68 @@ async function logout() {
  * 메인 이벤트 팝업 로드 및 슬라이더 로직
  */
 async function loadEventPopup() {
-    // 1. 자정 초기화 타이머 검증
     const hideUntil = localStorage.getItem('hidePopupUntil');
     if (hideUntil && Date.now() < parseInt(hideUntil)) return;
 
+    const cachedPopup = sessionStorage.getItem('eventPopupCache');
+    if (cachedPopup) {
+        renderPopup(JSON.parse(cachedPopup));
+
+        // 백그라운드에서 최신 데이터로 동기화
+        fetch('/api/v1/boards/popup')
+            .then(res => res.json())
+            .then(data => sessionStorage.setItem('eventPopupCache', JSON.stringify(data)))
+            .catch(() => {});
+        return;
+    }
+
+    // 최초 1회 로드 시 API 호출
     try {
         const res = await fetch('/api/v1/boards/popup');
         if (!res.ok) return;
         const data = await res.json();
 
-        // 팝업 데이터가 없거나 메시지가 반환된 경우 처리
         if (!data || !data.notice_id) return;
 
-        const modal = document.getElementById('eventPopupModal');
-        const imgContainer = document.getElementById('popupImageContainer');
-        document.getElementById('popupTitle').textContent = data.title || '진행 중인 이벤트';
-
-        let images = data.image_urls || [];
-        if (images.length === 0) return; // 이미지가 없으면 팝업을 띄우지 않음
-
-        // 2. 다중 이미지 처리 (슬라이더) 및 딥링킹 적용
-        let imgHtml = '';
-        if (images.length > 1) {
-            imgHtml = `
-                <div id="popupSlider" style="display: flex; transition: transform 0.3s ease-in-out; width: ${images.length * 100}%;">
-                    ${images.map(url => `
-                        <div style="width: ${100 / images.length}%; flex-shrink: 0; cursor: pointer;" onclick="location.href='/event?id=${data.notice_id}'">
-                            <img src="${url}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: #000;">
-                        </div>
-                    `).join('')}
-                </div>
-                <button onclick="movePopupSlide(-1)" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">&lt;</button>
-                <button onclick="movePopupSlide(1)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">&gt;</button>
-            `;
-        } else {
-            imgHtml = `<div style="cursor: pointer;" onclick="location.href='/event?id=${data.notice_id}'">
-                <img src="${images[0]}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: #000;">
-            </div>`;
-        }
-
-        imgContainer.innerHTML = imgHtml;
-        imgContainer.dataset.currentIndex = 0;
-        imgContainer.dataset.maxIndex = images.length - 1;
-
-        modal.classList.add('open');
+        sessionStorage.setItem('eventPopupCache', JSON.stringify(data));
+        renderPopup(data);
     } catch (e) { console.error('팝업 로드 실패', e); }
+}
+
+function renderPopup(data) {
+    if (!data || !data.notice_id) return;
+
+    const modal = document.getElementById('eventPopupModal');
+    const imgContainer = document.getElementById('popupImageContainer');
+    document.getElementById('popupTitle').textContent = data.title || '진행 중인 이벤트';
+
+    let images = data.image_urls || [];
+    if (images.length === 0) return;
+
+    let imgHtml = '';
+    if (images.length > 1) {
+        imgHtml = `
+            <div id="popupSlider" style="display: flex; transition: transform 0.3s ease-in-out; width: ${images.length * 100}%;">
+                ${images.map(url => `
+                    <div style="width: ${100 / images.length}%; flex-shrink: 0; cursor: pointer;" onclick="location.href='/event?id=${data.notice_id}'">
+                        <img src="${url}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: #000;">
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="movePopupSlide(-1)" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">&lt;</button>
+            <button onclick="movePopupSlide(1)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold;">&gt;</button>
+        `;
+    } else {
+        imgHtml = `<div style="cursor: pointer;" onclick="location.href='/event?id=${data.notice_id}'">
+            <img src="${images[0]}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: #000;">
+        </div>`;
+    }
+
+    imgContainer.innerHTML = imgHtml;
+    imgContainer.dataset.currentIndex = 0;
+    imgContainer.dataset.maxIndex = images.length - 1;
+
+    modal.classList.add('open');
 }
 
 window.movePopupSlide = function(dir) {
