@@ -35,7 +35,9 @@ def get_connection():
 
             # 세션 생존 여부 확인
             cursor = conn.cursor()
+            cursor.execute("SET statement_timeout = 2000;")
             cursor.execute("SELECT 1")
+            cursor.execute("SET statement_timeout = 0;")
             cursor.close()
 
             return conn

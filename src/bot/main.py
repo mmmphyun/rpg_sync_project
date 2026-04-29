@@ -1,5 +1,7 @@
 import os
 import discord
+import asyncio
+import concurrent.futures
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -23,6 +25,11 @@ class RPGSyncBot(commands.Bot):
 
     async def setup_hook(self):
         """봇 구동 시 필요한 확장 모듈을 로드하고 명령어를 동기화합니다."""
+        loop = asyncio.get_running_loop()
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
+        loop.set_default_executor(executor)
+        print("Thread pool executor configured with max_workers=20", flush=True)
+
         extensions = [
             "src.bot.cogs.auth.auth_cmd",
             "src.bot.cogs.jobs.job_cmd",
