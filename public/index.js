@@ -77,10 +77,19 @@ function stripMarkdown(text) {
  * 사이드바 최신 글 요약 로드
  */
 async function loadLatestPosts() {
+    const listEl = document.getElementById('latest-posts');
+
+    listEl.innerHTML = Array(5).fill(`
+        <li class="summary-item" style="display: flex; align-items: center; cursor: default;">
+            <span class="skeleton" style="width: 40px; height: 18px; border-radius: 4px; margin-right: 8px; flex-shrink: 0;"></span>
+            <span class="skeleton" style="flex-grow: 1; height: 18px; border-radius: 4px;"></span>
+            <span class="skeleton" style="width: 30px; height: 18px; border-radius: 4px; margin-left: 10px; flex-shrink: 0;"></span>
+        </li>
+    `).join('');
+
     try {
         const response = await fetch('/api/v1/boards/recent?limit=5');
         const posts = await response.json();
-        const listEl = document.getElementById('latest-posts');
 
         if (!posts || posts.length === 0) {
             listEl.innerHTML = '<li class="placeholder">최근 등록된 업데이트가 없습니다.</li>';
@@ -122,6 +131,18 @@ async function loadLatestPosts() {
  */
 async function loadRecentReviews() {
     const container = document.getElementById('recent-reviews');
+
+    container.innerHTML = Array(3).fill(`
+        <div class="review-card" style="padding: 12px; background: #13132b; border: 1px solid #1e1e3a; border-radius: 8px; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div class="skeleton skeleton-text short" style="margin: 0; width: 30%;"></div>
+                <div class="skeleton skeleton-text short" style="margin: 0; width: 15%;"></div>
+            </div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text short"></div>
+        </div>
+    `).join('');
+
     try {
         const response = await fetch('/api/v1/jobs/reviews/recent');
         if (!response.ok) throw new Error('Network response error');
@@ -224,17 +245,34 @@ async function loadEventPopup() {
         return;
     }
 
+    // API 호출 전 모달 컨테이너를 미리 노출하고 로딩 스피너 삽입
+    const modalEl = document.getElementById('eventPopupModal');
+    if (modalEl) {
+        modalEl.style.display = 'flex';
+        modalEl.innerHTML = '<div class="loading-spinner"></div>';
+    }
+
     // 최초 1회 로드 시 API 호출
     try {
         const res = await fetch('/api/v1/boards/popup');
-        if (!res.ok) return;
+        if (!res.ok) {
+            if (modalEl) modalEl.style.display = 'none';
+            return;
+        }
         const data = await res.json();
 
-        if (!data || !data.notice_id) return;
+        if (!data || !data.notice_id) {
+            if (modalEl) modalEl.style.display = 'none';
+            return;
+        }
 
         sessionStorage.setItem('eventPopupCache', JSON.stringify(data));
+
         renderPopup(data);
-    } catch (e) { console.error('팝업 로드 실패', e); }
+    } catch (e) {
+        console.error('팝업 로드 실패', e);
+        if (modalEl) modalEl.style.display = 'none';
+    }
 }
 
 function renderPopup(data) {

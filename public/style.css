@@ -659,6 +659,39 @@
 .review-stack::-webkit-scrollbar-track { background: transparent; }
 .review-stack::-webkit-scrollbar-thumb { background: #1e1e3a; border-radius: 2px; }
 
+/* 데이터 로딩 스켈레톤 애니메이션 */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton {
+  background: #1e1e3a;
+  background-image: linear-gradient(90deg, #1e1e3a 0px, #2a2a4a 40px, #1e1e3a 80px);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite linear;
+  border-radius: 4px;
+}
+
+.skeleton-text { height: 14px; margin-bottom: 8px; width: 100%; }
+.skeleton-text.short { width: 50%; }
+
+/* 팝업용 로딩 스피너 */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #1e1e3a;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
 /* Responsive adjustments */
 @media (max-aspect-ratio: 16/10) {
   .page-dashboard { overflow-y: auto; height: auto; }
