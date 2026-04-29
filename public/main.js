@@ -208,6 +208,9 @@ function renderGrid() {
     app.innerHTML = html;
 }
 
+let currentFormMap = {};
+let currentWeaponIdx = 0;
+
 function renderWeaponsSection(jobIdx, activeWeaponIdx) {
     const job = JOBS[jobIdx];
     const weapons = job.weapons || [];
@@ -217,18 +220,35 @@ function renderWeaponsSection(jobIdx, activeWeaponIdx) {
     }
 
     const activeWeapon = weapons[activeWeaponIdx];
+    const skills = activeWeapon.skills || [];
 
-    // 1. 무기 선택 아이콘 그리드
+    // 1. 해당 무기의 사용 가능한 폼 목록 추출
+    const availableForms = [...new Set(skills.map(s => s.form_name).filter(f => f && f.trim() !== ''))]
+        .sort((a, b) => a === '기본' ? -1 : b === '기본' ? 1 : 0);
+
+    // 초기화
+    if (availableForms.length > 0 && !currentFormMap[activeWeaponIdx]) {
+        currentFormMap[activeWeaponIdx] = availableForms.includes('기본') ? '기본' : availableForms[0];
+    }
+    const currentForm = currentFormMap[activeWeaponIdx];
+
+    // 2. 무기 선택 아이콘 그리드
     let tabsHtml = `<div style="display: flex; gap: 10px; margin-top: 20px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;">`;
     weapons.forEach((w, wIdx) => {
         const isAct = wIdx === activeWeaponIdx;
         const iconCls = getWeaponIconClass(w.weapon_type);
 
+        const hasForms = w.skills && w.skills.some(s => s.form_name && s.form_name.trim() !== '');
+        const formBadge = (hasForms && isAct)
+            ? `<div style="position:absolute; top:-5px; right:-5px; background:#e74c3c; color:white; font-size:0.6rem; padding:2px 4px; border-radius:3px;">🔄 ${currentForm}</div>`
+            : (hasForms ? `<div style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#e74c3c; border-radius:50%;"></div>` : '');
+
         tabsHtml += `
             <div onclick="changeWeapon(${jobIdx}, ${wIdx})"
-                 style="flex: 1; min-width: 60px; text-align: center; padding: 10px 5px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+                 style="position: relative; flex: 1; min-width: 60px; text-align: center; padding: 10px 5px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
                         background: ${isAct ? '#2a2a35' : '#16161e'};
                         border: 1px solid ${isAct ? '#c89b3c' : '#222'};">
+                ${formBadge}
                 <i class="${iconCls}" style="font-size: 24px; color: ${isAct ? '#c89b3c' : '#666'};"></i>
                 <div style="font-size: 0.7rem; margin-top: 6px; color: ${isAct ? '#ddd' : '#888'}; letter-spacing: -0.5px;">
                     ${escapeHTML(w.weapon_name)}
@@ -238,33 +258,62 @@ function renderWeaponsSection(jobIdx, activeWeaponIdx) {
     });
     tabsHtml += `</div>`;
 
-    // 2. 선택된 무기의 스킬 리스트 (최대 5개)
-    let skillsHtml = `<div><h4 style="color: #eee; margin-bottom: 10px; font-size: 0.95rem;">보유 스킬</h4>`;
-    if (activeWeapon.skills && activeWeapon.skills.length > 0) {
-        const displaySkills = activeWeapon.skills.slice(0, 5); // 5개 제한
-        displaySkills.forEach(s => {
-            skillsHtml += `
-                <div style="background: #1a1a24; border: 1px solid #2a2a35; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #2a2a35; padding-bottom: 6px; margin-bottom: 8px;">
-                        <strong style="color: #c89b3c; font-size: 0.9rem;">[${escapeHTML(s.command_key)}] ${escapeHTML(s.skill_name)}</strong>
-                        <div style="font-size: 0.75rem; color: #888;">
-                            <span style="margin-right: 8px;">⏱ ${escapeHTML(s.cooldown)}</span>
-                            <span>💧 ${escapeHTML(s.cost_value)}</span>
-                        </div>
-                    </div>
-                    <div style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 8px;">
-                        ${escapeHTML(s.description)}
-                    </div>
-                    <div style="font-size: 0.75rem; color: #888; display: flex; justify-content: space-between;">
-                        <span>🗡 계수: <span style="color: #aaa;">${escapeHTML(s.coefficient)}</span></span>
-                        ${s.is_mobility === 'Y' ? `<span style="color: #3498db;">🏃 이동기</span>` : ''}
-                    </div>
+    // 3. 스킬 분류 로직
+    const fixedSkills = skills.filter(s =>
+        s.command_key === '패시브' ||
+        !s.form_name ||
+        s.form_name.trim() === '' ||
+        s.form_name === '공통'
+    );
+
+    const formSkills = skills.filter(s =>
+        s.command_key !== '패시브' &&
+        s.form_name &&
+        s.form_name === currentForm &&
+        s.form_name !== '공통'
+    );
+
+    const renderSkillCard = (s) => `
+        <div style="background: #1a1a24; border: 1px solid #2a2a35; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #2a2a35; padding-bottom: 6px; margin-bottom: 8px;">
+                <strong style="color: #c89b3c; font-size: 0.9rem;">[${escapeHTML(s.command_key)}] ${escapeHTML(s.skill_name)}</strong>
+                <div style="font-size: 0.75rem; color: #888;">
+                    <span style="margin-right: 8px;">⏱ ${escapeHTML(s.cooldown || '-')}</span>
+                    <span>💧 ${escapeHTML(s.cost_value || '-')}</span>
                 </div>
-            `;
-        });
-    } else {
+            </div>
+            <div style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 8px; white-space: pre-wrap;">${escapeHTML(s.description)}</div>
+            <div style="font-size: 0.75rem; color: #888; display: flex; justify-content: space-between;">
+                <span>🗡 계수: <span style="color: #aaa;">${escapeHTML(s.coefficient || '-')}</span></span>
+                ${s.is_mobility === 'Y' ? `<span style="color: #3498db;">🏃 이동기</span>` : ''}
+            </div>
+        </div>
+    `;
+
+    // 4. 스킬 리스트 HTML 조합
+    let skillsHtml = `<div>`;
+
+    // 4-1. 고정 스킬 렌더링
+    if (fixedSkills.length > 0) {
+        skillsHtml += `<h4 style="color: #eee; margin-bottom: 10px; font-size: 0.95rem;">패시브 & 기본 스킬</h4>`;
+        fixedSkills.forEach(s => { skillsHtml += renderSkillCard(s); });
+    }
+
+    // 4-2. 폼 전용 스킬 렌더링
+    if (availableForms.length > 0) {
+        skillsHtml += `<h4 style="color: #eee; margin-top: 15px; margin-bottom: 10px; font-size: 0.95rem; display:flex; align-items:center;">
+            <span style="color:#e74c3c; margin-right:5px;">[${currentForm}]</span> 액티브 스킬
+        </h4>`;
+
+        if (formSkills.length > 0) {
+            formSkills.forEach(s => { skillsHtml += renderSkillCard(s); });
+        } else {
+            skillsHtml += `<div style="color:#888; font-size:0.85rem; text-align:center; padding: 10px; background: #16161e; border-radius: 6px;">현재 폼에 배정된 스킬이 없습니다.</div>`;
+        }
+    } else if (fixedSkills.length === 0) {
         skillsHtml += `<div style="color:#888; font-size:0.85rem; text-align:center; padding: 15px; background: #16161e; border-radius: 6px;">스킬이 등록되지 않았습니다.</div>`;
     }
+
     skillsHtml += `</div>`;
 
     return tabsHtml + skillsHtml;
@@ -272,14 +321,34 @@ function renderWeaponsSection(jobIdx, activeWeaponIdx) {
 
 window.changeWeapon = function(jobIdx, weaponIdx) {
     const container = document.getElementById("weaponsAndSkillsContainer");
-    if (container) {
-        container.innerHTML = renderWeaponsSection(jobIdx, weaponIdx);
+    if (!container) return;
+
+    const job = JOBS[jobIdx];
+    const activeWeapon = job.weapons[weaponIdx];
+    const availableForms = [...new Set((activeWeapon.skills || []).map(s => s.form_name).filter(f => f && f.trim() !== ''))];
+
+    const isAlreadyActive = (currentWeaponIdx === weaponIdx);
+
+    if (isAlreadyActive && availableForms.length > 1) {
+        const currentForm = currentFormMap[weaponIdx];
+        let nextFormIndex = availableForms.indexOf(currentForm) + 1;
+        if (nextFormIndex >= availableForms.length) nextFormIndex = 0;
+        currentFormMap[weaponIdx] = availableForms[nextFormIndex];
+    } else {
+        currentWeaponIdx = weaponIdx;
+        if (!currentFormMap[weaponIdx] && availableForms.length > 0) {
+            currentFormMap[weaponIdx] = availableForms[0];
+        }
     }
+
+    container.innerHTML = renderWeaponsSection(jobIdx, weaponIdx);
 };
 
 function openSidebar(idx) {
     const job = JOBS[idx];
     selectedIdx = idx;
+    currentFormMap = {};
+    currentWeaponIdx = 0;
     renderGrid();
 
     const sidePortrait = job.img
