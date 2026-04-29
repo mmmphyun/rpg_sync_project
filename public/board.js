@@ -138,6 +138,22 @@ function renderFeed(notices) {
     }).join("");
 
     feedArea.innerHTML = html;
+
+    const targetId = new URLSearchParams(window.location.search).get('id');
+    if (targetId) {
+        setTimeout(() => {
+            const targetEl = document.getElementById(`notice-card-${targetId}`);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                targetEl.style.transition = 'box-shadow 0.6s ease-out';
+                targetEl.style.boxShadow = '0 0 20px #c89b3c';
+                setTimeout(() => { targetEl.style.boxShadow = 'none'; }, 2000);
+
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }, 150);
+    }
 }
 
 function renderPagination(currentPage, isLastPage) {
@@ -250,7 +266,7 @@ window.setAsPopup = async function(id) {
         const res = await fetch(`${API_BASE}/${id}/popup`, { method: 'PATCH' });
         if (res.ok) {
             alert('팝업으로 등록되었습니다.');
-            loadFeed(currentPage); // 태그가 [팝업]으로 바뀐 것을 화면에 반영
+            loadFeed(currentPage);
         } else {
             alert("권한이 없거나 처리 중 오류가 발생했습니다.");
         }
