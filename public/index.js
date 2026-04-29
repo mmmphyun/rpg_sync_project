@@ -17,19 +17,19 @@ document.addEventListener('DOMContentLoaded', () => {
 function initDashboard() {
     if (document.getElementById('eventPopupModal')) loadEventPopup();
 
-    updateUserAuthUI();
+    setTimeout(() => { updateUserAuthUI(); }, 200);
 
     setTimeout(() => {
         if (document.getElementById('latest-posts')) loadLatestPosts();
-    }, 400);
+    }, 600);
 
     setTimeout(() => {
         if (document.getElementById('recent-reviews')) loadRecentReviews();
-    }, 800);
+    }, 1000);
 
     setTimeout(() => {
         if (document.getElementById('status-indicator')) updateServerStatus();
-    }, 1200);
+    }, 1400);
 }
 
 /**
