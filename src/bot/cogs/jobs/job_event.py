@@ -66,7 +66,7 @@ class JobEvent(BaseCog):
         try:
             parsed_data = parse_job_descriptions(content)
             if parsed_data:
-                sync_jobs_to_db(parsed_data)
+                await asyncio.to_thread(sync_jobs_to_db, parsed_data)
                 print(f"[Info] Description sync completed. Processed: {len(parsed_data)} items.")
         except Exception as e:
             print(f"[Error] Description parsing failed: {e}")
@@ -75,7 +75,7 @@ class JobEvent(BaseCog):
         try:
             parsed_data = parse_job_patches(content, created_at, message_id)
             if parsed_data:
-                sync_job_patch_to_db(parsed_data)
+                await asyncio.to_thread(sync_job_patch_to_db, parsed_data)
                 print(f"[Info] Patch note sync completed for job: {parsed_data.get('name')}")
         except Exception as e:
             print(f"[Error] Patch note processing failed: {e}")

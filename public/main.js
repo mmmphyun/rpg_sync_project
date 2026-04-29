@@ -33,6 +33,7 @@ const WEAPON_ICONS = {
     "게임패드": "fa-solid fa-gamepad",
     "삼지창": "ra ra-trident",
     "사슬": "ra ra-chain",
+    "닻": "ra ra-anchor",
     "없음": "ra ra-cancel"
 };
 
