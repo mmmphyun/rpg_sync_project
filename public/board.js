@@ -21,7 +21,8 @@ function escapeHTML(str) {
 
 function removeDiscordMentions(str) {
     if (!str) return '';
-    return str.replace(/@(everyone|here)/g, '')
+    // ZWSP(\u200B) 및 일반 공백 우회 대응
+    return str.replace(/@[\u200B\s]*(everyone|here)/g, '')
               .replace(/<@[!&]?\d+>/g, '')
               .trim();
 }

@@ -58,8 +58,6 @@ async def add_security_headers(request: Request, call_next):
     process_time = time.time() - start_time
     if process_time > 0.5:
         print(f"[Warning] Slow API Call: [{request.method}] {request.url.path} - {process_time:.4f}s")
-    else:
-        print(f"[Info] [{request.method}] {request.url.path} - {process_time:.4f}s")
 
     response.headers["X-Process-Time"] = str(process_time)
 

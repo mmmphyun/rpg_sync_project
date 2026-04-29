@@ -105,7 +105,7 @@ async function loadLatestPosts() {
             // 타입에 따른 대상 URL 생성 및 ID 파라미터 첨부
             const targetUrl = isEvent ? `/event?id=${post.notice_id}` : `/notice?id=${post.notice_id}`;
 
-            let rawContent = post.content ? post.content.replace(/@(everyone|here)/g, '').replace(/<@[!&]?\d+>/g, '').trim() : '';
+            let rawContent = post.content ? post.content.replace(/@[\u200B\s]*(everyone|here)/g, '').replace(/<@[!&]?\d+>/g, '').trim() : '';
 
             let displayTitle = post.title;
             if (!displayTitle) {
