@@ -1,11 +1,23 @@
+version: '3.8'
 
 services:
-  rpg-sync-app:
+  web-app:
     build: .
-    container_name: rpg-sync-container
+    container_name: rpg-web-container
     restart: always
+    command: uvicorn src.web.main:app --host 0.0.0.0 --port 8000
     ports:
       - "80:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./public/images:/app/public/images
+
+  discord-bot:
+    build: .
+    container_name: rpg-bot-container
+    restart: always
+    command: python -m src.bot.main
     env_file:
       - .env
     volumes:
