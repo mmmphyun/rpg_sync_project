@@ -19,6 +19,13 @@ function escapeHTML(str) {
     }[tag] || tag));
 }
 
+function removeDiscordMentions(str) {
+    if (!str) return '';
+    return str.replace(/@(everyone|here)/g, '')
+              .replace(/<@[!&]?\d+>/g, '')
+              .trim();
+}
+
 // =============================================
 //  Core Logic
 // =============================================
@@ -85,7 +92,7 @@ function renderFeed(notices) {
     const html = notices.map(notice => {
         const dateStr = new Date(notice.created_at).toLocaleString('ko-KR');
         const safeContent = (notice.content || "").replace(/```/g, "");
-        const parsedContent = marked.parse(notice.content || "", { breaks: true });
+        const parsedContent = removeDiscordMentions(marked.parse(notice.content || "", { breaks: true }));
 
         const safeTitle = notice.title ? escapeHTML(notice.title) : "";
         const titleHtml = `<h3 id="notice-title-${notice.notice_id}" style="margin: 0; color: #fff; font-size: 1.25rem; ${safeTitle ? 'margin-bottom: 10px;' : 'display: none;'}">${safeTitle}</h3>`;

@@ -105,11 +105,13 @@ async function loadLatestPosts() {
             // 타입에 따른 대상 URL 생성 및 ID 파라미터 첨부
             const targetUrl = isEvent ? `/event?id=${post.notice_id}` : `/notice?id=${post.notice_id}`;
 
+            let rawContent = post.content ? post.content.replace(/@(everyone|here)/g, '').replace(/<@[!&]?\d+>/g, '').trim() : '';
+
             let displayTitle = post.title;
             if (!displayTitle) {
-                displayTitle = post.content && post.content.length > 35
-                    ? post.content.substring(0, 35) + '...'
-                    : (post.content || '제목 없음');
+                displayTitle = rawContent && rawContent.length > 35
+                    ? rawContent.substring(0, 35) + '...'
+                    : (rawContent || '제목 없음');
             }
 
             return `
