@@ -11,8 +11,14 @@ def initialize_pool():
     global _db_pool
     if _db_pool is None:
         try:
-            # Thread-safe connection pool 생성 (min=1, max=20)
-            _db_pool = pool.ThreadedConnectionPool(1, 20, dsn=os.getenv("DATABASE_URL"))
+            _db_pool = pool.ThreadedConnectionPool(
+                10, 20,
+                dsn=os.getenv("DATABASE_URL"),
+                keepalives=1,
+                keepalives_idle=30,
+                keepalives_interval=10,
+                keepalives_count=5
+            )
         except Exception as e:
             print("[Critical] Database pool initialization failed. Check configuration.")
             raise
