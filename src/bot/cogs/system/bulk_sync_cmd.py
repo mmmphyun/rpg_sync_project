@@ -12,6 +12,7 @@ from src.bot.cogs.core.base_cog import BaseCog
 from src.database.jobs import update_job_illustrations
 from src.database.board import upsert_notice
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
+from src.database.tip import upsert_tip
 
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.bot.utils.s3_client import upload_to_r2
@@ -228,6 +229,91 @@ class BulkSyncCmd(BaseCog):
                         print(f"[Notice Sync Error] Msg ID {message.id}: {e}")
 
         await ctx.send(f"공지사항 동기화 완료: 총 {sync_count}건의 데이터가 적재/갱신되었습니다.")
+
+    @commands.command(name="팁동기화")
+    @commands.has_permissions(administrator=True)
+    async def sync_tips_command(self, ctx: commands.Context):
+        """빌드 및 길드 포럼의 전체 쓰레드를 DB에 동기화 (첨부파일 R2 업로드 포함)"""
+        await ctx.send("팁 게시판(포럼) 전체 동기화를 시작합니다. 미디어 업로드에 시간이 소요될 수 있습니다.")
+
+        try:
+            build_forum_id = int(os.getenv('BUILD_FORUM_ID', 0))
+            guild_forum_id = int(os.getenv('GUILD_FORUM_ID', 0))
+        except ValueError:
+            await ctx.send("환경 변수에 포럼 채널 ID가 올바르게 설정되지 않았습니다.")
+            return
+
+        forums_to_sync = [
+            (build_forum_id, 'BUILD'),
+            (guild_forum_id, 'GUILD')
+        ]
+
+        sync_count = 0
+        youtube_regex = re.compile(r'(https?://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)[a-zA-Z0-9_-]+)')
+
+        async with aiohttp.ClientSession() as session:
+            for forum_id, category in forums_to_sync:
+                if not forum_id:
+                    continue
+
+                forum = self.bot.get_channel(forum_id) or await self.bot.fetch_channel(forum_id)
+                if not forum or not isinstance(forum, discord.ForumChannel):
+                    continue
+
+                # 활성 쓰레드 및 보관된 쓰레드 병합 처리
+                all_threads = forum.threads.copy()
+                async for archived_thread in forum.archived_threads(limit=None):
+                    all_threads.append(archived_thread)
+
+                for thread in all_threads:
+                    try:
+                        # 포럼 쓰레드의 시작 메시지(본문) 패치
+                        starter_message = await thread.fetch_message(thread.id)
+                    except discord.NotFound:
+                        continue
+                    except Exception as e:
+                        print(f"[Tip Sync Warning] Failed to fetch starter msg for thread {thread.id}: {e}")
+                        continue
+
+                    if starter_message.author.bot:
+                        continue
+
+                    uploaded_urls = []
+                    if starter_message.attachments:
+                        for att in starter_message.attachments:
+                            async with session.get(att.url) as resp:
+                                if resp.status == 200:
+                                    file_bytes = await resp.read()
+                                    public_url = await asyncio.to_thread(
+                                        upload_to_r2,
+                                        file_bytes,
+                                        att.filename,
+                                        att.content_type,
+                                        "tips"
+                                    )
+                                    if public_url:
+                                        uploaded_urls.append(public_url)
+
+                    youtube_urls = youtube_regex.findall(starter_message.content)
+
+                    tip_data = {
+                        "category": category,
+                        "title": thread.name,
+                        "content": starter_message.content,
+                        "image_urls": json.dumps(uploaded_urls),
+                        "youtube_urls": json.dumps(youtube_urls),
+                        "discord_thread_id": str(thread.id),
+                        "author_id": str(thread.owner_id)
+                    }
+
+                    try:
+                        affected = await asyncio.to_thread(upsert_tip, tip_data)
+                        if affected > 0:
+                            sync_count += 1
+                    except Exception as e:
+                        print(f"[Tip Sync Error] Thread ID {thread.id}: {e}")
+
+        await ctx.send(f"팁 게시판 동기화 완료: 총 {sync_count}건의 쓰레드가 적재/갱신되었습니다.")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(BulkSyncCmd(bot))
