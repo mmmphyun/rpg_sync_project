@@ -13,9 +13,25 @@ from slowapi.errors import RateLimitExceeded
 from src.web.limiter import limiter
 
 from src.database.jobs import get_all_jobs_for_web
+from src.database.connection import initialize_pool
 from src.web.routers import auth, jobs, boards, server, tips
 
 app = FastAPI(title="Fossile Server Web Dashboard")
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    서버 구동 시점에 무거운 SSL 커넥션과 외부 API 핑을 미리 처리하여 캐싱(Pre-warming).
+    """
+    print("[System] DB 커넥션 풀 예열 시작...", flush=True)
+    initialize_pool()
+    print("[System] MC 서버 초기 상태 캐싱 시작...", flush=True)
+    try:
+        await server.get_server_status()
+    except Exception as e:
+        print(f"[System] MC 서버 캐싱 실패 (무시됨): {e}", flush=True)
+    print("[System] 서버 사전 예열 완료", flush=True)
+
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
