@@ -38,7 +38,8 @@ class RPGSyncBot(commands.Bot):
             "src.bot.cogs.board.board_event",
             "src.bot.cogs.board.tip_event",
             "src.bot.cogs.users.user_event",
-            "src.bot.cogs.system.bulk_sync_cmd"
+            "src.bot.cogs.system.bulk_sync_cmd",
+            "src.bot.cogs.system.banner_cmd"
         ]
 
         for ext in extensions:

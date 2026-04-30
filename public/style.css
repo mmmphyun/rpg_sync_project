@@ -13,6 +13,18 @@
   box-sizing: border-box;
 }
 
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.content-container {
+    flex: 1;
+    width: 100%;
+}
+
 /* ==========================================================================
    Page: Home (index.html)
    ========================================================================== */
@@ -794,4 +806,23 @@
 .review-submit-btn {
     background: #c89b3c; color: #fff; border: none; padding: 8px;
     border-radius: 4px; cursor: pointer; font-weight: bold;
+}
+
+.blur-content {
+        filter: blur(8px);
+        pointer-events: none; /* 클릭, 스크롤 등 이벤트 전면 차단 */
+        user-select: none; /* 텍스트 드래그 차단 */
+        opacity: 0.6;
+}
+.auth-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    text-align: center;
+    width: 100%;
+}
+.tips-container {
+    position: relative; /* 오버레이의 absolute 포지셔닝 기준점 */
 }

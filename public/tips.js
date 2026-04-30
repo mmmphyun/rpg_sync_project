@@ -5,6 +5,18 @@ let currentUser = null;
 let openAccordionIds = new Set();
 
 document.addEventListener('DOMContentLoaded', () => {
+    const tipsBoard = document.getElementById('tips-board');
+    const isLoggedIn = tipsBoard && tipsBoard.dataset.loggedIn === 'true';
+
+    if (!isLoggedIn) {
+        if (tipsBoard) {
+            tipsBoard.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, true);
+        }
+        return;
+    }
     loadTips();
     setupFilters();
 });

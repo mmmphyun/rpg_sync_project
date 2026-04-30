@@ -14,7 +14,7 @@ from src.web.limiter import limiter
 
 from src.database.jobs import get_all_jobs_for_web
 from src.database.connection import initialize_pool
-from src.web.routers import auth, jobs, boards, server, tips
+from src.web.routers import banner, auth, jobs, boards, server, tips
 
 app = FastAPI(title="Fossile Server Web Dashboard")
 
@@ -79,6 +79,7 @@ app.mount("/static", StaticFiles(directory="public"), name="static")
 templates = Jinja2Templates(directory="src/web/templates")
 
 # Include Routers
+app.include_router(banner.router, prefix="/api/v1/banners", tags=["Banners"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["Jobs"])
 app.include_router(boards.router, prefix="/api/v1/boards", tags=["Boards"])
@@ -149,14 +150,15 @@ async def serve_tips(request: Request):
     """팁 게시판 서빙 (게스트 접근 차단)"""
     token = request.cookies.get("forum_session")
 
-    if not token:
-        # 로그인 쿠키가 없으면 메인 페이지로 강제 리다이렉트
-        return RedirectResponse(url="/?alert=login_required", status_code=302)
+    is_logged_in = bool(token)
 
     return templates.TemplateResponse(
         request=request,
         name="tips.html",
-        context={"request": request}
+        context={
+            "request": request,
+            "is_logged_in": is_logged_in
+        }
     )
 
 # 로깅 (서버 터미널만 상세 에러 기록)
