@@ -211,10 +211,13 @@ class BulkSyncCmd(BaseCog):
                     # Discord UTC 시간을 KST로 변환
                     created_at_kst = message.created_at.astimezone(kst_tz)
 
+                    raw_text = str(message.clean_content)
+                    clean_content = raw_text.replace('```', '')
+
                     notice_data = {
                         "type": "notice",
                         "tag": "일반 공지",
-                        "content": message.content,
+                        "content": clean_content,
                         "image_urls": json.dumps(uploaded_urls),
                         "discord_message_id": str(message.id),
                         "author_id": str(message.author.id),
@@ -279,8 +282,8 @@ class BulkSyncCmd(BaseCog):
                             if msg.author.id != thread.owner_id:
                                 continue
 
-                            if msg.content.strip():
-                                full_content_lines.append(msg.content.strip())
+                            if msg.clean_content.strip():
+                                full_content_lines.append(msg.clean_content.strip())
 
                             if msg.attachments:
                                 for att in msg.attachments:
