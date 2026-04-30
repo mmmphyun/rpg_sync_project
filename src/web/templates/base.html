@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Fossile Wiki{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link rel="stylesheet" href="/static/global.css">
+    <link rel="manifest" href="/images/manifest.json">
+    <link rel="stylesheet" href="/static/css/rpg-awesome.min.css">
+    <link rel="stylesheet" href="/static/css/swiper-bundle.min.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@600;700&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 전역 최우선 팝업 레이어 -->
+    <div id="global-popup-overlay" class="modal-overlay hidden">
+        <div id="global-popup-content" class="modal-content"></div>
+    </div>
+
+    <!-- 투명 GNB 헤더 -->
+    <header class="global-header transparent">
+        <div class="header-inner">
+            <a href="/" class="logo" style="text-decoration: none; color: inherit;">Fossile Wiki</a>
+            <nav class="gnb-nav">
+                <a href="/notice">공지사항</a>
+                <a href="/event">이벤트</a>
+                <a href="/jobs">직업설명</a>
+                <a href="/tips">팁</a>
+            </nav>
+            <div id="user-status-area">
+                <!-- base.js에서 렌더링 -->
+            </div>
+        </div>
+    </header>
+
+    <main class="viewport-container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="dash-footer">
+        <div class="footer-container">
+            <p>&copy; 2026 Fossile Wiki. All rights reserved.</p>
+            <p class="attribution">아이디어 및 초기 소스 제공: 나나</p>
+        </div>
+    </footer>
+
+    <script src="/static/base.js"></script>
+    <script src="/static/js/swiper-bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

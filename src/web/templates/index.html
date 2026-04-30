@@ -1,104 +1,64 @@
-<!-- 아이디어 및 초기 소스 제공: 나나 -->
+{% extends "base.html" %}
 
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fossile Wiki</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body class="page-dashboard">
-    <header class="dash-header">
-        <div class="header-container">
-            <h1 class="logo" onclick="location.href='/'">Fossile Wiki</h1>
-            <div id="user-status-area" class="user-card-anchor">
-                <div class="user-card guest">
-                    <span class="status-label">상태: 게스트</span>
-                    <span class="login-guide">디스코드에서 /위키 입력 시 로그인 가능</span>
-                </div>
+{% block extra_css %}
+<link rel="stylesheet" href="/static/index.css">
+{% endblock %}
+
+{% block content %}
+<div class="index-layout">
+    <!-- Hero Banner -->
+    <section class="hero-section">
+        <div class="swiper" id="hero-swiper" style="width: 100%; height: 100%;">
+            <div class="swiper-wrapper" id="banner-wrapper">
+                <!-- 초기 로딩 스켈레톤 UI -->
+                <div class="swiper-slide skeleton" style="width: 100%; height: 100%;"></div>
             </div>
+            <div class="swiper-pagination"></div>
+            <div class="swiper-button-prev" style="color: var(--accent-hero);"></div>
+            <div class="swiper-button-next" style="color: var(--accent-hero);"></div>
         </div>
-    </header>
+    </section>
 
-    <main class="dash-container">
-        <section class="main-content">
-            <article class="info-card card">
-                <div class="intro-text">
-                    <h2>Wiki Dashboard</h2>
-                    <p>화석서버 공식 인터랙티브 위키입니다. 실시간 정보와 직업 평가를 확인하세요.</p>
-                </div>
-                <div class="server-status" id="server-stats">
-                    <div class="stat-group">
-                        <span class="label">Server Status</span>
-                        <span id="status-indicator" class="value">Checking...</span>
-                    </div>
-                    <div class="stat-group">
-                        <span class="label">Online Players</span>
-                        <span id="player-count" class="value">0 / 0</span>
-                    </div>
-                </div>
-            </article>
+    <!-- Quick Links -->
+    <nav class="quick-links">
+        <a href="/notice" class="quick-item">
+            <div class="icon"><i class="ra ra-scroll-unfurled"></i></div>
+            <span class="text">공지사항</span>
+        </a>
+        <a href="/event" class="quick-item">
+            <div class="icon"><i class="ra ra-horn-call"></i></div>
+            <span class="text">이벤트</span>
+        </a>
+        <a href="/jobs" class="quick-item">
+            <div class="icon"><i class="ra ra-crossed-swords"></i></div>
+            <span class="text">직업설명</span>
+        </a>
+        <a href="/tips" class="quick-item">
+            <div class="icon"><i class="ra ra-key"></i></div>
+            <span class="text">팁</span>
+        </a>
+    </nav>
 
-            <nav class="quick-links">
-                <a href="/notice" class="link-card card">
-                    <div class="link-icon notice">NOTICE</div>
-                    <span class="link-title">공지사항</span>
-                </a>
-                <a href="/event" class="link-card card">
-                    <div class="link-icon event">EVENT</div>
-                    <span class="link-title">이벤트</span>
-                </a>
-                <a href="/jobs" class="link-card card">
-                    <div class="link-icon job">JOB INFO</div>
-                    <span class="link-title">직업설명</span>
-                </a>
-                <a href="/tips" class="link-card card">
-                    <div class="link-icon tip">TIPS</div>
-                    <span class="link-title">팁</span>
-                </a>
-            </nav>
-        </section>
+    <!-- 3-Column Dashboard -->
+    <section class="dashboard-grid">
+        <article class="widget">
+            <h3 class="widget-title">서버 상태</h3>
+            <div id="server-status-content" class="widget-body"></div>
+        </article>
 
-        <aside class="side-content">
-            <section class="summary-widget card">
-                <h3 class="widget-title">Latest Updates</h3>
-                <ul id="latest-posts" class="summary-list">
-                    <li class="placeholder">업데이트를 불러오는 중입니다.</li>
-                </ul>
-            </section>
+        <article class="widget">
+            <h3 class="widget-title">최근 업데이트</h3>
+            <ul id="latest-posts" class="widget-body inner-scroll"></ul>
+        </article>
 
-            <section class="review-widget card">
-                <h3 class="widget-title">Recent Reviews</h3>
-                <div id="recent-reviews" class="review-stack">
-                    <p class="placeholder">최근 평가가 없습니다.</p>
-                </div>
-            </section>
-        </aside>
-    </main>
+        <article class="widget">
+            <h3 class="widget-title">최근 리뷰</h3>
+            <div id="recent-reviews" class="widget-body inner-scroll"></div>
+        </article>
+    </section>
+</div>
+{% endblock %}
 
-    <footer class="dash-footer">
-        <div class="footer-container">
-            <p>&copy; 2026 Fossile Wiki. All rights reserved.</p>
-            <p class="attribution">아이디어 및 초기 소스 제공: 나나</p>
-        </div>
-    </footer>
-
-    <script src="/static/index.js?v=1.0.4"></script>
-
-    <!-- Popup -->
-    <div class="review-modal-overlay" id="eventPopupModal" style="z-index: 9999;">
-        <div class="review-modal-content" style="padding: 0; overflow: hidden; width: 400px; max-width: 90%; background: #13132b; border: 1px solid #c89b3c;">
-            <div style="position: relative;" id="popupImageContainer">
-                </div>
-            <div style="padding: 15px; background: #0a0a1a;">
-                <h3 id="popupTitle" style="color: #fff; margin: 0 0 15px 0; font-size: 1.1rem; text-align: center;"></h3>
-                <div style="display: flex; justify-content: space-between; border-top: 1px solid #333; padding-top: 10px;">
-                    <button onclick="closePopupForToday()" style="background: none; color: #888; border: none; cursor: pointer; font-size: 0.85rem;">오늘은 그만 보기</button>
-                    <button onclick="closePopupModal()" style="background: none; color: #fff; border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold;">닫기</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+{% block extra_js %}
+<script src="/static/index.js"></script>
+{% endblock %}
