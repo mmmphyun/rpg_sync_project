@@ -21,10 +21,20 @@ function escapeHTML(str) {
 
 function removeDiscordMentions(str) {
     if (!str) return '';
-    // ZWSP(\u200B) 및 일반 공백 우회 대응
     return str.replace(/@[\u200B\s]*(everyone|here)/g, '')
               .replace(/<@[!&]?\d+>/g, '')
               .trim();
+}
+
+function getTagTheme(tag) {
+    if (BOARD_TYPE === 'event') return { color: '#e056fd', bg: 'rgba(224, 86, 253, 0.1)' }; // Neon Pink
+    switch(tag) {
+        case '업데이트': return { color: '#2ecc71', bg: 'rgba(46, 204, 113, 0.1)' }; // Green
+        case '서버 상태 공지': return { color: '#e74c3c', bg: 'rgba(231, 76, 60, 0.1)' }; // Red
+        case '직업 공지': return { color: '#f1c40f', bg: 'rgba(241, 196, 15, 0.1)' }; // Yellow
+        case '시스템 공지': return { color: '#9b59b6', bg: 'rgba(155, 89, 182, 0.1)' }; // Purple
+        case '일반 공지': default: return { color: '#3498db', bg: 'rgba(52, 152, 219, 0.1)' }; // Blue
+    }
 }
 
 // =============================================
@@ -77,6 +87,7 @@ async function loadFeed(page) {
         currentPage = page;
 
     } catch (e) {
+        console.error("게시판 로드 및 렌더링 에러:", e);
         feedArea.innerHTML = '<div style="text-align:center; color:#e74c3c;">게시글을 불러오지 못했습니다.</div>';
     }
 }
@@ -84,27 +95,65 @@ async function loadFeed(page) {
 function renderFeed(notices) {
     const feedArea = document.getElementById("feedArea");
     if (!notices || notices.length === 0) {
-        feedArea.innerHTML = '<div style="text-align:center; color:#555; padding: 40px; background: #13132b; border-radius: 8px;">게시글이 없습니다.</div>';
+        feedArea.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding: 60px; background: rgba(11, 12, 26, 0.4); border: 1px solid var(--border-color); border-radius: 8px; backdrop-filter: blur(12px);">게시글이 없습니다.</div>';
         return;
     }
 
     marked.setOptions({ breaks: true, gfm: true });
 
     const html = notices.map(notice => {
-        const dateStr = new Date(notice.created_at).toLocaleString('ko-KR');
+        let timelineDate = "00.00";
+        let cardTime = "00:00";
+
+        try {
+            const rawDate = notice.created_at;
+            const d = new Date(rawDate);
+
+            if (!isNaN(d.getTime())) {
+                const kstOptions = {
+                    timeZone: 'Asia/Seoul',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                };
+                const formatter = new Intl.DateTimeFormat('ko-KR', kstOptions);
+                const parts = formatter.formatToParts(d);
+
+                let month, day, hour, minute;
+                parts.forEach(part => {
+                    if (part.type === 'month') month = part.value;
+                    if (part.type === 'day') day = part.value;
+                    if (part.type === 'hour') hour = part.value;
+                    if (part.type === 'minute') minute = part.value;
+                });
+
+                timelineDate = `${month}.${day}`;
+                cardTime = `${hour}:${minute}`;
+            } else if (typeof rawDate === 'string') {
+                timelineDate = rawDate.substring(5, 10).replace('-', '.');
+                cardTime = rawDate.substring(11, 16);
+            }
+        } catch (e) {
+            console.warn("날짜 파싱 오류, 원본 데이터:", notice.created_at);
+        }
+
         const cleanContent = removeDiscordMentions(notice.content);
         const safeContent = cleanContent.replace(/```/g, "");
         const parsedContent = marked.parse(cleanContent, { breaks: true });
 
         const safeTitle = notice.title ? escapeHTML(notice.title) : "";
-        const titleHtml = `<h3 id="notice-title-${notice.notice_id}" style="margin: 0; color: #fff; font-size: 1.25rem; ${safeTitle ? 'margin-bottom: 10px;' : 'display: none;'}">${safeTitle}</h3>`;
+        const titleHtml = `<h3 id="notice-title-${notice.notice_id}" class="board-card-title" style="${safeTitle ? '' : 'display: none;'}">${safeTitle}</h3>`;
 
         let imagesHtml = "";
         if (notice.image_urls && notice.image_urls.length > 0) {
-            imagesHtml = `<div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:15px;">
-                ${notice.image_urls.map(url => `<img src="${url}" style="max-width:200px; max-height:200px; border-radius:8px; cursor:pointer;" onclick="openLightbox('${url}')">`).join('')}
+            imagesHtml = `<div class="board-card-images">
+                ${notice.image_urls.map(url => `<img src="${url}" onclick="openLightbox('${url}')">`).join('')}
             </div>`;
         }
+
+        const tagTheme = getTagTheme(notice.tag);
 
         let adminPanel = "";
         if (isAdmin) {
@@ -112,41 +161,92 @@ function renderFeed(notices) {
             const oppositeLabel = BOARD_TYPE === 'notice' ? '이벤트로 이관' : '공지로 이관';
             const escapedCurrentTitle = safeTitle.replace(/'/g, "\\'");
             const popupBtn = BOARD_TYPE === 'event'
-                ? `<button onclick="setAsPopup(${notice.notice_id})" style="background: #8e44ad; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">팝업 등록</button>`
+                ? `<button onclick="setAsPopup(${notice.notice_id})" class="admin-btn admin-btn-popup">팝업 등록</button>`
                 : '';
 
-            // Onclick 이벤트 내 파라미터 매핑
             adminPanel = `
-                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #333; display: flex; gap: 10px; justify-content: flex-end;">
+                <div class="board-card-admin">
                     ${popupBtn}
-                    <button onclick="changeNoticeType(${notice.notice_id}, '${oppositeType}')" style="background: #27ae60; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">${oppositeLabel}</button>
-                    ${BOARD_TYPE === 'notice' ? `<button id="tag-btn-${notice.notice_id}" onclick="promptTagChange(${notice.notice_id}, '${notice.tag}')" style="background: #3498db; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">태그 변경</button>` : ''}
-                    <button onclick="openTitleModal(${notice.notice_id}, '${escapedCurrentTitle}')" style="background: #f39c12; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">제목 수정</button>
-                    <button onclick="deleteNotice(${notice.notice_id})" style="background: #e74c3c; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">삭제</button>
+                    <button onclick="changeNoticeType(${notice.notice_id}, '${oppositeType}')" class="admin-btn admin-btn-move">${oppositeLabel}</button>
+                    ${BOARD_TYPE === 'notice' ? `<button id="tag-btn-${notice.notice_id}" onclick="promptTagChange(${notice.notice_id}, '${notice.tag}')" class="admin-btn admin-btn-tag">태그 변경</button>` : ''}
+                    <button onclick="openTitleModal(${notice.notice_id}, '${escapedCurrentTitle}')" class="admin-btn admin-btn-title">제목 수정</button>
+                    <button onclick="deleteNotice(${notice.notice_id})" class="admin-btn admin-btn-delete">삭제</button>
                 </div>
             `;
         }
 
-        // 로컬 업데이트를 위한 id 부여
         return `
-            <div id="notice-card-${notice.notice_id}" class="card" style="padding: 24px; background: #13132b; border: 1px solid #1e1e3a; border-radius: 12px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #1e1e3a; padding-bottom: 10px;">
-                    <span id="notice-tag-${notice.notice_id}" style="color: #c89b3c; font-weight: bold; font-size: 0.85rem;">
-                        ${BOARD_TYPE === 'notice' ? `[${notice.tag}]` : 'EVENT'}
-                    </span>
-                    <span style="color: #666; font-size: 0.8rem;">${dateStr}</span>
+            <div id="notice-card-${notice.notice_id}" class="board-card-wrapper">
+                <div class="timeline-indicator">
+                    <div class="timeline-dot" style="border-color: ${tagTheme.color}; box-shadow: 0 0 10px ${tagTheme.bg};"></div>
+                    <div class="timeline-date">${timelineDate}</div>
                 </div>
-                ${titleHtml}
-                <div style="color: #ccc; line-height: 1.6; font-size: 0.95rem;">
-                    ${parsedContent}
+                <div class="board-card">
+                    <div class="board-card-header">
+                        <span id="notice-tag-${notice.notice_id}" class="board-tag" style="color: ${tagTheme.color}; background: ${tagTheme.bg}; border: 1px solid ${tagTheme.color}40;">
+                            ${BOARD_TYPE === 'notice' ? `[${notice.tag}]` : 'EVENT'}
+                        </span>
+                        <span class="board-date">${cardTime}</span>
+                    </div>
+                    ${titleHtml}
+                    <div class="board-content markdown-body">
+                        ${parsedContent}
+                    </div>
+                    ${imagesHtml}
+                    ${adminPanel}
                 </div>
-                ${imagesHtml}
-                ${adminPanel}
             </div>
         `;
     }).join("");
 
     feedArea.innerHTML = html;
+
+    let glowLine = document.getElementById("timeline-glow");
+    if (!glowLine) {
+        glowLine = document.createElement("div");
+        glowLine.id = "timeline-glow";
+        glowLine.className = "timeline-glow";
+        feedArea.prepend(glowLine);
+    }
+
+    setTimeout(() => {
+        const wrappers = document.querySelectorAll('.board-card-wrapper');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (window.scrollY < 50 && entry.target === wrappers[0]) return;
+
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('focused');
+
+                    if (glowLine) {
+                        const dotCenterY = entry.target.offsetTop + 31;
+                        glowLine.style.transform = `translateY(${dotCenterY - 60}px)`;
+                    }
+                } else {
+                    entry.target.classList.remove('focused');
+                }
+            });
+        }, {
+            root: null,
+            rootMargin: '-40% 0px -40% 0px',
+            threshold: 0
+        });
+
+        wrappers.forEach(wrapper => observer.observe(wrapper));
+
+        const handleTopScroll = () => {
+            if (window.scrollY < 50 && wrappers[0]) {
+                wrappers[0].classList.add('focused');
+                if (glowLine) {
+                    const dotCenterY = wrappers[0].offsetTop + 31;
+                    glowLine.style.transform = `translateY(${dotCenterY - 60}px)`;
+                }
+            }
+        };
+
+        window.addEventListener('scroll', handleTopScroll, { passive: true });
+        handleTopScroll();
+    }, 50);
 
     const targetId = new URLSearchParams(window.location.search).get('id');
     if (targetId) {
@@ -155,9 +255,16 @@ function renderFeed(notices) {
             if (targetEl) {
                 targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                targetEl.style.transition = 'box-shadow 0.6s ease-out';
-                targetEl.style.boxShadow = '0 0 20px #c89b3c';
-                setTimeout(() => { targetEl.style.boxShadow = 'none'; }, 2000);
+                const targetCard = targetEl.querySelector('.board-card');
+                if(targetCard) {
+                    targetCard.style.transition = 'box-shadow 0.6s ease-out, border-color 0.6s ease-out';
+                    targetCard.style.boxShadow = '0 0 25px rgba(0, 242, 254, 0.4)';
+                    targetCard.style.borderColor = 'var(--accent-hero)';
+                    setTimeout(() => {
+                        targetCard.style.boxShadow = 'none';
+                        targetCard.style.borderColor = 'var(--border-color)';
+                    }, 2500);
+                }
 
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
@@ -170,13 +277,13 @@ function renderPagination(currentPage, isLastPage) {
     let html = "";
 
     if (currentPage > 1) {
-        html += `<button onclick="loadFeed(${currentPage - 1})" style="padding: 6px 12px; background: #1e1e3a; color: #fff; border: 1px solid #333; border-radius: 4px; cursor: pointer;">&lt; 이전</button>`;
+        html += `<button onclick="loadFeed(${currentPage - 1})" class="page-btn">&lt; 이전</button>`;
     }
 
-    html += `<button style="padding: 6px 12px; background: #c89b3c; color: #0a0a1a; border: 1px solid #c89b3c; border-radius: 4px; font-weight: bold;">${currentPage}</button>`;
+    html += `<button class="page-btn active">${currentPage}</button>`;
 
     if (!isLastPage) {
-         html += `<button onclick="loadFeed(${currentPage + 1})" style="padding: 6px 12px; background: #1e1e3a; color: #fff; border: 1px solid #333; border-radius: 4px; cursor: pointer;">다음 &gt;</button>`;
+         html += `<button onclick="loadFeed(${currentPage + 1})" class="page-btn">다음 &gt;</button>`;
     }
 
     pageArea.innerHTML = html;
@@ -364,4 +471,16 @@ document.addEventListener("click", e => {
     }
 });
 
-document.addEventListener("DOMContentLoaded", checkAuthAndLoad);
+document.addEventListener("DOMContentLoaded", () => {
+    checkAuthAndLoad();
+
+    const targetHref = BOARD_TYPE === 'notice' ? '/notice' : '/event';
+    const gnbLink = document.querySelector(`.gnb-nav a[href="${targetHref}"]`);
+    if (gnbLink) {
+        gnbLink.style.color = '#f39c12';
+        gnbLink.style.fontWeight = 'bold';
+        gnbLink.style.textShadow = '0 0 15px rgba(243, 156, 18, 0.6)';
+        gnbLink.style.transform = 'scale(1.15)';
+        gnbLink.style.display = 'inline-block';
+    }
+});

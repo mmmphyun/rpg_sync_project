@@ -32,7 +32,18 @@
 .swiper-pagination-bullet-active {
     background: var(--accent-hero) !important;
     opacity: 1;
-    box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+    box-shadow: 0 0 10px var(--shadow-hero);
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.swiper:hover .swiper-button-next,
+.swiper:hover .swiper-button-prev {
+    opacity: 1;
 }
 
 /* 퀵 링크 */
@@ -57,7 +68,7 @@
 
 .quick-item .icon {
     width: 64px; height: 64px; border-radius: 50%;
-    background: transparent; border: 1px solid rgba(255, 255, 255, 0.05);
+    background: transparent; border: 1px solid var(--border-faint);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     display: flex; justify-content: center; align-items: center;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -80,21 +91,22 @@
 }
 .quick-item:hover .icon {
     border-color: var(--accent-hero);
-    box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+    box-shadow: 0 0 15px color-mix(in srgb, var(--accent-hero) 30%, transparent);
 }
 .quick-item:hover .text {
     opacity: 1;
     color: var(--accent-hero);
     background: transparent !important;
-    text-shadow: 0 0 5px rgba(0, 242, 254, 0.4), 0 0 15px rgba(0, 242, 254, 0.2);
+    text-shadow: 0 0 5px color-mix(in srgb, var(--accent-hero) 40%, transparent),
+                 0 0 15px color-mix(in srgb, var(--accent-hero) 20%, transparent);
 }
 
 /* 팝업 */
 .popup-nav-btn:hover {
-    background: rgba(0, 242, 254, 0.1) !important;
+    background: color-mix(in srgb, var(--accent-hero) 10%, transparent) !important;
     border-color: var(--accent-hero) !important;
     color: var(--accent-hero) !important;
-    box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent-hero) 30%, transparent);
 }
 
 /* 3단 그리드 */
@@ -110,7 +122,7 @@
 }
 
 .widget {
-    background: rgba(11, 12, 26, 0.85);
+    background: var(--bg-widget-dark);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     display: flex; flex-direction: column;
@@ -136,7 +148,7 @@
 }
 
 .widget-list-item:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--border-faint);
     transform: translateX(4px);
 }
 

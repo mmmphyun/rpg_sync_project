@@ -1,11 +1,41 @@
 :root {
-    --bg-base: #05050A;
-    --bg-surface: #0B0C1A;
-    --border-color: #1E1E2A;
+    /* 전역 베이스 및 표면 색상 */
+    --bg-base: #0B0C1A;
+    --bg-surface: #0A1526;
+
+    /* 주요 포인트 컬러 */
     --accent-hero: #00F2FE;
     --accent-villain: #E60023;
-    --text-main: #E0E0E0;
-    --text-muted: #888888;
+
+    /* 텍스트 컬러 */
+    --text-main: #E2E8F0;
+    --text-muted: #94A3B8;
+
+    /* 보더 및 라인 */
+    --border-color: #1E1E2A;
+    --border-light: rgba(255, 255, 255, 0.1);
+    --border-faint: rgba(255, 255, 255, 0.05);
+
+    /* 투명도 기반 위젯 배경 */
+    --bg-widget-dark: rgba(11, 12, 26, 0.85);
+    --bg-widget-medium: rgba(11, 12, 26, 0.7);
+    --bg-widget-light: rgba(11, 12, 26, 0.6);
+
+    /* 모달 및 헤더 오버레이 배경 */
+    --bg-overlay-dark: rgba(2, 2, 6, 0.85);
+    --bg-header-gradient-start: rgba(5, 5, 10, 0.9);
+    --bg-header-gradient-end: rgba(5, 5, 10, 0);
+
+    /* 그림자 색상 */
+    --shadow-hero: rgba(0, 242, 254, 0.6);
+    --shadow-villain: rgba(230, 0, 35, 0.3);
+    --shadow-dark: rgba(0, 0, 0, 0.9);
+
+    /* 관리자 버튼 및 특수 액센트 색상 */
+    --accent-warning: #f39c12;
+    --accent-success: #27ae60;
+    --accent-info: #3498db;
+    --accent-special: #8e44ad;
 
     --header-height: 60px;
 }
@@ -13,17 +43,19 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    background-color: var(--bg-base);
+    background-color: var(--bg-surface);
     color: var(--text-main);
     font-family: 'Pretendard', sans-serif;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background-color: var(--bg-surface);
+
     background-image:
-        radial-gradient(circle at center, transparent 30%, rgba(2, 2, 6, 0.85) 120%),
-        url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+        radial-gradient(circle at center, transparent 30%, var(--bg-overlay-dark) 120%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M60 0 L0 0 L0 60' fill='none' stroke='%2300f2fe' stroke-width='1' stroke-dasharray='10 7 3 5' stroke-opacity='0.05'/%3E%3C/svg%3E");
+    background-size: 100% 100%, 60px 60px;
+    background-position: center center;
 }
 
 .viewport-container {
@@ -39,7 +71,7 @@ body {
     top: 0; left: 0; width: 100%;
     height: var(--header-height);
     z-index: 1000;
-    background: linear-gradient(to bottom, rgba(5, 5, 10, 0.9) 0%, rgba(5, 5, 10, 0) 100%);
+    background: linear-gradient(to bottom, var(--bg-header-gradient-start) 0%, var(--bg-header-gradient-end) 100%);
     transition: background 0.3s ease;
 }
 
@@ -51,7 +83,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 0 24px;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    text-shadow: 0 2px 6px var(--shadow-dark);
 }
 
 .gnb-nav a {
@@ -79,14 +111,14 @@ body {
 
 .logo:hover {
     color: var(--accent-hero);
-    text-shadow: 0 0 10px rgba(0, 242, 254, 0.6), 0 0 20px rgba(0, 242, 254, 0.4);
+    text-shadow: 0 0 10px var(--shadow-hero), 0 0 20px color-mix(in srgb, var(--accent-hero) 40%, transparent);
 }
 
 /* Footer Styles */
 .dash-footer {
     height: 60px;
     background: transparent;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--border-faint);
     flex-shrink: 0;
     z-index: 100;
     margin-top: auto;
@@ -104,13 +136,24 @@ body {
 
 /* Global Modal */
 .modal-overlay {
+    display: none;
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
+    background: var(--bg-overlay-dark);
+    backdrop-filter: blur(8px);
     z-index: 9999;
-    display: flex; justify-content: center; align-items: center;
+    justify-content: center; align-items: center;
 }
 .modal-overlay.hidden { display: none; }
+.modal-overlay.open { display: flex; }
+
+.modal-overlay .widget {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+}
 
 /* =========================================
    전역 요소 반응형 (Header & Footer)
@@ -149,5 +192,3 @@ body {
         font-size: 0.75rem;
     }
 }
-
-#eventPopupModal.open { display: flex !important; }

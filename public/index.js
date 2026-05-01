@@ -42,6 +42,17 @@ function stripMarkdown(text) {
         .trim();
 }
 
+function getTagThemeForIndex(tag, type) {
+    if (type === 'event') return { color: '#e056fd', bg: 'rgba(224, 86, 253, 0.1)' };
+    switch(tag) {
+        case '업데이트': return { color: '#2ecc71', bg: 'rgba(46, 204, 113, 0.1)' };
+        case '서버 상태 공지': return { color: '#e74c3c', bg: 'rgba(231, 76, 60, 0.1)' };
+        case '직업 공지': return { color: '#f1c40f', bg: 'rgba(241, 196, 15, 0.1)' };
+        case '시스템 공지': return { color: '#9b59b6', bg: 'rgba(155, 89, 182, 0.1)' };
+        case '일반 공지': default: return { color: '#3498db', bg: 'rgba(52, 152, 219, 0.1)' };
+    }
+}
+
 // ---------------------------------------------------------
 // 위젯 로드 함수
 // ---------------------------------------------------------
@@ -132,8 +143,8 @@ async function loadLatestPosts() {
 
         listEl.innerHTML = posts.map(post => {
             const dateStr = new Date(post.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
-            const tagColor = post.type === 'event' ? '#E60023' : '#00F2FE';
             const tagText = post.tag || (post.type === 'event' ? '이벤트' : '공지');
+            const tagTheme = getTagThemeForIndex(post.tag, post.type);
 
             let rawContent = post.content ? stripMarkdown(post.content.replace(/@[\u200B\s]*(everyone|here)/g, '').replace(/<@[!&]?\d+>/g, '')) : '';
             let displayTitle = post.title;
@@ -144,7 +155,7 @@ async function loadLatestPosts() {
 
             return `
                 <li class="widget-list-item" onclick="location.href='/${post.type}?id=${post.notice_id}'">
-                    <span style="color: ${tagColor}; border: 1px solid ${tagColor}; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; margin-right: 8px; flex-shrink: 0;">${escapeHTML(tagText)}</span>
+                    <span style="color: ${tagTheme.color}; background: ${tagTheme.bg}; border: 1px solid ${tagTheme.color}40; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; margin-right: 8px; flex-shrink: 0;">${escapeHTML(tagText)}</span>
                     <span class="item-title" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; transition: color 0.2s;">${escapeHTML(displayTitle)}</span>
                     <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 10px; flex-shrink: 0;">${dateStr}</span>
                 </li>
