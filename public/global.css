@@ -149,3 +149,5 @@ body {
         font-size: 0.75rem;
     }
 }
+
+#eventPopupModal.open { display: flex !important; }

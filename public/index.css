@@ -5,6 +5,8 @@
     min-height: 0;
 }
 
+/* 배너 */
+
 .hero-section {
     flex: 1;
     min-height: 50vh;
@@ -32,6 +34,8 @@
     opacity: 1;
     box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
 }
+
+/* 퀵 링크 */
 
 .quick-links {
     flex: 0 0 110px;
@@ -83,6 +87,14 @@
     color: var(--accent-hero);
     background: transparent !important;
     text-shadow: 0 0 5px rgba(0, 242, 254, 0.4), 0 0 15px rgba(0, 242, 254, 0.2);
+}
+
+/* 팝업 */
+.popup-nav-btn:hover {
+    background: rgba(0, 242, 254, 0.1) !important;
+    border-color: var(--accent-hero) !important;
+    color: var(--accent-hero) !important;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
 }
 
 /* 3단 그리드 */

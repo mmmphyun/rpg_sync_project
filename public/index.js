@@ -3,11 +3,12 @@
  * 메인 대시보드 컴포넌트 렌더링 및 Fetch 체이닝
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. 초기 스켈레톤 렌더링
     renderSkeletons();
 
-    // 2. 체이닝 방식 로드 (네트워크 스파이크 방지)
-    // 배너 로드 -> 완료 후 서버 상태 로드 -> 완료 후 최신글 로드 -> 완료 후 리뷰 로드
+    if (document.getElementById('eventPopupModal')) {
+        loadEventPopup();
+    }
+
     loadBanner()
         .then(() => loadServerStatus())
         .then(() => loadLatestPosts())
@@ -25,6 +26,20 @@ function escapeHTML(str) {
     return str.replace(/[&<>'"]/g, tag => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
     }[tag] || tag));
+}
+
+function stripMarkdown(text) {
+    if (!text) return '';
+    return text
+        .replace(/(\*\*|__)(.*?)\1/g, '$2')
+        .replace(/~~(.*?)~~/g, '$1')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+        .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '')
+        .replace(/#{1,6}\s?/g, '')
+        .replace(/>\s?/g, '')
+        .replace(/`{1,3}/g, '')
+        .replace(/\n/g, ' ')
+        .trim();
 }
 
 // ---------------------------------------------------------
@@ -120,7 +135,7 @@ async function loadLatestPosts() {
             const tagColor = post.type === 'event' ? '#E60023' : '#00F2FE';
             const tagText = post.tag || (post.type === 'event' ? '이벤트' : '공지');
 
-            let rawContent = post.content ? post.content.replace(/@[\u200B\s]*(everyone|here)/g, '').replace(/<@[!&]?\d+>/g, '').trim() : '';
+            let rawContent = post.content ? stripMarkdown(post.content.replace(/@[\u200B\s]*(everyone|here)/g, '').replace(/<@[!&]?\d+>/g, '')) : '';
             let displayTitle = post.title;
 
             if (!displayTitle) {
@@ -164,3 +179,96 @@ async function loadRecentReviews() {
         container.innerHTML = '<div class="placeholder" style="color: #E60023;">로드 실패</div>';
     }
 }
+
+async function loadEventPopup() {
+    const hideUntil = localStorage.getItem('hidePopupUntil');
+    if (hideUntil && Date.now() < parseInt(hideUntil)) return;
+
+    const cachedPopup = sessionStorage.getItem('eventPopupCache');
+    if (cachedPopup) {
+        renderPopup(JSON.parse(cachedPopup));
+
+        fetch('/api/v1/boards/popup')
+            .then(res => res.json())
+            .then(data => sessionStorage.setItem('eventPopupCache', JSON.stringify(data)))
+            .catch(() => {});
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/v1/boards/popup');
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (!data || !data.notice_id) return;
+
+        sessionStorage.setItem('eventPopupCache', JSON.stringify(data));
+        renderPopup(data);
+    } catch (e) {
+        console.error('팝업 로드 실패', e);
+    }
+}
+
+function renderPopup(data) {
+    if (!data || !data.notice_id) return;
+
+    const modal = document.getElementById('eventPopupModal');
+    const imgContainer = document.getElementById('popupImageContainer');
+    document.getElementById('popupTitle').textContent = data.title || '진행 중인 이벤트';
+
+    let images = data.image_urls || [];
+    if (images.length === 0) return;
+
+    let imgHtml = '';
+    if (images.length > 1) {
+        imgHtml = `
+            <div id="popupSlider" style="display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); width: ${images.length * 100}%;">
+                ${images.map(url => `
+                    <div style="width: ${100 / images.length}%; flex-shrink: 0; cursor: pointer;" onclick="location.href='/event?id=${data.notice_id}'">
+                        <img src="${url}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: rgba(11, 12, 26, 0.8);">
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="movePopupSlide(-1)" class="popup-nav-btn" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(11, 12, 26, 0.6); backdrop-filter: blur(4px); color: var(--text-main); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: all 0.2s ease;">&lt;</button>
+            <button onclick="movePopupSlide(1)" class="popup-nav-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(11, 12, 26, 0.6); backdrop-filter: blur(4px); color: var(--text-main); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: all 0.2s ease;">&gt;</button>
+        `;
+    } else {
+        // 단일 이미지 렌더링
+        imgHtml = `<div style="cursor: pointer;" onclick="location.href='/event?id=${data.notice_id}'">
+            <img src="${images[0]}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: rgba(11, 12, 26, 0.8);">
+        </div>`;
+    }
+
+    imgContainer.innerHTML = imgHtml;
+    imgContainer.dataset.currentIndex = 0;
+    imgContainer.dataset.maxIndex = images.length - 1;
+
+    modal.classList.add('open');
+}
+
+window.movePopupSlide = function(dir) {
+    const container = document.getElementById('popupImageContainer');
+    const slider = document.getElementById('popupSlider');
+    if (!slider) return;
+
+    let currentIndex = parseInt(container.dataset.currentIndex);
+    const maxIndex = parseInt(container.dataset.maxIndex);
+
+    currentIndex += dir;
+    if (currentIndex < 0) currentIndex = maxIndex;
+    if (currentIndex > maxIndex) currentIndex = 0;
+
+    container.dataset.currentIndex = currentIndex;
+    slider.style.transform = `translateX(-${currentIndex * (100 / (maxIndex + 1))}%)`;
+};
+
+window.closePopupModal = function() {
+    document.getElementById('eventPopupModal').classList.remove('open');
+};
+
+window.closePopupForToday = function() {
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    localStorage.setItem('hidePopupUntil', midnight.getTime());
+    closePopupModal();
+};

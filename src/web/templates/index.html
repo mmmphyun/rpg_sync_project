@@ -57,6 +57,25 @@
         </article>
     </section>
 </div>
+
+<!-- Event Popup Modal -->
+<div class="modal-overlay" id="eventPopupModal" style="display: none;">
+    <!-- 테마 일치화: .widget 클래스를 재사용하여 글래스모피즘 및 보더 컬러 적용 -->
+    <div class="widget" style="padding: 0; overflow: hidden; width: 400px; max-width: 90%; border-color: rgba(0, 242, 254, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 242, 254, 0.1);">
+        <div style="position: relative;" id="popupImageContainer">
+            <!-- JS 렌더링 영역 -->
+        </div>
+        <div style="padding: 20px; background: rgba(11, 12, 26, 0.95);">
+            <!-- 테마 일치화: Jura 폰트 및 텍스트 글로우 적용 -->
+            <h3 id="popupTitle" style="color: var(--text-main); margin: 0 0 15px 0; font-size: 1.2rem; text-align: center; font-family: 'Jura', sans-serif; text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);"></h3>
+
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+                <button onclick="closePopupForToday()" style="background: none; color: var(--text-muted); border: none; cursor: pointer; font-size: 0.85rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">오늘은 그만 보기</button>
+                <button onclick="closePopupModal()" style="background: none; color: var(--accent-hero); border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold; text-shadow: 0 0 5px rgba(0, 242, 254, 0.3); transition: text-shadow 0.2s;" onmouseover="this.style.textShadow='0 0 10px rgba(0,242,254,0.8)'" onmouseout="this.style.textShadow='0 0 5px rgba(0, 242, 254, 0.3)'">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
