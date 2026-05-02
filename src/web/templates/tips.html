@@ -1,77 +1,81 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>팁 게시판 - Fossile Wiki</title>
-  <link rel="stylesheet" href="/static/style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-</head>
-<body class="page-jobs">
-<header class="dash-header">
-    <div class="header-container">
-        <h1 class="logo" onclick="location.href='/'">Fossile Wiki</h1>
-        <div id="user-status-area" class="user-card-anchor"></div>
-    </div>
-</header>
+{% extends "base.html" %}
 
-<div class="content-container" style="max-width: 900px; margin: 0 auto; padding: 20px; position: relative;">
-    <div class="page-title-area" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: #fff; margin: 0;">팁 게시판</h2>
-        <button id="writeTipBtn" onclick="openWriteModal()" style="display: none; padding: 8px 16px; background: #3498db; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">작성하기</button>
+{% block title %}팁 게시판 - Fossile Wiki{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/tips.css">
+{% endblock %}
+
+{% block content %}
+<div class="header-blur-backdrop"></div>
+
+<div class="content-container tips-container">
+    <div class="page-title-area">
+        <button id="writeTipBtn" class="btn-primary" onclick="openWriteModal()" style="display: none;">
+            <i class="ra ra-quill-ink"></i> 작성하기
+        </button>
     </div>
 
+    <!-- 비로그인 유저 블러 처리 및 오버레이 -->
     {% if not is_logged_in %}
     <div class="auth-overlay">
-        <h2 style="color: white; margin-bottom: 30px; font-size: 2.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.8);">디스코드 서버 입장 후 /위키 명령어로 로그인하세요!</h2>
-        <a href="https://discord.gg/YOUR_INVITE_CODE" target="_blank" style="display: inline-block; padding: 10px 20px; background: #5865F2; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; pointer-events: auto; cursor: pointer;">디스코드 서버 입장하기</a>
+        <div class="auth-card">
+            <i class="ra ra-locked overlay-icon"></i>
+            <h2>접근 권한이 없습니다</h2>
+            <p>디스코드 서버 입장 후 <strong>/위키</strong> 명령어로 로그인하세요.</p>
+            <a href="https://discord.gg/jjqMWF5drb" target="_blank" class="btn-discord">
+                <i class="ra ra-speech-bubble"></i> 디스코드 서버 입장하기
+            </a>
+        </div>
     </div>
     {% endif %}
 
+    <!-- 게시판 메인 컨텐츠 -->
     <div id="tips-board" class="{% if not is_logged_in %}blur-content{% endif %}" data-logged-in="{{ 'true' if is_logged_in else 'false' }}">
-        <div class="filter-bar" style="border-radius: 8px; margin-bottom: 20px;">
-            <span class="filter-label">카테고리</span>
-            <button class="filter-btn tag-btn active" data-category="BUILD">추천 빌드</button>
-            <button class="filter-btn tag-btn" data-category="GUILD">길드 모집</button>
-            <button class="filter-btn tag-btn" data-category="QNA">팁 & Q&A</button>
+        
+        <div class="filter-bar">
+            <button class="tag-btn active" data-category="BUILD">추천 빌드</button>
+            <button class="tag-btn" data-category="GUILD">길드 모집</button>
+            <button class="tag-btn" data-category="QNA">유저 포럼 (Q&A)</button>
         </div>
 
-        <div id="feedArea" style="display: flex; flex-direction: column; gap: 15px;">
+        <div id="feedArea" class="feed-area">
+            <!-- JS 렌더링 영역 -->
         </div>
 
-        <div id="paginationArea" style="display: flex; justify-content: center; gap: 8px; margin-top: 30px; padding-bottom: 40px;">
+        <div id="paginationArea" class="pagination-area">
+            <!-- 페이지네이션 렌더링 영역 -->
         </div>
     </div>
 </div>
 
-<footer class="dash-footer">
-    <div class="footer-container">
-        <p>&copy; 2026 Fossile Wiki. All rights reserved.</p>
-    </div>
-</footer>
-
-<div class="review-modal-overlay" id="writeModal">
-    <div class="review-modal-content" style="width: 500px; padding: 20px;">
-        <div class="review-modal-header" style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-            <h3 style="color: #fff; margin: 0;">작성하기</h3>
-            <button onclick="closeWriteModal()" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">&times;</button>
+<!-- 작성/수정 모달 -->
+<div class="modal-overlay" id="writeModal" style="display: none;">
+    <div class="modal-content write-modal-content">
+        <div class="modal-header">
+            <h3>작성하기</h3>
+            <button class="modal-close" onclick="closeWriteModal()">&times;</button>
         </div>
-        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-            <select id="tipPrefixInput" style="padding: 10px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px; box-sizing: border-box;">
+        <div class="write-form-group row">
+            <select id="tipPrefixInput" class="form-input select-prefix">
                 <option value="질문">질문</option>
                 <option value="팁">팁</option>
+                <option value="잡담">잡담</option>
             </select>
-            <input type="text" id="tipTitleInput" placeholder="제목을 입력하세요" style="flex-grow: 1; padding: 10px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px; box-sizing: border-box;">
+            <input type="text" id="tipTitleInput" class="form-input flex-grow" placeholder="제목을 입력하세요">
         </div>
-        <textarea id="tipContentInput" placeholder="본문 내용을 입력하세요 (마크다운 지원)" style="width: 100%; height: 200px; padding: 10px; margin-bottom: 20px; background: #0f0f15; color: #fff; border: 1px solid #333; border-radius: 4px; box-sizing: border-box; resize: vertical;"></textarea>
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button onclick="closeWriteModal()" style="padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer;">취소</button>
-            <button onclick="submitTip()" style="padding: 8px 16px; background: #3498db; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">등록하기</button>
+        <div class="write-form-group">
+            <textarea id="tipContentInput" class="form-input content-textarea" placeholder="본문 내용을 입력하세요 (마크다운 지원)"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeWriteModal()">취소</button>
+            <button class="btn-primary" onclick="submitTip()">등록하기</button>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<script src="/static/index.js?v=1.0.2"></script>
-<script src="/static/tips.js?v=1.0.2"></script>
-</body>
-</html>
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/static/tips.js"></script>
+{% endblock %}

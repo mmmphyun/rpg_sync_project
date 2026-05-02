@@ -8,6 +8,7 @@
 body {
     overflow-y: auto !important;
     height: auto !important;
+    min-height: 100vh !important;
 }
 
 .global-header {
