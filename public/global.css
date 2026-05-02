@@ -1,41 +1,41 @@
 :root {
-    /* 전역 베이스 및 표면 색상 */
-    --bg-base: #0B0C1A;
-    --bg-surface: #0A1526;
+    /* 딥 네이비 베이스 */
+    --bg-base: #0D1117;
+    --bg-surface: #161B22;
 
-    /* 주요 포인트 컬러 */
-    --accent-hero: #00F2FE;
-    --accent-villain: #E60023;
+    /* 눈이 편안한 파스텔 톤 포인트 */
+    --accent-hero: #38BDF8; /* 부드러운 스카이블루 */
+    --accent-villain: #F87171; /* 부드러운 코랄 레드 */
 
-    /* 텍스트 컬러 */
+    /* 텍스트 컬러 (너무 쨍한 흰색 배제) */
     --text-main: #E2E8F0;
-    --text-muted: #94A3B8;
+    --text-muted: #8B949E;
 
     /* 보더 및 라인 */
-    --border-color: #1E1E2A;
+    --border-color: #30363D;
     --border-light: rgba(255, 255, 255, 0.1);
-    --border-faint: rgba(255, 255, 255, 0.05);
+    --border-faint: rgba(255, 255, 255, 0.04);
 
-    /* 투명도 기반 위젯 배경 */
-    --bg-widget-dark: rgba(11, 12, 26, 0.85);
-    --bg-widget-medium: rgba(11, 12, 26, 0.7);
-    --bg-widget-light: rgba(11, 12, 26, 0.6);
+    /* 위젯 배경 */
+    --bg-widget-dark: rgba(22, 27, 34, 0.85);
+    --bg-widget-medium: rgba(22, 27, 34, 0.7);
+    --bg-widget-light: rgba(22, 27, 34, 0.5);
 
-    /* 모달 및 헤더 오버레이 배경 */
-    --bg-overlay-dark: rgba(2, 2, 6, 0.85);
-    --bg-header-gradient-start: rgba(5, 5, 10, 0.9);
-    --bg-header-gradient-end: rgba(5, 5, 10, 0);
+    /* 모달 및 헤더 */
+    --bg-overlay-dark: rgba(1, 4, 9, 0.8);
+    --bg-header-gradient-start: rgba(13, 17, 23, 0.95);
+    --bg-header-gradient-end: rgba(13, 17, 23, 0);
 
     /* 그림자 색상 */
-    --shadow-hero: rgba(0, 242, 254, 0.6);
-    --shadow-villain: rgba(230, 0, 35, 0.3);
-    --shadow-dark: rgba(0, 0, 0, 0.9);
+    --shadow-hero: rgba(56, 189, 248, 0.25);
+    --shadow-villain: rgba(248, 113, 113, 0.25);
+    --shadow-dark: rgba(0, 0, 0, 0.6);
 
-    /* 관리자 버튼 및 특수 액센트 색상 */
-    --accent-warning: #f39c12;
-    --accent-success: #27ae60;
-    --accent-info: #3498db;
-    --accent-special: #8e44ad;
+    /* 관리자/유틸리티 색상 (채도 완화) */
+    --accent-warning: #D29922;
+    --accent-success: #238636;
+    --accent-info: #38BDF8;
+    --accent-special: #8957E5;
 
     --header-height: 60px;
 }

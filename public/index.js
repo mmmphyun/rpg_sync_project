@@ -125,10 +125,10 @@ async function loadServerStatus() {
 
         let statusHtml = `<div>`;
         if (data.online) {
-            statusHtml += `<div style="color: #00F2FE; font-weight: bold; font-size: 1.2rem;">ONLINE</div>
+            statusHtml += `<div style="color: var(--accent-hero); font-weight: bold; font-size: 1.2rem;">ONLINE</div>
                            <div style="margin-top: 8px;">접속자: ${data.players.online} / ${data.players.max}</div>`;
         } else {
-            statusHtml += `<div style="color: #E60023; font-weight: bold; font-size: 1.2rem;">OFFLINE</div>`;
+            statusHtml += `<div style="color: var(--accent-villain); font-weight: bold; font-size: 1.2rem;">OFFLINE</div>`;
         }
         statusHtml += `</div>`;
 
