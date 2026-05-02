@@ -1,0 +1,153 @@
+/* =========================================
+   Guide Page Styles
+   ========================================= */
+body {
+    overflow-y: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+}
+
+.global-header {
+    position: sticky !important;
+    top: 0;
+}
+
+/* -----------------------------------------
+   Container & Header
+   ----------------------------------------- */
+.guide-container {
+    max-width: 900px; width: 100%; margin: 0 auto;
+    padding: 100px 20px 60px 20px;
+    box-sizing: border-box;
+}
+
+.guide-page-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.guide-page-header .page-title {
+    font-family: 'Jura', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--text-main);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 15px color-mix(in srgb, var(--accent-hero) 30%, transparent);
+}
+
+.guide-page-header .page-desc {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+}
+
+/* -----------------------------------------
+   Guide Sections (Cards)
+   ----------------------------------------- */
+.guide-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.guide-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 30px;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.guide-section:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--accent-hero) 50%, transparent);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 15px color-mix(in srgb, var(--accent-hero) 10%, transparent);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.section-header i {
+    font-size: 2rem;
+    color: var(--accent-hero);
+    text-shadow: 0 0 10px color-mix(in srgb, var(--accent-hero) 40%, transparent);
+}
+
+.section-header h3 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+/* -----------------------------------------
+   List Styling
+   ----------------------------------------- */
+.section-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.section-body ul li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 12px;
+    color: var(--text-main);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.section-body ul li:last-child {
+    margin-bottom: 0;
+}
+
+.section-body ul li::before {
+    content: '❯';
+    position: absolute;
+    left: 0;
+    top: 1px;
+    color: var(--accent-hero);
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.section-body .sub-list {
+    margin: 15px 0 20px 0;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 3px solid var(--accent-info);
+    border-radius: 6px;
+    padding: 15px 20px;
+}
+
+.section-body .sub-list li {
+    color: var(--text-muted);
+}
+
+.section-body .sub-list li::before {
+    content: '-';
+    color: var(--text-muted);
+}
+
+.section-body .grid-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    padding: 15px 20px 5px 20px;
+}
+.section-body .grid-list li {
+    margin-bottom: 10px;
+}
+
+.section-body strong {
+    color: #FFFFFF;
+    font-weight: 700;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--accent-hero) 60%, transparent);
+}

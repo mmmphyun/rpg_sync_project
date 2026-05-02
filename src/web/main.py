@@ -161,6 +161,10 @@ async def serve_tips(request: Request):
         }
     )
 
+@app.get("/guide", response_class=HTMLResponse)
+async def get_guide_page(request: Request):
+    return templates.TemplateResponse(request=request, name="guide.html")
+
 # 로깅 (서버 터미널만 상세 에러 기록)
 logger = logging.getLogger("uvicorn.error")
 
