@@ -115,7 +115,7 @@ def update_job_single_column(job_name: str, column_name: str, value: str) -> int
 def get_all_jobs_for_web():
     """
     웹 대시보드용 전체 직업 데이터 조회.
-    무기 및 무기별 스킬(폼 정보 포함)을 조인하여 반환.
+    무기 및 무기별 스킬(폼 정보 포함), 패치노트를 조인하여 반환.
     """
     sql = """
         WITH WeaponSkills AS (
@@ -131,7 +131,7 @@ def get_all_jobs_for_web():
                         'cost_value', cost_value,
                         'coefficient', coefficient,
                         'is_mobility', is_mobility,
-                        'form_name', form_name -- 신규 추가
+                        'form_name', form_name
                     )
                 ) as skills
             FROM skills
@@ -158,14 +158,28 @@ def get_all_jobs_for_web():
             FROM users
             WHERE current_job_id IS NOT NULL
             GROUP BY current_job_id
+        ),
+        JobPatches AS (
+            SELECT 
+                job_id,
+                jsonb_agg(
+                    jsonb_build_object(
+                        'date', patch_date,
+                        'notes', notes
+                    ) ORDER BY patch_date DESC
+                ) as patches
+            FROM job_patches
+            GROUP BY job_id
         )
         SELECT 
             j.*,
             COALESCE(jw.weapons, '[]'::jsonb) as weapons,
-            COALESCE(jp.players, '[]'::jsonb) as players
+            COALESCE(jp.players, '[]'::jsonb) as players,
+            COALESCE(jpa.patches, '[]'::jsonb) as patches
         FROM jobs j
         LEFT JOIN JobWeapons jw ON j.job_id = jw.job_id
         LEFT JOIN JobPlayers jp ON j.job_id = jp.job_id
+        LEFT JOIN JobPatches jpa ON j.job_id = jpa.job_id
         ORDER BY j.name;
     """
 

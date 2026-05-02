@@ -1,93 +1,69 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>직업 종류 - Fossile Wiki</title>
-    <link rel="stylesheet" href="/static/style.css?v=1.0.2">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/nagoshiashumari/Rpg-Awesome@master/css/rpg-awesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body class="page-jobs">
+{% extends "base.html" %}
 
-<header class="dash-header">
-    <div class="header-container">
-        <h1 class="logo" onclick="location.href='/'">Fossile Wiki</h1>
-        <div id="user-status-area" class="user-card-anchor">
-            </div>
-    </div>
-</header>
+{% block title %}직업 종류 - Fossile Wiki{% endblock %}
 
-<div class="content-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+{% block extra_css %}
+<link rel="stylesheet" href="/static/jobs.css">
+{% endblock %}
 
-    <div class="page-title-area" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: #fff; margin: 0;">직업 종류</h2>
-        <div class="meta-info" style="display: flex; align-items: center; gap: 15px;">
-            <span class="job-count" id="jobCount" style="color: #8b8b8b; font-size: 0.9rem;"></span>
-            <img src="https://visitor-badge.laobi.icu/badge?page_id=jaeunify.do-it-minecraft-fossile.jobs" alt="방문자수" style="height:20px; opacity:0.6;">
+{% block content %}
+<div class="content-container jobs-container">
+
+    <div class="page-title-area">
+        <div class="meta-info">
+            <span class="job-count" id="jobCount"></span>
         </div>
     </div>
 
-    <div class="filter-bar">
-        <span class="filter-label">분류</span>
-        <button class="filter-btn active" data-sort="range">사거리</button>
-        <button class="filter-btn" data-sort="position">포지션</button>
-        <button class="filter-btn" data-sort="resource">재화</button>
-        <button class="filter-btn" data-sort="gate">게이트</button>
-        <div class="filter-sep"></div>
-        <input type="text" id="searchInput" class="search-input" placeholder="직업명 검색...">
+    <div class="filter-dashboard">
+        <div class="filter-group">
+            <span class="filter-label">정렬 기준</span>
+            <button class="filter-btn active" data-sort="range">사거리</button>
+            <button class="filter-btn" data-sort="position">포지션</button>
+            <button class="filter-btn" data-sort="resource">재화</button>
+            <button class="filter-btn" data-sort="gate">게이트</button>
+        </div>
+        
+        <div class="filter-group">
+            <span class="filter-label">필터</span>
+            <button class="filter-btn tag-filter" data-key="range" data-val="근거리">근거리</button>
+            <button class="filter-btn tag-filter" data-key="range" data-val="원거리">원거리</button>
+            <div class="filter-sep"></div>
+            <button class="filter-btn tag-filter" data-key="position" data-val="탱">탱</button>
+            <button class="filter-btn tag-filter" data-key="position" data-val="물리">물리</button>
+            <button class="filter-btn tag-filter" data-key="position" data-val="마법">마법</button>
+            <button class="filter-btn tag-filter" data-key="position" data-val="혼합">혼합</button>
+            <button class="filter-btn tag-filter" data-key="position" data-val="힐">힐</button>
+            <button class="filter-btn tag-filter" data-key="position" data-val="유틸">유틸</button>
+            <div class="filter-sep"></div>
+            <button class="filter-btn tag-filter type-hero" data-key="type" data-val="영웅">영웅</button>
+            <button class="filter-btn tag-filter type-villain" data-key="type" data-val="빌런">빌런</button>
+        </div>
+
+        <div class="search-group">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="직업명 검색...">
+        </div>
     </div>
 
-    <div class="filter-bar">
-        <span class="filter-label">필터</span>
-        <button class="filter-btn tag-filter" data-key="range" data-val="근거리">근거리</button>
-        <button class="filter-btn tag-filter" data-key="range" data-val="원거리">원거리</button>
-        <div class="filter-sep"></div>
-        <button class="filter-btn tag-filter" data-key="position" data-val="탱">탱</button>
-        <button class="filter-btn tag-filter" data-key="position" data-val="물리">물리</button>
-        <button class="filter-btn tag-filter" data-key="position" data-val="마법">마법</button>
-        <button class="filter-btn tag-filter" data-key="position" data-val="혼합">혼합</button>
-        <button class="filter-btn tag-filter" data-key="position" data-val="힐">힐</button>
-        <button class="filter-btn tag-filter" data-key="position" data-val="유틸">유틸</button>
-        <div class="filter-sep"></div>
-        <button class="filter-btn tag-filter" data-key="type" data-val="영웅">영웅</button>
-        <button class="filter-btn tag-filter" data-key="type" data-val="빌런">빌런</button>
-    </div>
-
-    <div class="main">
-        <div class="grid-area" id="app"></div>
+    <div class="main-workspace">
+        <div class="grid-area inner-scroll" id="app"></div>
+        
         <div class="sidebar" id="sidebar">
             <div class="sidebar-inner" id="sidebarContent"></div>
         </div>
     </div>
+
 </div>
 
-<footer class="dash-footer">
-    <div class="footer-container">
-        <p>&copy; 2026 Fossile Wiki. All rights reserved.</p>
-        <p class="attribution">아이디어 및 초기 소스 제공: 나나</p>
-    </div>
-</footer>
-
-<script>
-    window.INITIAL_JOBS_DATA = {{ jobs_data | tojson }};
-</script>
-<script src="/static/main.js?v=1.0.8"></script>
-<script src="/static/index.js?v=1.0.3"></script>
-
-<div class="lightbox" id="lightbox"><img src="" alt=""></div>
-
-<!-- 모달 -->
-<div class="review-modal-overlay" id="reviewModal">
-    <div class="review-modal-content">
-        <div class="review-modal-header">
+<!-- 리뷰 팝업 -->
+<div class="modal-overlay hidden" id="reviewModal">
+    <div class="widget review-widget-modal">
+        <div class="modal-header">
             <h3 id="reviewModalTitle">직업 평가</h3>
-            <button class="review-modal-close" onclick="closeReviewModal()">&times;</button>
+            <button class="modal-close" onclick="closeReviewModal()">&times;</button>
         </div>
-
-        <div class="review-list" id="reviewList">
-            </div>
-
+        <div class="review-list inner-scroll" id="reviewList"></div>
         <div class="review-form-area" id="reviewFormArea">
             <div class="review-auth-blocker" id="reviewAuthBlocker">
                 평가를 작성하려면 로그인이 필요합니다.
@@ -96,22 +72,21 @@
                 <div class="rating-select">
                     <label>별점: </label>
                     <select id="reviewRating">
-                        <option value="5">5점</option>
-                        <option value="4">4점</option>
-                        <option value="3">3점</option>
-                        <option value="2">2점</option>
-                        <option value="1">1점</option>
+                        <option value="5">5점</option><option value="4">4점</option><option value="3">3점</option><option value="2">2점</option><option value="1">1점</option>
                     </select>
                 </div>
                 <textarea id="reviewComment" placeholder="한줄평을 남겨주세요 (최대 255자)" maxlength="255" required></textarea>
-                <div class="review-notice" style="color: #888; font-size: 0.75rem; margin-top: -5px; padding-left: 2px;">
-                    ※ 이미 평가를 남기셨다면 새로운 내용으로 수정됩니다.
-                </div>
-                <button type="submit" class="review-submit-btn">작성</button>
+                <div class="review-notice">※ 이미 평가를 남기셨다면 새로운 내용으로 수정됩니다.</div>
+                <button type="submit" class="review-submit-btn">작성 완료</button>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
 
-</body>
-</html>
+{% block extra_js %}
+<script>
+    window.INITIAL_JOBS_DATA = {{ jobs_data | tojson }};
+</script>
+<script src="/static/main.js"></script>
+{% endblock %}

@@ -46,3 +46,17 @@ async function logout() {
         console.error('Logout failed:', e);
     }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const currentPath = window.location.pathname;
+
+    const gnbLink = document.querySelector(`.gnb-nav a[href="${currentPath}"]`);
+
+    if (gnbLink) {
+        gnbLink.style.color = '#FFFFFF';
+        gnbLink.style.fontWeight = 'bold';
+        gnbLink.style.textShadow = '0 0 12px color-mix(in srgb, var(--accent-hero) 40%, transparent)';
+        gnbLink.style.transform = 'scale(1.1)';
+        gnbLink.style.display = 'inline-block';
+    }
+});

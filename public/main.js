@@ -217,102 +217,99 @@ function renderWeaponsSection(jobIdx, activeWeaponIdx) {
     const weapons = job.weapons || [];
 
     if (weapons.length === 0) {
-        return `<div style="padding: 15px; color: #888; text-align: center; background: #16161e; border-radius: 6px; margin-top: 15px;">등록된 무기 및 스킬 정보가 없습니다.</div>`;
+        return `<div style="padding: 15px; color: var(--text-muted); text-align: center; background: var(--bg-widget-medium); border-radius: 6px; margin-top: 15px; border: 1px solid var(--border-color);">등록된 무기 및 스킬 정보가 없습니다.</div>`;
     }
 
     const activeWeapon = weapons[activeWeaponIdx];
     const skills = activeWeapon.skills || [];
 
-    // 1. 해당 무기의 사용 가능한 폼 목록 추출
     const availableForms = [...new Set(skills.map(s => s.form_name).filter(f => f && f.trim() !== ''))]
         .sort((a, b) => a === '기본' ? -1 : b === '기본' ? 1 : 0);
 
-    // 초기화
     if (availableForms.length > 0 && !currentFormMap[activeWeaponIdx]) {
         currentFormMap[activeWeaponIdx] = availableForms.includes('기본') ? '기본' : availableForms[0];
     }
     const currentForm = currentFormMap[activeWeaponIdx];
 
-    // 2. 무기 선택 아이콘 그리드
-    let tabsHtml = `<div style="display: flex; gap: 10px; margin-top: 20px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;">`;
+    // 무기 선택 탭 (가로 스크롤 가능)
+    let tabsHtml = `<div class="weapon-tabs-container">`;
     weapons.forEach((w, wIdx) => {
         const isAct = wIdx === activeWeaponIdx;
         const iconCls = getWeaponIconClass(w.weapon_type);
-
         const hasForms = w.skills && w.skills.some(s => s.form_name && s.form_name.trim() !== '');
-        const formBadge = (hasForms && isAct)
-            ? `<div style="position:absolute; top:-5px; right:-5px; background:#e74c3c; color:white; font-size:0.6rem; padding:2px 4px; border-radius:3px;">🔄 ${currentForm}</div>`
-            : (hasForms ? `<div style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:#e74c3c; border-radius:50%;"></div>` : '');
+
+        const dotBadge = (hasForms && !isAct) ? `<div class="form-badge-dot"></div>` : '';
+
+        const isSpecialForm = hasForms && currentForm !== '기본';
+        const themeColor = isSpecialForm ? 'var(--accent-villain)' : 'var(--accent-hero)';
+
+        const formIndicator = (hasForms && isAct)
+            ? `<div class="weapon-form-indicator" style="color: ${themeColor}; text-shadow: 0 0 8px color-mix(in srgb, ${themeColor} 40%, transparent);"><i class="ra ra-cycle" style="color: ${themeColor};"></i> ${currentForm}</div>`
+            : '';
+
+        const activeClass = isAct ? (isSpecialForm ? 'active form-active' : 'active') : '';
 
         tabsHtml += `
-            <div onclick="changeWeapon(${jobIdx}, ${wIdx})"
-                 style="position: relative; flex: 1; min-width: 60px; text-align: center; padding: 10px 5px; border-radius: 8px; cursor: pointer; transition: all 0.2s;
-                        background: ${isAct ? '#2a2a35' : '#16161e'};
-                        border: 1px solid ${isAct ? '#c89b3c' : '#222'};">
-                ${formBadge}
-                <i class="${iconCls}" style="font-size: 24px; color: ${isAct ? '#c89b3c' : '#666'};"></i>
-                <div style="font-size: 0.7rem; margin-top: 6px; color: ${isAct ? '#ddd' : '#888'}; letter-spacing: -0.5px;">
-                    ${escapeHTML(w.weapon_name)}
-                </div>
+            <div class="weapon-tab ${activeClass}" onclick="changeWeapon(${jobIdx}, ${wIdx})">
+                ${dotBadge}
+                <i class="${iconCls} main-icon"></i>
+                <span class="weapon-name-text">${escapeHTML(w.weapon_name)}</span>
+                ${formIndicator}
             </div>
         `;
     });
     tabsHtml += `</div>`;
 
-    // 3. 스킬 분류 로직
-    const fixedSkills = skills.filter(s =>
-        s.command_key === '패시브' ||
-        !s.form_name ||
-        s.form_name.trim() === '' ||
-        s.form_name === '공통'
-    );
+    // 스킬 필터링
+    const fixedSkills = skills.filter(s => s.command_key === '패시브' || !s.form_name || s.form_name.trim() === '' || s.form_name === '공통');
+    const formSkills = skills.filter(s => s.command_key !== '패시브' && s.form_name && s.form_name === currentForm && s.form_name !== '공통');
 
-    const formSkills = skills.filter(s =>
-        s.command_key !== '패시브' &&
-        s.form_name &&
-        s.form_name === currentForm &&
-        s.form_name !== '공통'
-    );
-
+    // 스킬 카드 렌더링 (공간 압축형)
     const renderSkillCard = (s) => `
-        <div style="background: #1a1a24; border: 1px solid #2a2a35; border-radius: 6px; padding: 12px; margin-bottom: 8px;">
-            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #2a2a35; padding-bottom: 6px; margin-bottom: 8px;">
-                <strong style="color: #c89b3c; font-size: 0.9rem;">[${escapeHTML(s.command_key)}] ${escapeHTML(s.skill_name)}</strong>
-                <div style="font-size: 0.75rem; color: #888;">
-                    <span style="margin-right: 8px;">⏱ ${escapeHTML(s.cooldown || '-')}</span>
-                    <span>💧 ${escapeHTML(s.cost_value || '-')}</span>
+        <div class="skill-card">
+            <div class="skill-header">
+                <strong class="skill-title">[${escapeHTML(s.command_key)}] ${escapeHTML(s.skill_name)}</strong>
+                <div class="skill-meta">
+                    <span title="쿨타임">⏱ ${escapeHTML(s.cooldown || '-')}</span>
+                    <span title="소모값">💧 ${escapeHTML(s.cost_value || '-')}</span>
                 </div>
             </div>
-            <div style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 8px; white-space: pre-wrap;">${escapeHTML(s.description)}</div>
-            <div style="font-size: 0.75rem; color: #888; display: flex; justify-content: space-between;">
-                <span>🗡 계수: <span style="color: #aaa;">${escapeHTML(s.coefficient || '-')}</span></span>
-                ${s.is_mobility === 'Y' ? `<span style="color: #3498db;">🏃 이동기</span>` : ''}
+            <div class="skill-desc inner-scroll">${escapeHTML(s.description)}</div>
+            <div class="skill-footer">
+                <span>🗡 <span class="coef">${escapeHTML(s.coefficient || '-')}</span></span>
+                ${s.is_mobility === 'Y' ? `<span class="mobility-tag">🏃 이동기</span>` : ''}
             </div>
         </div>
     `;
 
-    // 4. 스킬 리스트 HTML 조합
-    let skillsHtml = `<div>`;
+    let skillsHtml = `<div class="skills-wrapper">`;
 
-    // 4-1. 고정 스킬 렌더링
     if (fixedSkills.length > 0) {
-        skillsHtml += `<h4 style="color: #eee; margin-bottom: 10px; font-size: 0.95rem;">패시브 & 기본 스킬</h4>`;
+        skillsHtml += `<h4 class="skill-section-title">패시브 & 공통 스킬</h4>`;
+        skillsHtml += `<div class="skill-grid">`;
         fixedSkills.forEach(s => { skillsHtml += renderSkillCard(s); });
+        skillsHtml += `</div>`;
     }
 
-    // 4-2. 폼 전용 스킬 렌더링
     if (availableForms.length > 0) {
-        skillsHtml += `<h4 style="color: #eee; margin-top: 15px; margin-bottom: 10px; font-size: 0.95rem; display:flex; align-items:center;">
-            <span style="color:#e74c3c; margin-right:5px;">[${currentForm}]</span> 액티브 스킬
+        const isSpecialForm = currentForm !== '기본';
+        const themeColor = isSpecialForm ? 'var(--accent-villain)' : 'var(--accent-hero)';
+
+        skillsHtml += `<h4 class="skill-section-title type-form">
+            <span class="form-name" style="color: ${themeColor}; text-shadow: 0 0 8px color-mix(in srgb, ${themeColor} 40%, transparent);">
+                [${currentForm}]
+            </span> 액티브 스킬
         </h4>`;
 
         if (formSkills.length > 0) {
+            skillsHtml += `<div class="skill-grid">`;
             formSkills.forEach(s => { skillsHtml += renderSkillCard(s); });
+            skillsHtml += `</div>`;
         } else {
-            skillsHtml += `<div style="color:#888; font-size:0.85rem; text-align:center; padding: 10px; background: #16161e; border-radius: 6px;">현재 폼에 배정된 스킬이 없습니다.</div>`;
+            skillsHtml += `<div class="empty-msg">현재 폼에 배정된 스킬이 없습니다.</div>`;
         }
     } else if (fixedSkills.length === 0) {
-        skillsHtml += `<div style="color:#888; font-size:0.85rem; text-align:center; padding: 15px; background: #16161e; border-radius: 6px;">스킬이 등록되지 않았습니다.</div>`;
+        skillsHtml += `<div class="empty-msg">스킬이 등록되지 않았습니다.</div>`;
     }
 
     skillsHtml += `</div>`;
@@ -345,6 +342,39 @@ window.changeWeapon = function(jobIdx, weaponIdx) {
     container.innerHTML = renderWeaponsSection(jobIdx, weaponIdx);
 };
 
+window.changeGalleryImage = function(direction) {
+    const imgEl = document.getElementById('sidebar-main-img');
+    const photos = JSON.parse(imgEl.dataset.photos);
+    if (!photos || photos.length === 0) return;
+
+    let currentIndex = parseInt(imgEl.dataset.index);
+    currentIndex += direction;
+
+    if (currentIndex >= photos.length) currentIndex = 0;
+    if (currentIndex < 0) currentIndex = photos.length - 1;
+
+    imgEl.src = photos[currentIndex];
+    imgEl.dataset.index = currentIndex;
+
+    const dots = document.querySelectorAll('.gallery-dot');
+    dots.forEach((dot, idx) => {
+        if (idx === currentIndex) dot.classList.add('active');
+        else dot.classList.remove('active');
+    });
+};
+
+window.togglePatchNotes = function() {
+    const notesContainer = document.getElementById('patchNotesContainer');
+    const toggleIcon = document.getElementById('patchToggleIcon');
+    if (notesContainer.style.display === 'none') {
+        notesContainer.style.display = 'block';
+        toggleIcon.textContent = '▲';
+    } else {
+        notesContainer.style.display = 'none';
+        toggleIcon.textContent = '▼';
+    }
+};
+
 function openSidebar(idx) {
     const job = JOBS[idx];
     selectedIdx = idx;
@@ -352,64 +382,99 @@ function openSidebar(idx) {
     currentWeaponIdx = 0;
     renderGrid();
 
-    const sidePortrait = job.img
-        ? `<img src="${job.img}" alt="${job.name}">`
-        : getInitials(job.name);
+    let galleryImages = [];
+    if (job.img) galleryImages.push(job.img);
+    if (job.photos && job.photos.length > 0) galleryImages = galleryImages.concat(job.photos);
 
-    const gallery = job.photos && job.photos.length > 0
-        ? `<div class="sidebar-gallery">${job.photos.map(p => `<img src="${p}" alt="${job.name}" onclick="openLightbox('${p}')">`).join("")}</div>`
-        : "";
+    let portraitHtml = "";
+    if (galleryImages.length > 0) {
+        const photosJson = escapeHTML(JSON.stringify(galleryImages));
+        let dotsHtml = galleryImages.length > 1 ? `<div class="gallery-indicators">${galleryImages.map((_, i) => `<span class="gallery-dot ${i===0?'active':''}"></span>`).join('')}</div>` : '';
+        let navHtml = galleryImages.length > 1 ? `
+            <button class="gallery-nav prev" onclick="changeGalleryImage(-1)">&#10094;</button>
+            <button class="gallery-nav next" onclick="changeGalleryImage(1)">&#10095;</button>
+        ` : '';
 
-    // 줄바꿈 보존을 위해 white-space: pre-wrap 적용 클래스 추가 또는 replace 활용
+        portraitHtml = `
+            <div class="sidebar-portrait-wrapper">
+                <img id="sidebar-main-img" src="${galleryImages[0]}" data-photos='${photosJson}' data-index="0" alt="${job.name}" onclick="openLightbox(this.src)">
+                ${navHtml}
+                ${dotsHtml}
+            </div>
+        `;
+    } else {
+        portraitHtml = `<div class="sidebar-portrait-fallback">${getInitials(job.name)}</div>`;
+    }
+
     const formattedDesc = job.desc ? job.desc.replace(/\n/g, '<br>') : "설명이 없습니다.";
     const reqCondition = (job.req_condition && job.req_condition !== "정보 없음")
-        ? `<div style="margin-top:10px; color:#e74c3c; font-size:0.85em; font-weight:bold;">[ 조건: ${job.req_condition} ]</div>`
-        : "";
+        ? `<div class="req-condition">[ 조건: ${job.req_condition} ]</div>` : "";
 
-    const reviewSummaryHtml = `
-      <div class="sidebar-review-summary" style="margin: 10px 0; padding: 10px; background: #16161e; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-        <span id="sideAvgRating" style="color: #c89b3c; font-weight: bold; font-size: 0.9rem;">평점 로딩 중...</span>
-        <button onclick="openReviewModal(${job.job_id}, '${job.name}')" style="background: #333; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">평가 보기/작성</button>
-      </div>
-    `;
+    let patchesHtml = "";
+    if (job.patches && job.patches.length > 0) {
+        patchesHtml = `
+            <div class="sidebar-patches-wrapper">
+                <div class="patch-header" onclick="togglePatchNotes()">
+                    <h4>패치노트 (${job.patches.length})</h4>
+                    <span id="patchToggleIcon">▼</span>
+                </div>
+                <div id="patchNotesContainer" style="display: none;">
+                    ${job.patches.map(p => `
+                        <div class="patch-entry">
+                            <div class="patch-date">${p.date}</div>
+                            <div class="patch-notes">${p.notes.replace(/\n/g, "<br>")}</div>
+                        </div>
+                    `).join("")}
+                </div>
+            </div>
+        `;
+    }
 
     sidebarContent.innerHTML = `
       <button class="sidebar-close" onclick="closeSidebar()">&times;</button>
-      <div class="sidebar-portrait ${posBg(job.position)}">${sidePortrait}</div>
-      <div class="sidebar-name">${job.name}</div>
-      ${reviewSummaryHtml}
-      <div class="sidebar-gate">${job.gate}${job.group && job.group !== "정보 없음" ? ` · ${job.group}` : ""}</div>
-      <div class="sidebar-tags">
-        <span class="sidebar-tag ${RANGE_CLS[job.range] || "t-unknown"}">${formatRangeDisplay(job.range)}</span>
-        ${posTagFull(job.position)}
-        <span class="sidebar-tag ${RES_CLS[job.resource] || "t-unknown"}">${job.resource}</span>
-        ${job.limit ? `<span class="sidebar-tag t-limit">1인 제한</span>` : ""}
+
+      <div class="slideover-layout">
+          <!-- 좌측 패널: 정보 및 미디어 (35%) -->
+          <div class="slideover-left inner-scroll">
+              ${portraitHtml}
+              <div class="sidebar-name">${job.name}</div>
+              <div class="sidebar-gate">${job.gate}${job.group && job.group !== "정보 없음" ? ` · ${job.group}` : ""}</div>
+
+              <div class="sidebar-review-summary">
+                <span id="sideAvgRating" class="rating-text">평점 로딩 중...</span>
+                <button onclick="openReviewModal(${job.job_id}, '${job.name}')" class="review-btn">평가</button>
+              </div>
+
+              <div class="sidebar-tags">
+                <span class="sidebar-tag ${RANGE_CLS[job.range] || "t-unknown"}">${formatRangeDisplay(job.range)}</span>
+                ${posTagFull(job.position)}
+                <span class="sidebar-tag ${RES_CLS[job.resource] || "t-unknown"}">${job.resource}</span>
+                ${job.limit ? `<span class="sidebar-tag t-limit">1인 제한</span>` : ""}
+              </div>
+
+              <div class="sidebar-desc">${formattedDesc}${reqCondition}</div>
+              ${patchesHtml}
+          </div>
+
+          <!-- 우측 패널: 전투 시스템 (65%) -->
+          <div class="slideover-right inner-scroll">
+              <div id="weaponsAndSkillsContainer">
+                  ${renderWeaponsSection(idx, 0)}
+              </div>
+          </div>
       </div>
-      <div class="sidebar-desc">${formattedDesc}${reqCondition}</div>
-      ${job.patches && job.patches.length > 0 ? `
-      <div class="sidebar-patches">
-        <h4>패치노트</h4>
-        ${job.patches.map(p => `<div class="patch-entry">
-          <div class="patch-date">${p.date}</div>
-          <div class="patch-notes">${p.notes.replace(/\n/g, "<br>")}</div>
-        </div>`).join("")}
-      </div>` : ""}
-      ${gallery}
-      <div id="weaponsAndSkillsContainer">
-        ${renderWeaponsSection(idx, 0)} </div>`;
+    `;
 
-    currentJobReviewsPromise = fetch(`/api/v1/jobs/${job.job_id}/reviews`)
-        .then(res => res.json());
+    currentJobReviewsPromise = fetch(`/api/v1/jobs/${job.job_id}/reviews`).then(res => res.json());
+    currentJobReviewsPromise.then(data => {
+        document.getElementById('sideAvgRating').textContent = `★ ${data.avg_rating}`;
+    }).catch(e => {
+        document.getElementById('sideAvgRating').textContent = `평가 없음`;
+    });
 
-    currentJobReviewsPromise
-        .then(data => {
-            document.getElementById('sideAvgRating').textContent = `★ ${data.avg_rating}`;
-        })
-        .catch(e => {
-            document.getElementById('sideAvgRating').textContent = `평가 없음`;
-        });
-
-    sidebar.classList.add("open");
+    setTimeout(() => {
+        sidebar.classList.add("open");
+    }, 10);
 }
 
 function closeSidebar() {

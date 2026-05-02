@@ -471,16 +471,4 @@ document.addEventListener("click", e => {
     }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-    checkAuthAndLoad();
-
-    const targetHref = BOARD_TYPE === 'notice' ? '/notice' : '/event';
-    const gnbLink = document.querySelector(`.gnb-nav a[href="${targetHref}"]`);
-    if (gnbLink) {
-        gnbLink.style.color = '#f39c12';
-        gnbLink.style.fontWeight = 'bold';
-        gnbLink.style.textShadow = '0 0 15px rgba(243, 156, 18, 0.6)';
-        gnbLink.style.transform = 'scale(1.15)';
-        gnbLink.style.display = 'inline-block';
-    }
-});
+document.addEventListener("DOMContentLoaded", checkAuthAndLoad);

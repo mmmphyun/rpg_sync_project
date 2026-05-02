@@ -1,0 +1,460 @@
+/* =========================================
+   Jobs Layout & Filter
+   ========================================= */
+.jobs-container {
+    max-width: 1400px;
+    margin: 80px auto 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 80px - 60px);
+}
+
+.page-title-area {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+}
+.page-title-area h2 { font-family: 'Jura', sans-serif; font-size: 2rem; color: var(--text-main); }
+
+.filter-dashboard {
+    display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;
+    background: var(--bg-widget-light); padding: 15px 20px;
+    border-radius: 8px; border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px); align-items: center; justify-content: space-between;
+}
+
+.filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filter-label { color: var(--text-muted); font-size: 0.85rem; margin-right: 5px; font-weight: bold; }
+.filter-sep { width: 1px; height: 20px; background: var(--border-color); margin: 0 5px; }
+
+.filter-btn {
+    background: var(--bg-surface); color: var(--text-muted);
+    border: 1px solid var(--border-faint); padding: 6px 14px;
+    border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+}
+.filter-btn:hover { border-color: var(--border-light); color: var(--text-main); }
+.filter-btn.active {
+    background: color-mix(in srgb, var(--accent-hero) 15%, transparent);
+    color: var(--accent-hero); border-color: var(--accent-hero);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent-hero) 30%, transparent);
+}
+
+.search-group {
+    display: flex; align-items: center; background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border-color); border-radius: 20px; padding: 5px 15px;
+}
+.search-group i { color: var(--text-muted); margin-right: 8px; font-size: 0.9rem; }
+.search-input {
+    background: transparent; border: none; color: var(--text-main);
+    outline: none; font-size: 0.9rem; width: 180px;
+}
+
+/* =========================================
+   Main Workspace & Slide-over Sidebar
+   ========================================= */
+.main-workspace {
+    position: relative; flex: 1; display: flex; overflow: hidden;
+    border-top: 1px solid var(--border-color); padding-top: 20px;
+}
+
+.grid-area {
+    flex: 1; display: block; overflow-y: auto; padding-right: 15px;
+}
+
+/* Slide-over  */
+.sidebar {
+    position: absolute; top: 0; right: 0; height: 100%;
+    width: 60%; max-width: 1000px;
+    transform: translateX(100%);
+    background: var(--bg-widget-dark);
+    border-left: 1px solid var(--accent-hero);
+    box-shadow: none;
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease;
+    overflow: hidden; z-index: 100;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.sidebar.open { transform: translateX(0); box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6); }
+
+.sidebar-inner { width: 100%; height: 100%; padding: 20px; position: relative; }
+.sidebar-close {
+    position: absolute; top: 15px; right: 20px; background: none; border: none;
+    color: var(--text-muted); font-size: 1.5rem; cursor: pointer; z-index: 10;
+}
+.sidebar-close:hover { color: var(--accent-villain); }
+
+.slideover-layout {
+    display: flex; height: calc(100% - 20px); gap: 25px; margin-top: 20px;
+}
+.slideover-left { flex: 0 0 35%; padding-right: 10px; border-right: 1px dashed var(--border-color); }
+.slideover-right { flex: 1; padding-right: 10px; }
+
+/* =========================================
+   Slide-over Left: Info & Media
+   ========================================= */
+.sidebar-portrait-wrapper { position: relative; width: 100%; aspect-ratio: 1/1; margin-bottom: 15px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+.sidebar-portrait-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-nav {
+    position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6);
+    color: #fff; border: none; padding: 10px; cursor: pointer; font-size: 1rem; transition: background 0.2s;
+}
+.gallery-nav.prev { left: 0; border-radius: 0 4px 4px 0; }
+.gallery-nav.next { right: 0; border-radius: 4px 0 0 4px; }
+.gallery-nav:hover { background: var(--accent-hero); }
+
+.sidebar-name { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 5px; }
+.sidebar-gate { font-size: 0.85rem; color: var(--accent-warning); margin-bottom: 15px; }
+.sidebar-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-faint); }
+.req-condition { margin-top: 10px; color: var(--accent-villain); font-size: 0.85rem; font-weight: bold; }
+
+.sidebar-patches-wrapper { margin-top: 20px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--border-faint); overflow: hidden; }
+.patch-header { padding: 12px 15px; display: flex; justify-content: space-between; cursor: pointer; background: var(--bg-widget-light); }
+.patch-header h4 { font-size: 0.85rem; color: var(--accent-hero); margin: 0; }
+.patch-entry { padding: 10px 15px; border-top: 1px solid var(--border-faint); }
+.patch-date { font-size: 0.75rem; color: var(--accent-info); margin-bottom: 4px; }
+.patch-notes { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+
+/* =========================================
+   Custom Scrollbar
+   ========================================= */
+.grid-area::-webkit-scrollbar,
+.inner-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.grid-area::-webkit-scrollbar-track,
+.inner-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.grid-area::-webkit-scrollbar-thumb,
+.inner-scroll::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+    border: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+}
+
+.grid-area::-webkit-scrollbar-thumb:hover,
+.inner-scroll::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--accent-hero) 40%, transparent);
+}
+
+/* =========================================
+   Slide-over Left: Review Summary & Button
+   ========================================= */
+.sidebar-review-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-faint);
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.rating-text {
+    color: var(--accent-warning);
+    font-weight: bold;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+}
+
+.review-btn {
+    background: var(--bg-surface);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    font-weight: 600;
+}
+
+.review-btn:hover {
+    background: color-mix(in srgb, var(--accent-hero) 15%, transparent);
+    color: var(--accent-hero);
+    border-color: var(--accent-hero);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent-hero) 30%, transparent);
+}
+
+/* =========================================
+   Slide-over Right: Combat System (2-Grid)
+   ========================================= */
+.weapon-tabs-container { display: flex; gap: 10px; margin-bottom: 20px; padding-bottom: 10px; overflow-x: auto; }
+.weapon-tab {
+    flex: 1; min-width: 80px; padding: 10px; text-align: center; border-radius: 8px;
+    background: var(--bg-surface); border: 1px solid var(--border-color);
+    cursor: pointer; transition: all 0.2s; position: relative;
+}
+.weapon-tab:hover { border-color: var(--border-light); }
+.weapon-tab.active { background: color-mix(in srgb, var(--accent-hero) 10%, transparent); border-color: var(--accent-hero); }
+.weapon-tab i.main-icon { display: block; font-size: 1.6rem; color: var(--text-muted); margin-bottom: 6px; transition: color 0.2s; }
+.weapon-tab.active i.main-icon { color: var(--accent-hero); }
+.weapon-name-text { font-size: 0.75rem; color: var(--text-muted); transition: color 0.2s; }
+.weapon-tab.active .weapon-name-text { color: var(--text-main); font-weight: bold; }
+.form-badge-dot {
+    position: absolute; top: 6px; right: 6px; width: 6px; height: 6px;
+    background: var(--accent-villain); border-radius: 50%;
+}
+.weapon-tab.active.form-active {
+    background: color-mix(in srgb, var(--accent-villain) 10%, transparent);
+    border-color: var(--accent-villain);
+}
+.weapon-tab.active.form-active i.main-icon {
+    color: var(--accent-villain);
+}
+.weapon-form-indicator {
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    margin-top: 8px; padding-top: 4px;
+    font-size: 0.75rem; font-weight: bold;
+    transition: color 0.2s, text-shadow 0.2s;
+    width: 100%;
+}
+.weapon-form-indicator i {
+    font-size: 0.8rem; margin: 0;
+    transition: color 0.2s;
+}
+
+.skill-section-title { font-size: 1rem; color: var(--text-main); margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid var(--border-color); }
+.skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.skill-card {
+    background: rgba(0,0,0,0.4); border: 1px solid var(--border-faint);
+    border-radius: 8px; padding: 12px; display: flex; flex-direction: column;
+}
+.skill-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.skill-title { font-size: 0.9rem; color: var(--accent-warning); line-height: 1.2; flex: 1; padding-right: 5px; }
+.skill-meta { display: flex; flex-direction: column; align-items: flex-end; font-size: 0.7rem; color: var(--text-muted); gap: 2px; }
+
+.skill-desc {
+    font-size: 0.8rem; color: #ccc; line-height: 1.5; flex: 1;
+    max-height: 80px; overflow-y: auto; margin-bottom: 8px; padding-right: 5px;
+}
+.skill-footer { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); border-top: 1px dashed var(--border-faint); padding-top: 8px; }
+.skill-footer .coef { color: var(--text-main); }
+.mobility-tag { color: var(--accent-info); }
+
+/* =========================================
+   Job Grid & Tiles (Restored Legacy CSS)
+   ========================================= */
+.group-label {
+    color: var(--text-muted); font-size: 0.85rem; letter-spacing: 1px;
+    text-transform: uppercase; margin: 20px 0 10px 0; padding-bottom: 5px;
+    border-bottom: 1px solid var(--border-faint);
+}
+.group-label:first-child { margin-top: 0; }
+
+.champ-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px;
+    margin-bottom: 20px;
+}
+
+.champ-tile {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; padding: 10px 5px; border-radius: 8px;
+    transition: background 0.2s; position: relative;
+}
+.champ-tile:hover { background: rgba(255, 255, 255, 0.05); }
+.champ-tile.selected { background: color-mix(in srgb, var(--accent-hero) 15%, transparent); }
+
+.champ-portrait {
+    width: 64px; height: 64px; border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.25); display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; font-weight: 700; color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s; position: relative;
+    background-color: var(--bg-widget-medium);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+.champ-portrait img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; z-index: 1; }
+.champ-tile:hover .champ-portrait { border-color: var(--accent-hero); box-shadow: 0 0 12px color-mix(in srgb, var(--accent-hero) 50%, transparent); }
+.champ-tile.selected .champ-portrait { border-color: var(--accent-hero); box-shadow: 0 0 18px color-mix(in srgb, var(--accent-hero) 80%, transparent); }
+
+.active-dot {
+    position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px;
+    background: var(--accent-success); border-radius: 50%;
+    border: 2px solid var(--bg-surface); z-index: 10;
+}
+
+.player-tooltip {
+    display: none; position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%);
+    background: var(--bg-widget-dark); border: 1px solid var(--border-color); color: #fff;
+    font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; white-space: nowrap; z-index: 10;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+.champ-tile:hover .player-tooltip { display: block; }
+
+.champ-name {
+    font-size: 0.75rem; color: var(--text-main); margin-top: 6px;
+    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
+}
+
+.champ-mini-tags { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+.mini-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+.sidebar-tag { font-size: 0.75rem; padding: 3px 10px; border-radius: 4px; font-weight: 600; }
+
+/* =========================================
+   Utilities: Theme Classes
+   ========================================= */
+.t-melee      { background: var(--accent-villain); color: #fff; }
+.t-ranged     { background: var(--accent-info); color: #fff; }
+.t-hybrid     { background: linear-gradient(135deg, var(--accent-villain), var(--accent-info)); color: #fff; }
+.t-unknown    { background: #3a3a4a; color: #999; }
+.t-phys       { background: #e67e22; color: #fff; }
+.t-magic      { background: #8e44ad; color: #fff; }
+.t-hybrid-dmg { background: linear-gradient(135deg, #e67e22, #8e44ad); color: #fff; }
+.t-tank       { background: var(--accent-success); color: #fff; }
+.t-heal       { background: #9b59b6; color: #fff; }
+.t-util       { background: #16a085; color: #fff; }
+.t-ki         { background: #d4a017; color: #1a1a1a; }
+.t-mana       { background: #2471a3; color: #fff; }
+.t-hp         { background: var(--accent-success); color: #fff; }
+.t-en         { background: #AFEEEE; color: #1a1a1a; }
+.t-none       { background: #444; color: #aaa; }
+.t-yes        { background: var(--accent-success); color: #fff; }
+.t-no         { background: var(--accent-villain); color: #fff; }
+.t-limit      { background: var(--accent-villain); color: #fff; border: 1px solid #fff; }
+
+.bg-phys       { background: linear-gradient(135deg, #2c1810, #1a0f08); }
+.bg-magic      { background: linear-gradient(135deg, #1f1028, #140a1a); }
+.bg-hybrid-dmg { background: linear-gradient(135deg, #2c1810, #1a0f08); }
+.bg-tank       { background: linear-gradient(135deg, #0f2818, #081a0f); }
+.bg-heal       { background: linear-gradient(135deg, #1f1028, #140a1a); }
+.bg-util       { background: linear-gradient(135deg, #0a2020, #061515); }
+.bg-unknown    { background: linear-gradient(135deg, #1a1a2a, #101018); }
+
+@keyframes borderGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.type-hero.champ-portrait, .type-villain.champ-portrait {
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.type-hero.champ-portrait::before, .type-villain.champ-portrait::before {
+    content: ''; position: absolute;
+    top: -3px; left: -3px; right: -3px; bottom: -3px;
+    background-size: 300% 300%;
+    animation: borderGradient 3s ease infinite;
+    z-index: -2;
+    border-radius: 14px;
+    transition: all 0.2s ease;
+}
+
+.type-hero.champ-portrait::before {
+    background-image: linear-gradient(60deg, var(--accent-info), #8e44ad, var(--accent-info));
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent-info) 50%, transparent);
+}
+.type-villain.champ-portrait::before {
+    background-image: linear-gradient(60deg, var(--accent-villain), #ff4d4d, #ff7675, var(--accent-villain));
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent-villain) 50%, transparent);
+}
+
+.type-hero.champ-portrait::after, .type-villain.champ-portrait::after {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 10px;
+    background-color: var(--bg-widget-medium);
+    z-index: -1;
+}
+
+.champ-tile:hover .type-hero.champ-portrait::before,
+.champ-tile.selected .type-hero.champ-portrait::before {
+    animation-duration: 1.5s;
+    top: -4px; left: -4px; right: -4px; bottom: -4px;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent-info) 90%, transparent);
+}
+
+.champ-tile:hover .type-villain.champ-portrait::before,
+.champ-tile.selected .type-villain.champ-portrait::before {
+    animation-duration: 1.5s;
+    top: -4px; left: -4px; right: -4px; bottom: -4px;
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent-villain) 90%, transparent);
+}
+
+/* =========================================
+   Review Modal Styles
+   ========================================= */
+.review-widget-modal {
+    width: 500px; max-width: 90vw; max-height: 80vh;
+    display: flex; flex-direction: column; padding: 0 !important;
+}
+
+/* 헤더 */
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px 20px; background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-header h3 { margin: 0; color: var(--accent-hero); font-size: 1.1rem; }
+.modal-close {
+    background: none; border: none; color: var(--text-muted);
+    font-size: 1.5rem; cursor: pointer; transition: color 0.2s;
+}
+.modal-close:hover { color: var(--accent-villain); }
+
+/* 리뷰 목록 */
+.review-list { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.review-item {
+    background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-faint);
+    border-radius: 8px; padding: 12px;
+}
+/* JS에서 주입된 인라인 스타일 강제 덮어쓰기 */
+.review-item .review-rating { color: var(--accent-warning) !important; font-size: 0.9rem !important; }
+.review-item span[style*="color:#666"] { color: var(--text-muted) !important; font-size: 0.8rem !important; }
+.review-item .review-comment-text { color: var(--text-main) !important; margin-top: 6px; }
+
+/* 작성 폼 영역 */
+.review-form-area {
+    padding: 20px; background: rgba(0, 0, 0, 0.5);
+    border-top: 1px solid var(--border-color);
+}
+#reviewForm { display: flex; flex-direction: column; gap: 12px; }
+
+.rating-select { display: flex; align-items: center; gap: 10px; color: var(--text-main); font-size: 0.9rem; }
+#reviewRating {
+    background: var(--bg-surface); color: var(--text-main);
+    border: 1px solid var(--border-color); padding: 6px 12px;
+    border-radius: 4px; outline: none; cursor: pointer;
+}
+#reviewRating:focus { border-color: var(--accent-hero); }
+
+#reviewComment {
+    width: 100%; height: 80px; background: var(--bg-surface); color: var(--text-main);
+    border: 1px solid var(--border-color); padding: 12px; border-radius: 6px;
+    resize: none; outline: none; font-family: inherit; font-size: 0.9rem;
+}
+#reviewComment:focus { border-color: var(--accent-hero); }
+
+.review-notice { color: var(--text-muted); font-size: 0.75rem; }
+
+.review-submit-btn {
+    background: color-mix(in srgb, var(--accent-hero) 15%, transparent);
+    color: var(--accent-hero); border: 1px solid var(--accent-hero);
+    padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;
+    transition: all 0.2s; font-family: inherit;
+}
+.review-submit-btn:hover {
+    background: var(--accent-hero); color: #000;
+    box-shadow: 0 0 15px color-mix(in srgb, var(--accent-hero) 40%, transparent);
+}
+
+.review-auth-blocker { text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 10px 0; }
+
+
+
+/* 모바일/태블릿 반응형 */
+@media screen and (max-width: 1024px) {
+    .sidebar.open { width: 100%; max-width: 100%; border-left: none; }
+    .slideover-layout { flex-direction: column; overflow-y: auto; }
+    .slideover-left { flex: none; border-right: none; border-bottom: 1px dashed var(--border-color); padding-bottom: 20px; }
+    .slideover-right { padding-top: 10px; }
+}
+@media screen and (max-width: 768px) {
+    .skill-grid { grid-template-columns: 1fr; }
+}
