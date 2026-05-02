@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadBanner()
-        .then(() => loadServerStatus())
         .then(() => loadLatestPosts())
         .then(() => loadRecentReviews())
+        .then(() => loadServerStatus())
         .catch(err => console.error("Dashboard Load Error:", err));
 });
 
