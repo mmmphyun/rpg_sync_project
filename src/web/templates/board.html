@@ -3,7 +3,7 @@
 {% block title %}{{ "공지사항" if board_type == "notice" else "이벤트" }} - Fossile Wiki{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/board.css">
+<link rel="stylesheet" href="/static/board.css?v=1.0.1">
 {% endblock %}
 
 {% block content %}
@@ -40,7 +40,7 @@
 </div>
 
 <!-- 태그 변경 모달 -->
-<div class="modal-overlay" id="tagModal"">
+<div class="modal-overlay" id="tagModal">
     <div class="widget" style="width: 320px; padding: 20px; border-color: rgba(0, 242, 254, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
         <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem; font-family: 'Jura', sans-serif;">태그 변경</h3>
         <select id="newTagSelect" style="width: 100%; padding: 10px; margin-bottom: 20px; background: rgba(11, 12, 26, 0.8); color: #fff; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; outline: none;">
@@ -58,7 +58,7 @@
 </div>
 
 <!-- 제목 수정 모달 -->
-<div class="modal-overlay" id="titleModal"">
+<div class="modal-overlay" id="titleModal">
     <div class="widget" style="width: 350px; padding: 20px; border-color: rgba(243, 156, 18, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);">
         <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem; font-family: 'Jura', sans-serif;">제목 수정</h3>
         <input type="text" id="newTitleInput" placeholder="제목 입력 (비워두면 자동 요약)" style="width: 100%; padding: 10px; margin-bottom: 20px; background: rgba(11, 12, 26, 0.8); color: #fff; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; outline: none;">
@@ -75,5 +75,5 @@
 <script>
     window.BOARD_TYPE = "{{ board_type }}";
 </script>
-<script src="/static/board.js"></script>
+<script src="/static/board.js?v=1.0.1"></script>
 {% endblock %}

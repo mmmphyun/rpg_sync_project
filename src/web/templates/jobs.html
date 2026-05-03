@@ -3,7 +3,7 @@
 {% block title %}직업 종류 - Fossile Wiki{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/jobs.css">
+<link rel="stylesheet" href="/static/jobs.css?v=1.0.1">
 {% endblock %}
 
 {% block content %}
@@ -88,5 +88,5 @@
 <script>
     window.INITIAL_JOBS_DATA = {{ jobs_data | tojson }};
 </script>
-<script src="/static/main.js"></script>
+<script src="/static/main.js?v=1.0.1"></script>
 {% endblock %}
