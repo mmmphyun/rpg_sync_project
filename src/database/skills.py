@@ -4,7 +4,8 @@ from src.database.connection import get_connection, release_connection
 
 def upsert_weapon_and_skill(
         job_name: str, weapon_type: str, weapon_name: str, command_key: str, skill_name: str,
-        description: str, cooldown: str, cost_value: str, coefficient_combined: str, is_mobility: str
+        description: str, cooldown: str, cost_value: str, coefficient_combined: str, is_mobility: str,
+        form_name: str
 ) -> bool:
     """무기 및 스킬 정보 수동 UPSERT (스키마 구조 반영)"""
     conn = get_connection()
@@ -35,22 +36,25 @@ def upsert_weapon_and_skill(
             weapon_id = cursor.fetchone()[0]
 
         # 3. 스킬 정보 적재
-        cursor.execute("SELECT skill_id FROM skills WHERE weapon_id = %s AND command_key = %s",
-                       (weapon_id, command_key))
+        cursor.execute("""
+                    SELECT skill_id FROM skills 
+                    WHERE weapon_id = %s AND command_key = %s AND COALESCE(form_name, '기본') = %s
+                """, (weapon_id, command_key, form_name))
         skill_row = cursor.fetchone()
 
         if skill_row:
             cursor.execute("""
-                UPDATE skills SET
-                    skill_name = %s, description = %s, cooldown = %s, cost_value = %s, coefficient = %s, is_mobility = %s
-                WHERE skill_id = %s
-            """, (skill_name, description, cooldown, cost_value, coefficient_combined, is_mobility, skill_row[0]))
+                        UPDATE skills SET
+                            skill_name = %s, description = %s, cooldown = %s, cost_value = %s, coefficient = %s, is_mobility = %s
+                        WHERE skill_id = %s
+                    """, (skill_name, description, cooldown, cost_value, coefficient_combined, is_mobility,
+                          skill_row[0]))
         else:
             cursor.execute("""
-                INSERT INTO skills (weapon_id, command_key, skill_name, description, cooldown, cost_value, coefficient, is_mobility)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (weapon_id, command_key, skill_name, description, cooldown, cost_value, coefficient_combined,
-                  is_mobility))
+                        INSERT INTO skills (weapon_id, command_key, skill_name, description, cooldown, cost_value, coefficient, is_mobility, form_name)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (weapon_id, command_key, skill_name, description, cooldown, cost_value, coefficient_combined,
+                          is_mobility, form_name))
 
         conn.commit()
         return True

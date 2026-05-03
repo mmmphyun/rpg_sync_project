@@ -146,7 +146,7 @@ class JobCmd(BaseCog):
         try:
             parts = [p.strip() for p in details.split('|')]
             if len(parts) < 6:
-                await ctx.send("[Error] 상세 정보 포맷 오류. (형식: 설명|쿨타임|코스트|계수|피해타입|이동기)")
+                await ctx.send("[Error] 상세 정보 포맷 오류. (형식: 설명|쿨타임|코스트|계수|피해타입|이동기|[폼이름])")
                 return
 
             description = parts[0]
@@ -154,6 +154,8 @@ class JobCmd(BaseCog):
             cost_value = parts[2]
             coefficient_combined = f"{parts[3]} ({parts[4]})"
             is_mobility = parts[5].upper()
+
+            form_name = parts[6] if len(parts) > 6 and parts[6] else "기본"
 
             if len(weapon_name) > 100:
                 raise ValueError("무기명은 100자를 초과할 수 없습니다.")
@@ -167,7 +169,7 @@ class JobCmd(BaseCog):
             success = await asyncio.to_thread(
                 upsert_weapon_and_skill,
                 job_name, weapon_type, weapon_name, command_key, skill_name,
-                description, cooldown, cost_value, coefficient_combined, is_mobility
+                description, cooldown, cost_value, coefficient_combined, is_mobility, form_name
             )
 
             if success:
@@ -183,8 +185,8 @@ class JobCmd(BaseCog):
         if isinstance(error, commands.MissingRequiredArgument):
             error_msg = (
                 "[Error] 필수 입력값이 누락되었습니다.\n"
-                "사용법: `!스킬등록 <직업명> <무기종류> <무기명> <커맨드> <스킬명> <설명|쿨타임|코스트|계수|피해타입|이동기Y/N>`\n"
-                "예시: `!스킬등록 다크메이지 지팡이 초보자스태프 우클릭 다크볼 적에게 암흑구를 발사|3초|10|지력 * 1.5|마법|N`"
+                "사용법: `!스킬등록 <직업명> <무기종류> <무기명> <커맨드> <스킬명> <설명|쿨타임|코스트|계수|피해타입|이동기Y/N|[폼이름]>`\n"
+                "예시: `!스킬등록 다크메이지 지팡이 초보자스태프 우클릭 다크볼 적에게 암흑구를 발사|3초|10|지력 * 1.5|마법|N|각성폼`"
             )
             await ctx.send(error_msg)
         elif isinstance(error, commands.MissingPermissions):
