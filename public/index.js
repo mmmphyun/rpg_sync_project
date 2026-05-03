@@ -17,8 +17,35 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function renderSkeletons() {
-    document.getElementById('latest-posts').innerHTML = '<li class="skeleton" style="height: 20px; margin-bottom: 10px;"></li>'.repeat(5);
-    document.getElementById('recent-reviews').innerHTML = '<div class="skeleton" style="height: 60px; margin-bottom: 10px;"></div>'.repeat(3);
+    const statusContainer = document.getElementById('server-status-content');
+    if (statusContainer) {
+        statusContainer.style.display = 'flex';
+        statusContainer.style.flexDirection = 'column';
+        statusContainer.innerHTML = `
+            <div>
+                <div style="color: var(--text-muted); font-weight: bold; font-size: 1.2rem;">CHECKING...</div>
+                <div style="margin-top: 8px; color: var(--text-muted);">서버 상태 확인 중</div>
+            </div>
+            <div class="server-status-actions" style="opacity: 0.3; pointer-events: none;">
+                <div class="status-btn btn-discord-icon" style="background: var(--border-color);">
+                    <i class="ra ra-speech-bubble"></i>
+                </div>
+                <div class="status-btn btn-guide" style="border-color: var(--border-color); color: var(--border-color);">
+                    데이터 불러오는 중...
+                </div>
+            </div>
+        `;
+    }
+
+    const postsContainer = document.getElementById('latest-posts');
+    if (postsContainer) {
+        postsContainer.innerHTML = '<li class="skeleton" style="height: 34px; margin-bottom: 8px; border-radius: 4px; list-style: none;"></li>'.repeat(5);
+    }
+
+    const reviewsContainer = document.getElementById('recent-reviews');
+    if (reviewsContainer) {
+        reviewsContainer.innerHTML = '<div class="skeleton" style="height: 97px; margin-bottom: 10px; border-radius: 8px;"></div>'.repeat(2);
+    }
 }
 
 function escapeHTML(str) {
@@ -190,7 +217,7 @@ async function loadLatestPosts() {
 async function loadRecentReviews() {
     const container = document.getElementById('recent-reviews');
     try {
-        const response = await fetch('/api/v1/jobs/reviews/recent');
+        const response = await fetch('/api/v1/jobs/reviews/recent?limit=2');
         const reviews = await response.json();
 
         if (!reviews || reviews.length === 0) {
