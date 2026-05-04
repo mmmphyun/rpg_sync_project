@@ -284,6 +284,26 @@ function renderWeaponsSection(jobIdx, activeWeaponIdx) {
     const fixedSkills = skills.filter(s => s.command_key === '패시브' || !s.form_name || s.form_name.trim() === '' || s.form_name === '공통');
     const formSkills = skills.filter(s => s.command_key !== '패시브' && s.form_name && s.form_name === currentForm && s.form_name !== '공통');
 
+    // 커맨드 우선순위 가중치 반환 함수
+    const getCommandWeight = (cmd) => {
+        if (!cmd) return 999;
+        const normalizedCmd = cmd.replace(/\s+/g, '').toUpperCase();
+
+        const weights = {
+            '패시브': 1,
+            '좌클릭': 10,
+            '우클릭': 20,
+            'F': 30,
+            'SHIFT+좌클릭': 40,
+            'SHIFT+우클릭': 50,
+            'SHIFT+F': 60
+        };
+        return weights[normalizedCmd] || 999;
+    };
+
+    fixedSkills.sort((a, b) => getCommandWeight(a.command_key) - getCommandWeight(b.command_key));
+    formSkills.sort((a, b) => getCommandWeight(a.command_key) - getCommandWeight(b.command_key));
+
     // 스킬 카드 렌더링 (공간 압축형)
     const renderSkillCard = (s) => `
         <div class="skill-card">
