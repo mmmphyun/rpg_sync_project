@@ -219,7 +219,7 @@ function formatCommandToKbd(cmd) {
     }
 
     const commandMap = {
-        'SHIFT': '<i class="fa-solid fa-arrow-up"></i>', // 또는 '⇧'
+        'SHIFT': '⇧',
         '좌클릭': '<i class="fa-solid fa-mouse"></i><span style="font-size: 0.6rem; color: #ff7675; margin-left: 2px;">L</span>',
         '우클릭': '<i class="fa-solid fa-mouse"></i><span style="font-size: 0.6rem; color: #74b9ff; margin-left: 2px;">R</span>',
         '휠클릭': '<i class="fa-solid fa-mouse"></i><span style="font-size: 0.6rem; color: #55efc4; margin-left: 2px;">M</span>'
@@ -290,7 +290,7 @@ function renderWeaponsSection(jobIdx, activeWeaponIdx) {
             <div class="skill-header-top">
                 <strong class="skill-title">
                     <span class="cmd-wrapper">${formatCommandToKbd(s.command_key)}</span>
-                    <span class="skill-name-text">${escapeHTML(s.skill_name)}</span>
+                    <span class="skill-name-text" title="${escapeHTML(s.skill_name)}">${escapeHTML(s.skill_name)}</span>
                 </strong>
             </div>
             <div class="skill-meta-row">
