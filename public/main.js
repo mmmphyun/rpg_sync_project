@@ -218,8 +218,17 @@ function formatCommandToKbd(cmd) {
         return `<span class="passive-tag">[패시브]</span>`;
     }
 
+    const commandMap = {
+        'SHIFT': '<i class="fa-solid fa-arrow-up"></i>', // 또는 '⇧'
+        '좌클릭': '<i class="fa-solid fa-mouse"></i><span style="font-size: 0.6rem; color: #ff7675; margin-left: 2px;">L</span>',
+        '우클릭': '<i class="fa-solid fa-mouse"></i><span style="font-size: 0.6rem; color: #74b9ff; margin-left: 2px;">R</span>',
+        '휠클릭': '<i class="fa-solid fa-mouse"></i><span style="font-size: 0.6rem; color: #55efc4; margin-left: 2px;">M</span>'
+    };
+
     return cmd.split('+').map(part => {
-        return `<kbd class="key-kbd">${escapeHTML(part.trim())}</kbd>`;
+        const p = part.trim().toUpperCase();
+        const content = commandMap[p] || commandMap[part.trim()] || escapeHTML(part.trim());
+        return `<kbd class="key-kbd">${content}</kbd>`;
     }).join('<span class="key-plus">+</span>');
 }
 
@@ -278,15 +287,15 @@ function renderWeaponsSection(jobIdx, activeWeaponIdx) {
     // 스킬 카드 렌더링 (공간 압축형)
     const renderSkillCard = (s) => `
         <div class="skill-card">
-            <div class="skill-header">
+            <div class="skill-header-top">
                 <strong class="skill-title">
                     <span class="cmd-wrapper">${formatCommandToKbd(s.command_key)}</span>
-                    ${escapeHTML(s.skill_name)}
+                    <span class="skill-name-text">${escapeHTML(s.skill_name)}</span>
                 </strong>
-                <div class="skill-meta">
-                    <span title="쿨타임">⏱ ${escapeHTML(s.cooldown || '-')}</span>
-                    <span title="소모값">💧 ${escapeHTML(s.cost_value || '-')}</span>
-                </div>
+            </div>
+            <div class="skill-meta-row">
+                <span title="쿨타임"><i class="fa-regular fa-clock"></i> ${escapeHTML(s.cooldown || '-')}</span>
+                <span title="소모값" style="margin-left: 8px;"><i class="fa-solid fa-droplet" style="color: #3498db;"></i> ${escapeHTML(s.cost_value || '-')}</span>
             </div>
             <div class="skill-desc inner-scroll">${escapeHTML(s.description)}</div>
             <div class="skill-footer">
