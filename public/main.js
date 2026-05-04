@@ -212,6 +212,17 @@ function renderGrid() {
 let currentFormMap = {};
 let currentWeaponIdx = 0;
 
+function formatCommandToKbd(cmd) {
+    if (!cmd) return '';
+    if (cmd === '패시브') {
+        return `<span class="passive-tag">[패시브]</span>`;
+    }
+
+    return cmd.split('+').map(part => {
+        return `<kbd class="key-kbd">${escapeHTML(part.trim())}</kbd>`;
+    }).join('<span class="key-plus">+</span>');
+}
+
 function renderWeaponsSection(jobIdx, activeWeaponIdx) {
     const job = JOBS[jobIdx];
     const weapons = job.weapons || [];
@@ -268,7 +279,10 @@ function renderWeaponsSection(jobIdx, activeWeaponIdx) {
     const renderSkillCard = (s) => `
         <div class="skill-card">
             <div class="skill-header">
-                <strong class="skill-title">[${escapeHTML(s.command_key)}] ${escapeHTML(s.skill_name)}</strong>
+                <strong class="skill-title">
+                    <span class="cmd-wrapper">${formatCommandToKbd(s.command_key)}</span>
+                    ${escapeHTML(s.skill_name)}
+                </strong>
                 <div class="skill-meta">
                     <span title="쿨타임">⏱ ${escapeHTML(s.cooldown || '-')}</span>
                     <span title="소모값">💧 ${escapeHTML(s.cost_value || '-')}</span>
