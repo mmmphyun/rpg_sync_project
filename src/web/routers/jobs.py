@@ -23,7 +23,7 @@ def get_db_connection():
 @limiter.limit("60/minute")
 async def get_recent_reviews(request: Request):
     """메인 페이지용 최근 직업 평가 3개 조회"""
-    reviews = get_recent_reviews_for_web(limit=3)
+    reviews = get_recent_reviews_for_web(limit=2)
     return reviews
 
 @router.get("/{job_id}/reviews")

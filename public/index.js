@@ -217,7 +217,7 @@ async function loadLatestPosts() {
 async function loadRecentReviews() {
     const container = document.getElementById('recent-reviews');
     try {
-        const response = await fetch('/api/v1/jobs/reviews/recent?limit=2');
+        const response = await fetch('/api/v1/jobs/reviews/recent');
         const reviews = await response.json();
 
         if (!reviews || reviews.length === 0) {
