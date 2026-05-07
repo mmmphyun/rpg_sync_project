@@ -1,4 +1,5 @@
 import json
+import asyncio
 from fastapi import APIRouter, Request, Query, Body, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
@@ -6,6 +7,7 @@ from src.database.tip import get_tips_for_web, upsert_tip, get_tip_comments, cre
 from src.database.tip import get_tip_by_id, update_tip_by_id, delete_tip_by_id, get_comment_by_id, delete_comment_by_id
 from src.web.limiter import limiter
 from src.web.routers.auth import get_current_user
+from src.database.cache import get_cache, set_cache
 
 router = APIRouter()
 
@@ -19,8 +21,20 @@ async def get_tip_list(
 ):
     limit = 10
     offset = (page - 1) * limit
-    tips = get_tips_for_web(category=category, limit=limit, offset=offset)
 
+    if category in ["BUILD", "GUILD"]:
+        cache_key = f"cache:tips:{category}:page:{page}"
+        cached_data = await get_cache(cache_key)
+        if cached_data:
+            return cached_data
+
+        tips = await asyncio.to_thread(get_tips_for_web, category=category, limit=limit, offset=offset)
+        response_data = {"tips": tips, "page": page, "category": category}
+
+        await set_cache(cache_key, response_data, ex=86400)
+        return response_data
+
+    tips = await asyncio.to_thread(get_tips_for_web, category=category, limit=limit, offset=offset)
     return {"tips": tips, "page": page, "category": category}
 
 

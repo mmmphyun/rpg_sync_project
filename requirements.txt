@@ -12,3 +12,4 @@ jinja2
 PyJWT
 python-multipart
 mcstatus
+redis>=5.0.0

@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import asyncio
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -14,7 +15,8 @@ from src.web.limiter import limiter
 
 from src.database.jobs import get_all_jobs_for_web
 from src.database.connection import initialize_pool
-from src.web.routers import banner, auth, jobs, boards, server, tips
+from src.database.cache import init_redis_pool, close_redis_pool, get_cache, set_cache
+from src.web.routers import auth, jobs, boards, server, tips, dashboard
 
 app = FastAPI(title="Fossile Server Web Dashboard")
 
@@ -25,6 +27,8 @@ async def startup_event():
     """
     print("[System] DB 커넥션 풀 예열 시작...", flush=True)
     initialize_pool()
+    print("[System] Redis 커넥션 풀 초기화 시작...", flush=True)
+    await init_redis_pool()
     print("[System] MC 서버 초기 상태 캐싱 시작...", flush=True)
     try:
         await server.get_server_status()
@@ -32,6 +36,11 @@ async def startup_event():
         print(f"[System] MC 서버 캐싱 실패 (무시됨): {e}", flush=True)
     print("[System] 서버 사전 예열 완료", flush=True)
 
+@app.on_event("shutdown")
+async def shutdown_event():
+    """서버 종료 시 DB 및 Redis 커넥션을 안전하게 해제합니다."""
+    print("[System] Redis 커넥션 풀 해제...", flush=True)
+    await close_redis_pool()
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -79,7 +88,7 @@ app.mount("/static", StaticFiles(directory="public"), name="static")
 templates = Jinja2Templates(directory="src/web/templates")
 
 # Include Routers
-app.include_router(banner.router, prefix="/api/v1/banners", tags=["Banners"])
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboard"])
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(jobs.router, prefix="/api/v1/jobs", tags=["Jobs"])
 app.include_router(boards.router, prefix="/api/v1/boards", tags=["Boards"])
@@ -94,10 +103,21 @@ async def serve_index(request: Request):
         context={"request": request}
     )
 
+
 @app.get("/jobs", response_class=HTMLResponse)
 @limiter.limit("30/minute")
-def serve_jobs(request: Request):
-    jobs_data = get_all_jobs_for_web()
+async def serve_jobs(request: Request):
+    cache_key = "cache:jobs:all"
+
+    cached_jobs = await get_cache(cache_key)
+    if cached_jobs:
+        return templates.TemplateResponse(
+            request=request,
+            name="jobs.html",
+            context={"request": request, "jobs_data": cached_jobs}
+        )
+
+    jobs_data = await asyncio.to_thread(get_all_jobs_for_web)
 
     formatted_jobs = []
     for row in jobs_data:
@@ -122,6 +142,8 @@ def serve_jobs(request: Request):
             "players": row.get('players', []),
             "weapons": row.get('weapons', [])
         })
+
+    await set_cache(cache_key, formatted_jobs, ex=86400)
 
     return templates.TemplateResponse(
         request=request,
@@ -165,7 +187,6 @@ async def serve_tips(request: Request):
 async def get_guide_page(request: Request):
     return templates.TemplateResponse(request=request, name="guide.html")
 
-# 로깅 (서버 터미널만 상세 에러 기록)
 logger = logging.getLogger("uvicorn.error")
 
 @app.exception_handler(Exception)

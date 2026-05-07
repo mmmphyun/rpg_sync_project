@@ -22,3 +22,9 @@ services:
       - .env
     volumes:
       - ./public/images:/app/public/images
+
+  redis:
+    image: redis:alpine
+    container_name: rpg-redis-container
+    restart: always
+    command: redis-server --maxmemory 50mb --maxmemory-policy allkeys-lru

@@ -1,4 +1,3 @@
-import os
 import discord
 import aiohttp
 import asyncio
@@ -8,6 +7,7 @@ from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
 from src.database.board import upsert_notice, get_notice_images_by_message_id, delete_notice_by_message_id
 from src.bot.utils.s3_client import upload_to_r2, delete_from_r2
+from src.database.cache import delete_cache
 
 class BoardEvent(BaseCog):
 
@@ -63,6 +63,11 @@ class BoardEvent(BaseCog):
             if deleted_image_urls:
                 for image_url in deleted_image_urls:
                     await asyncio.to_thread(delete_from_r2, image_url)
+
+                await delete_cache("cache:main_page:all")
+                await delete_cache("cache:boards:notice:page:1:tag:None")
+                await delete_cache("cache:boards:event:page:1:tag:None")
+
                 print(f"[Info] 게시글 삭제 동기화 완료: Message ID {payload.message_id}")
 
         except Exception as e:
@@ -125,9 +130,14 @@ class BoardEvent(BaseCog):
             affected = upsert_notice(notice_data)
 
             # 4. UPSERT 성공 시 기존 R2 이미지 일괄 삭제
-            if affected > 0 and old_image_urls:
-                for old_url in old_image_urls:
-                    await asyncio.to_thread(delete_from_r2, old_url)
+            if affected > 0:
+                await delete_cache("cache:main_page:all")
+                await delete_cache("cache:boards:notice:page:1:tag:None")
+                await delete_cache("cache:boards:event:page:1:tag:None")
+
+                if old_image_urls:
+                    for old_url in old_image_urls:
+                        await asyncio.to_thread(delete_from_r2, old_url)
 
             print(f"[Info] Notice sync completed. Message ID: {message.id}, Affected: {affected}")
 

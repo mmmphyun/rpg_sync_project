@@ -1,12 +1,11 @@
 import discord
 import os
 import asyncio
-import mimetypes
+
 from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
 from src.database.board import update_notice_title
-from src.bot.utils.s3_client import upload_to_r2
-from src.database.skills import upsert_weapon_and_skill
+from src.database.cache import delete_cache
 
 VALID_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 
@@ -22,8 +21,12 @@ class BoardCmd(BaseCog):
         if len(title) > 200:
             return await ctx.send("제목이 너무 깁니다. (최대 200자)")
 
-        success = update_notice_title(message_id, title)
+        success = await asyncio.to_thread(update_notice_title, message_id, title)
         if success:
+            # 캐시 무효화 추가
+            await delete_cache("cache:main_page:all")
+            await delete_cache("cache:boards:notice:page:1:tag:None")
+            await delete_cache("cache:boards:event:page:1:tag:None")
             await ctx.send(f"성공적으로 제목이 업데이트되었습니다: **{title}**")
         else:
             await ctx.send("해당 메시지 ID를 가진 공지를 찾을 수 없습니다.")

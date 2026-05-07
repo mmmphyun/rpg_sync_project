@@ -5,13 +5,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     renderSkeletons();
 
-    if (document.getElementById('eventPopupModal')) {
-        loadEventPopup();
-    }
-
-    loadBanner()
-        .then(() => loadLatestPosts())
-        .then(() => loadRecentReviews())
+    fetchMainDashboardData()
         .then(() => loadServerStatus())
         .catch(err => console.error("Dashboard Load Error:", err));
 });
@@ -46,6 +40,19 @@ function renderSkeletons() {
     if (reviewsContainer) {
         reviewsContainer.innerHTML = '<div class="skeleton" style="height: 97px; margin-bottom: 10px; border-radius: 8px;"></div>'.repeat(2);
     }
+}
+
+function renderDashboardErrorUI() {
+    const errorHtml = '<div class="placeholder" style="color: var(--accent-villain); padding: 20px; text-align: center; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed var(--border-color);">데이터를 불러오지 못했습니다.</div>';
+
+    const bannerWrapper = document.getElementById('banner-wrapper');
+    if (bannerWrapper) bannerWrapper.innerHTML = errorHtml;
+
+    const postsList = document.getElementById('latest-posts');
+    if (postsList) postsList.innerHTML = '<li class="placeholder" style="color: var(--accent-villain);">게시글 로드 실패</li>';
+
+    const reviewsContainer = document.getElementById('recent-reviews');
+    if (reviewsContainer) reviewsContainer.innerHTML = errorHtml;
 }
 
 function escapeHTML(str) {
@@ -84,60 +91,49 @@ function getTagThemeForIndex(tag, type) {
 // 위젯 로드 함수
 // ---------------------------------------------------------
 
-async function loadBanner() {
-    const wrapper = document.getElementById('banner-wrapper');
-
+async function fetchMainDashboardData() {
     try {
-        const response = await fetch('/api/v1/banners/');
-        if (!response.ok) throw new Error('Banner load failed');
+        const response = await fetch('/api/v1/dashboard/main');
+        if (!response.ok) throw new Error('Dashboard data fetch failed');
 
         const data = await response.json();
 
-        if (!data.banners || data.banners.length === 0) {
-            wrapper.innerHTML = '<div class="swiper-slide" style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--text-muted); background:var(--bg-surface);">표시할 배너가 없습니다.</div>';
-            return;
+        if (document.getElementById('eventPopupModal')) {
+            handleEventPopup(data.popup);
         }
 
-        wrapper.innerHTML = data.banners.map(b => {
-            const bgStyle = `display:block; width:100%; height:100%; background-image:url('${escapeHTML(b.image_url)}'); background-size:cover; background-position:center;`;
-
-            if (b.link_url && b.link_url.trim() !== '') {
-                return `
-                    <div class="swiper-slide">
-                        <a href="${escapeHTML(b.link_url)}" target="_blank" rel="noopener noreferrer" style="${bgStyle} text-decoration:none;"></a>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="swiper-slide">
-                        <div style="${bgStyle}"></div>
-                    </div>
-                `;
-            }
-        }).join('');
-
-        new Swiper('#hero-swiper', {
-            loop: data.banners.length > 1,
-            autoplay: {
-                delay: 5000,
-                disableOnInteraction: false,
-            },
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-            effect: 'fade',
-            fadeEffect: { crossFade: true }
-        });
-
+        renderBanners(data.banners);
+        renderLatestPosts(data.posts);
+        renderRecentReviews(data.reviews);
     } catch (e) {
-        console.error("배너 로드 실패:", e);
-        wrapper.innerHTML = '<div class="swiper-slide" style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--accent-villain); background:var(--bg-surface);">배너를 불러오지 못했습니다.</div>';
+        console.error("fetchMainDashboardData 실패:", e);
+        renderDashboardErrorUI();
     }
+}
+
+function renderBanners(banners) {
+    const wrapper = document.getElementById('banner-wrapper');
+    if (!banners || banners.length === 0) {
+        wrapper.innerHTML = '<div class="swiper-slide" style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--text-muted); background:var(--bg-surface);">표시할 배너가 없습니다.</div>';
+        return;
+    }
+
+    wrapper.innerHTML = banners.map(b => {
+        const bgStyle = `display:block; width:100%; height:100%; background-image:url('${escapeHTML(b.image_url)}'); background-size:cover; background-position:center;`;
+        if (b.link_url && b.link_url.trim() !== '') {
+            return `<div class="swiper-slide"><a href="${escapeHTML(b.link_url)}" target="_blank" rel="noopener noreferrer" style="${bgStyle} text-decoration:none;"></a></div>`;
+        } else {
+            return `<div class="swiper-slide"><div style="${bgStyle}"></div></div>`;
+        }
+    }).join('');
+
+    new Swiper('#hero-swiper', {
+        loop: banners.length > 1,
+        autoplay: { delay: 5000, disableOnInteraction: false },
+        pagination: { el: '.swiper-pagination', clickable: true },
+        navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+        effect: 'fade', fadeEffect: { crossFade: true }
+    });
 }
 
 async function loadServerStatus() {
@@ -178,93 +174,54 @@ async function loadServerStatus() {
     }
 }
 
-async function loadLatestPosts() {
+function renderLatestPosts(posts) {
     const listEl = document.getElementById('latest-posts');
-    try {
-        const response = await fetch('/api/v1/boards/recent?limit=5');
-        const posts = await response.json();
-
-        if (!posts || posts.length === 0) {
-            listEl.innerHTML = '<li class="placeholder">최근 업데이트가 없습니다.</li>';
-            return;
-        }
-
-        listEl.innerHTML = posts.map(post => {
-            const dateStr = new Date(post.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
-            const tagText = post.tag || (post.type === 'event' ? '이벤트' : '공지');
-            const tagTheme = getTagThemeForIndex(post.tag, post.type);
-
-            let rawContent = post.content ? stripMarkdown(post.content.replace(/@[\u200B\s]*(everyone|here)/g, '').replace(/<@[!&]?\d+>/g, '')) : '';
-            let displayTitle = post.title;
-
-            if (!displayTitle) {
-                displayTitle = rawContent.length > 50 ? rawContent.substring(0, 50) : (rawContent || '제목 없음');
-            }
-
-            return `
-                <li class="widget-list-item" onclick="location.href='/${post.type}?id=${post.notice_id}'">
-                    <span style="color: ${tagTheme.color}; background: ${tagTheme.bg}; border: 1px solid ${tagTheme.color}40; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; margin-right: 8px; flex-shrink: 0;">${escapeHTML(tagText)}</span>
-                    <span class="item-title" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; transition: color 0.2s;">${escapeHTML(displayTitle)}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 10px; flex-shrink: 0;">${dateStr}</span>
-                </li>
-            `;
-        }).join('');
-    } catch (e) {
-        listEl.innerHTML = '<li class="placeholder" style="color: #E60023;">로드 실패</li>';
-    }
-}
-
-async function loadRecentReviews() {
-    const container = document.getElementById('recent-reviews');
-    try {
-        const response = await fetch('/api/v1/jobs/reviews/recent');
-        const reviews = await response.json();
-
-        if (!reviews || reviews.length === 0) {
-            container.innerHTML = '<div class="placeholder">최근 평가가 없습니다.</div>';
-            return;
-        }
-
-        container.innerHTML = reviews.map(r => `
-            <div style="background: var(--bg-base); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color);">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="color: #c89b3c; font-size: 0.8rem;">★ ${r.rating} | ${r.job_name}</span>
-                </div>
-                <div style="font-size: 0.85rem; line-height: 1.4; color: var(--text-main);">${r.comment}</div>
-                <div style="text-align: right; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">- ${r.nickname}</div>
-            </div>
-        `).join('');
-    } catch (e) {
-        container.innerHTML = '<div class="placeholder" style="color: #E60023;">로드 실패</div>';
-    }
-}
-
-async function loadEventPopup() {
-    const hideUntil = localStorage.getItem('hidePopupUntil');
-    if (hideUntil && Date.now() < parseInt(hideUntil)) return;
-
-    const cachedPopup = sessionStorage.getItem('eventPopupCache');
-    if (cachedPopup) {
-        renderPopup(JSON.parse(cachedPopup));
-
-        fetch('/api/v1/boards/popup')
-            .then(res => res.json())
-            .then(data => sessionStorage.setItem('eventPopupCache', JSON.stringify(data)))
-            .catch(() => {});
+    if (!posts || posts.length === 0) {
+        listEl.innerHTML = '<li class="placeholder">최근 업데이트가 없습니다.</li>';
         return;
     }
 
-    try {
-        const res = await fetch('/api/v1/boards/popup');
-        if (!res.ok) return;
+    listEl.innerHTML = posts.map(post => {
+        const dateStr = new Date(post.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+        const tagText = post.tag || (post.type === 'event' ? '이벤트' : '공지');
+        const tagTheme = getTagThemeForIndex(post.tag, post.type);
+        let rawContent = post.content ? stripMarkdown(post.content.replace(/@[\u200B\s]*(everyone|here)/g, '').replace(/<@[!&]?\d+>/g, '')) : '';
+        let displayTitle = post.title || (rawContent.length > 50 ? rawContent.substring(0, 50) : (rawContent || '제목 없음'));
 
-        const data = await res.json();
-        if (!data || !data.notice_id) return;
+        return `
+            <li class="widget-list-item" onclick="location.href='/${post.type}?id=${post.notice_id}'">
+                <span style="color: ${tagTheme.color}; background: ${tagTheme.bg}; border: 1px solid ${tagTheme.color}40; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; margin-right: 8px; flex-shrink: 0;">${escapeHTML(tagText)}</span>
+                <span class="item-title" style="flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; transition: color 0.2s;">${escapeHTML(displayTitle)}</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 10px; flex-shrink: 0;">${dateStr}</span>
+            </li>
+        `;
+    }).join('');
+}
 
-        sessionStorage.setItem('eventPopupCache', JSON.stringify(data));
-        renderPopup(data);
-    } catch (e) {
-        console.error('팝업 로드 실패', e);
+function renderRecentReviews(reviews) {
+    const container = document.getElementById('recent-reviews');
+    if (!reviews || reviews.length === 0) {
+        container.innerHTML = '<div class="placeholder">최근 평가가 없습니다.</div>';
+        return;
+    }
+
+    container.innerHTML = reviews.map(r => `
+        <div style="background: var(--bg-base); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #c89b3c; font-size: 0.8rem;">★ ${r.rating} | ${r.job_name}</span>
+            </div>
+            <div style="font-size: 0.85rem; line-height: 1.4; color: var(--text-main);">${r.comment}</div>
+            <div style="text-align: right; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">- ${r.nickname}</div>
+        </div>
+    `).join('');
+}
+
+function handleEventPopup(popupData) {
+    const hideUntil = localStorage.getItem('hidePopupUntil');
+    if (hideUntil && Date.now() < parseInt(hideUntil)) return;
+
+    if (popupData && popupData.notice_id) {
+        renderPopup(popupData);
     }
 }
 

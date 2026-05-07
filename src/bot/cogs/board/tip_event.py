@@ -8,6 +8,7 @@ from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
 from src.database.tip import upsert_tip, get_tip_images_by_thread_id, delete_tip_by_thread_id
 from src.bot.utils.s3_client import upload_to_r2, delete_from_r2
+from src.database.cache import delete_cache
 
 
 class TipEvent(BaseCog):
@@ -92,6 +93,8 @@ class TipEvent(BaseCog):
             # DB Soft Delete 처리 및 기존 이미지 삭제
             deleted_image_urls = await asyncio.to_thread(delete_tip_by_thread_id, str(payload.thread_id))
 
+            await delete_cache(f"cache:tips:{category}:page:1")
+
             if deleted_image_urls:
                 for image_url in deleted_image_urls:
                     await asyncio.to_thread(delete_from_r2, image_url)
@@ -151,9 +154,12 @@ class TipEvent(BaseCog):
             affected = await asyncio.to_thread(upsert_tip, tip_data)
 
             # 성공 시 기존 R2 이미지 일괄 삭제
-            if affected > 0 and old_image_urls:
-                for old_url in old_image_urls:
-                    await asyncio.to_thread(delete_from_r2, old_url)
+            if affected > 0:
+                await delete_cache(f"cache:tips:{category}:page:1")
+
+                if old_image_urls:
+                    for old_url in old_image_urls:
+                        await asyncio.to_thread(delete_from_r2, old_url)
 
             print(f"[Info] Tip sync completed. Thread: {title}, Category: {category}")
 

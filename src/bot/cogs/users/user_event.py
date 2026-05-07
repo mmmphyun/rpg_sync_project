@@ -6,6 +6,7 @@ from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
 from src.database.connection import sync_users_to_db
 from src.database.auth import delete_user_from_db, update_user_voice_exit
+from src.database.cache import delete_cache
 
 class UserEvent(BaseCog):
 
@@ -55,6 +56,7 @@ class UserEvent(BaseCog):
         success_count = await asyncio.to_thread(sync_users_to_db, [user_data])
 
         if success_count > 0:
+            await delete_cache("cache:jobs:all")
             print(f"[Info] 유저 정보 변경 동기화 완료: {before.display_name} -> {after.display_name} ({after.id})")
         else:
             print(f"[Warn] 유저 정보 변경 동기화 실패: {after.display_name} ({after.id})")
@@ -66,6 +68,8 @@ class UserEvent(BaseCog):
             discord_id = str(member.id)
             affected_rows = await asyncio.to_thread(delete_user_from_db, discord_id)
             if affected_rows > 0:
+                await delete_cache("cache:jobs:all")
+                await delete_cache("cache:main_page:all")
                 print(f"[Info] 퇴장 유저 삭제 완료: {member.display_name} ({discord_id})")
         except Exception as e:
             print(f"[Error] 퇴장 유저 삭제 중 오류: {e}")

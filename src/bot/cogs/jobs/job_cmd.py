@@ -6,6 +6,7 @@ from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
 from src.database.jobs import update_job_single_column, update_job_illustrations
 from src.bot.utils.s3_client import upload_to_r2
+from src.database.cache import delete_cache
 from src.database.skills import upsert_weapon_and_skill
 
 VALID_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
@@ -50,6 +51,7 @@ class JobCmd(BaseCog):
 
                 affected = update_job_single_column(job_name, column, r2_url)
                 if affected > 0:
+                    await delete_cache("cache:jobs:all")
                     await ctx.send(f"[Success] `{job_name}` 프로필 이미지 적용 완료\nURL: {r2_url}")
                 else:
                     await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
@@ -103,6 +105,7 @@ class JobCmd(BaseCog):
 
                 affected = update_job_illustrations(job_name, uploaded_urls)
                 if affected > 0:
+                    await delete_cache("cache:jobs:all")
                     await ctx.send(f"[Success] `{job_name}` 일러스트({len(uploaded_urls)}장) 적용 완료")
                 else:
                     await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
@@ -114,6 +117,7 @@ class JobCmd(BaseCog):
 
             affected = update_job_single_column(job_name, column, value)
             if affected > 0:
+                await delete_cache("cache:jobs:all")
                 await ctx.send(f"[Success] `{job_name}`의 `{column}` 항목 업데이트 완료")
             else:
                 await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
@@ -173,6 +177,7 @@ class JobCmd(BaseCog):
             )
 
             if success:
+                await delete_cache("cache:jobs:all")
                 await ctx.send(f"[Success] `{job_name}` - `{weapon_name}({weapon_type})`의 `{skill_name}` 스킬 정보 갱신 완료")
 
         except ValueError as ve:

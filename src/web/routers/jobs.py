@@ -19,13 +19,6 @@ def get_db_connection():
         raise RuntimeError("DATABASE_URL 환경 변수가 설정되지 않았습니다.")
     return psycopg2.connect(db_url)
 
-@router.get("/reviews/recent")
-@limiter.limit("60/minute")
-async def get_recent_reviews(request: Request):
-    """메인 페이지용 최근 직업 평가 3개 조회"""
-    reviews = get_recent_reviews_for_web(limit=2)
-    return reviews
-
 @router.get("/{job_id}/reviews")
 @limiter.limit("60/minute")
 def get_job_reviews(request: Request, job_id: int):

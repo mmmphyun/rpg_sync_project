@@ -8,6 +8,7 @@ from src.bot.cogs.core.base_cog import BaseCog
 from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
 from src.database.connection import sync_jobs_to_db, sync_job_patch_to_db
 from src.database.jobs import update_job_illustrations
+from src.database.cache import delete_cache
 from src.bot.utils.s3_client import upload_to_r2
 
 class JobEvent(BaseCog):
@@ -67,6 +68,7 @@ class JobEvent(BaseCog):
             parsed_data = parse_job_descriptions(content)
             if parsed_data:
                 await asyncio.to_thread(sync_jobs_to_db, parsed_data)
+                await delete_cache("cache:jobs:all")
                 print(f"[Info] Description sync completed. Processed: {len(parsed_data)} items.")
         except Exception as e:
             print(f"[Error] Description parsing failed: {e}")
@@ -76,6 +78,7 @@ class JobEvent(BaseCog):
             parsed_data = parse_job_patches(content, created_at, message_id)
             if parsed_data:
                 await asyncio.to_thread(sync_job_patch_to_db, parsed_data)
+                await delete_cache("cache:jobs:all")
                 print(f"[Info] Patch note sync completed for job: {parsed_data.get('name')}")
         except Exception as e:
             print(f"[Error] Patch note processing failed: {e}")
@@ -116,6 +119,7 @@ class JobEvent(BaseCog):
 
             if uploaded_urls:
                 affected = update_job_illustrations(job_name, uploaded_urls)
+                await delete_cache("cache:jobs:all")
                 print(f"[Info] Illustration update completed. Job: {job_name}, Affected: {affected}")
             else:
                 print(f"[Error] R2 upload failed for all attachments of job: {job_name}")
