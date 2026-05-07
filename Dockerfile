@@ -2,6 +2,7 @@ FROM python:3.11-slim
 
 # 보안 업데이트 및 패키지 캐시 정리
 RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
