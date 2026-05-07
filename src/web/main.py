@@ -56,6 +56,26 @@ app.add_middleware(
 )
 
 @app.middleware("http")
+async def csrf_protection_middleware(request: Request, call_next):
+    if request.method not in ["POST", "PUT", "PATCH", "DELETE"]:
+        return await call_next(request)
+
+    origin = request.headers.get("origin")
+    referer = request.headers.get("referer")
+
+    is_valid_origin = origin and any(origin == allowed.strip() for allowed in ALLOWED_ORIGINS)
+    is_valid_referer = referer and any(referer.startswith(allowed.strip()) for allowed in ALLOWED_ORIGINS)
+
+    if not (is_valid_origin or is_valid_referer):
+        print(f"[Security Block] CSRF 시도 차단: Method={request.method}, Origin={origin}, Referer={referer}")
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "비정상적인 접근입니다. (CSRF 차단)"}
+        )
+
+    return await call_next(request)
+
+@app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     """
     [Security & Monitoring] 보안 헤더 삽입 및 API 처리 시간 로깅 미들웨어
