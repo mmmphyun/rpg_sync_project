@@ -121,11 +121,16 @@ class TipEvent(BaseCog):
             # R2 이미지 업로드 (동영상 파일 제외)
             uploaded_urls = []
             ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+            MAX_FILE_SIZE = 15 * 1024 * 1024
 
             if message.attachments:
                 async with aiohttp.ClientSession() as session:
                     for att in message.attachments:
                         if att.content_type not in ALLOWED_IMAGE_TYPES:
+                            continue
+
+                        if att.size > MAX_FILE_SIZE:
+                            print(f"[Warn] 용량 초과 차단: {att.filename} ({att.size / (1024 * 1024):.2f}MB)")
                             continue
 
                         async with session.get(att.url) as resp:

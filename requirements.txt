@@ -12,4 +12,5 @@ jinja2
 PyJWT
 python-multipart
 mcstatus
+python-magic
 redis>=5.0.0

@@ -95,12 +95,17 @@ class JobEvent(BaseCog):
                 return
 
             ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+            MAX_FILE_SIZE = 15 * 1024 * 1024
 
             uploaded_urls = []
             async with aiohttp.ClientSession() as session:
                 for att in attachments[:4]:
                     if att.content_type not in ALLOWED_MIME_TYPES:
                         print(f"[Warn] 허용되지 않은 파일 형식 차단: {att.filename} ({att.content_type})")
+                        continue
+
+                    if att.size > MAX_FILE_SIZE:
+                        print(f"[Warn] 용량 초과 차단: {att.filename} ({att.size / (1024 * 1024):.2f}MB)")
                         continue
 
                     async with session.get(att.url) as resp:

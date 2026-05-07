@@ -20,8 +20,12 @@ class BannerCog(commands.Cog):
         image = ctx.message.attachments[0]
 
         # 2. 이미지 파일 검증
+        MAX_BANNER_SIZE = 25 * 1024 * 1024
+        if image.size > MAX_BANNER_SIZE:
+            return await ctx.send(f"[Error] 배너 이미지는 최대 25MB까지만 업로드 가능합니다. (현재: {image.size / (1024 * 1024):.2f}MB)")
+
         if not image.content_type or not image.content_type.startswith('image/'):
-            return await ctx.send("❌ 이미지 파일(PNG, JPG, GIF 등)만 업로드 가능합니다.")
+            return await ctx.send("[Error] 이미지 파일(PNG, JPG, GIF 등)만 업로드 가능합니다.")
 
         # 3. 처리 중 메시지 전송 (R2 업로드 등 시간이 걸릴 수 있으므로)
         processing_msg = await ctx.send("⏳ 배너 이미지를 처리 중입니다...")
@@ -42,7 +46,7 @@ class BannerCog(commands.Cog):
             if not r2_url:
                 return await processing_msg.edit(content="❌ R2 스토리지 업로드에 실패했습니다.")
 
-            # 6. DB 적재 (동기 psycopg2 사용 -> 스레드 분리 필수)
+            # 6. DB 적재
             banner_data = {
                 "image_url": r2_url,
                 "link_url": link,
@@ -50,10 +54,9 @@ class BannerCog(commands.Cog):
                 "is_active": True
             }
 
-            # 실무 환경에 맞춰 insert_banner 함수는 구현되어야 합니다.
             await asyncio.to_thread(insert_banner, banner_data)
 
-            # 7. 최종 완료 메시지로 수정
+            # 7. 최종 완료 메시지
             embed = discord.Embed(title="✅ 배너 등록 완료", color=discord.Color.green())
             embed.add_field(name="R2 URL", value=r2_url, inline=False)
             embed.add_field(name="연결 링크", value=link if link else "없음", inline=True)

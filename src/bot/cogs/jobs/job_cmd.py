@@ -23,6 +23,8 @@ class JobCmd(BaseCog):
         """
         Usage: !직업수정 <직업명> <항목> [<값/메시지ID>]
         """
+        MAX_FILE_SIZE = 15 * 1024 * 1024
+
         try:
             if column == "img":
                 if not ctx.message.attachments:
@@ -30,6 +32,11 @@ class JobCmd(BaseCog):
                     return
 
                 attachment = ctx.message.attachments[0]
+
+                if attachment.size > MAX_FILE_SIZE:
+                    await ctx.send(f"[Error] 이미지는 최대 15MB까지만 업로드 가능합니다. (현재: {attachment.size / (1024 * 1024):.2f}MB)")
+                    return
+
                 if not is_valid_image(attachment.filename):
                     await ctx.send(f"[Error] 지원하지 않는 파일 포맷입니다. (허용: {', '.join(VALID_IMAGE_EXTENSIONS)})")
                     return
@@ -78,9 +85,10 @@ class JobCmd(BaseCog):
                     await ctx.send("[Error] 메시지 링크 검증 실패 또는 대상 메시지를 읽을 수 없습니다.")
                     return
 
-                valid_attachments = [att for att in target_message.attachments if is_valid_image(att.filename)]
+                valid_attachments = [att for att in target_message.attachments if
+                                     is_valid_image(att.filename) and att.size <= MAX_FILE_SIZE]
                 if not valid_attachments:
-                    await ctx.send("[Error] 대상 메시지에 유효한 이미지 첨부파일이 존재하지 않습니다.")
+                    await ctx.send("[Error] 대상 메시지에 유효하거나 용량 제한(15MB)을 통과한 이미지 첨부파일이 존재하지 않습니다.")
                     return
 
                 target_attachments = valid_attachments[:4]

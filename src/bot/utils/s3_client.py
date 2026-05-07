@@ -1,7 +1,10 @@
 import os
 import uuid
 import boto3
+import magic
 from botocore.exceptions import ClientError
+
+ALLOWED_MAGIC_MIMES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 def get_r2_client():
     return boto3.client(
@@ -16,6 +19,11 @@ def upload_to_r2(file_bytes: bytes, filename: str, content_type: str, folder_nam
     """
     R2 스토리지 파일 업로드 및 Public URL 반환
     """
+    actual_mime = magic.from_buffer(file_bytes, mime=True)
+    if actual_mime not in ALLOWED_MAGIC_MIMES:
+        print(f"[Security Block] 허용되지 않은 파일 형식 업로드 시도: 주장={content_type}, 실제={actual_mime}")
+        return None
+
     s3 = get_r2_client()
     bucket_name = os.getenv('R2_BUCKET_NAME')
     domain_env = os.getenv('R2_PUBLIC_DOMAIN') or os.getenv('R2_PUBLIC_DOMAIN_DEV')
@@ -24,7 +32,7 @@ def upload_to_r2(file_bytes: bytes, filename: str, content_type: str, folder_nam
 
     public_domain = domain_env.rstrip('/')
 
-    ext = filename.split('.')[-1] if '.' in filename else 'png'
+    ext = actual_mime.split('/')[-1]
     unique_filename = f"{folder_name}/{uuid.uuid4().hex}.{ext}"
 
     try:
@@ -32,7 +40,7 @@ def upload_to_r2(file_bytes: bytes, filename: str, content_type: str, folder_nam
             Bucket=bucket_name,
             Key=unique_filename,
             Body=file_bytes,
-            ContentType=content_type
+            ContentType=actual_mime
         )
         return f"{public_domain}/{unique_filename}"
     except ClientError as e:
