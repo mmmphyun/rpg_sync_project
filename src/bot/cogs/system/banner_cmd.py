@@ -4,6 +4,7 @@ import asyncio
 
 from src.bot.utils.s3_client import upload_to_r2
 from src.database.banner import insert_banner
+from src.database.cache import delete_cache
 
 
 class BannerCog(commands.Cog):
@@ -55,6 +56,8 @@ class BannerCog(commands.Cog):
             }
 
             await asyncio.to_thread(insert_banner, banner_data)
+
+            await delete_cache("cache:main_page:all")
 
             # 7. 최종 완료 메시지
             embed = discord.Embed(title="✅ 배너 등록 완료", color=discord.Color.green())
