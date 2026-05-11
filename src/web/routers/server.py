@@ -52,3 +52,8 @@ async def get_server_status():
     cache["last_updated"] = current_time
 
     return result
+
+@router.get("/test-error", include_in_schema=False)
+async def test_webhook_error():
+    """실무: 관제탑 웹훅 발송 테스트용 임시 엔드포인트"""
+    raise Exception("[Test] FastAPI 서버 웹훅 모니터링 연동 테스트 에러입니다.")
