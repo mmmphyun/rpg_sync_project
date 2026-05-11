@@ -325,11 +325,5 @@ class BulkSyncCmd(BaseCog):
 
                 await ctx.send(f"팁 게시판 동기화 완료: 총 {sync_count}건의 쓰레드가 적재/갱신되었습니다.")
 
-    @app_commands.command(name="testerror", description="[관리자 전용] 관제 채널 로깅 테스트")
-    @app_commands.default_permissions(administrator=True)
-    async def test_bot_error(self, interaction: discord.Interaction):
-        """실무: 봇 관제 채널 에러 발송 테스트용 임시 명령어"""
-        raise Exception("[Test] 디스코드 봇 관제 채널 모니터링 연동 테스트 에러입니다.")
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(BulkSyncCmd(bot))
