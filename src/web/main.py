@@ -2,6 +2,8 @@ import os
 import time
 import logging
 import asyncio
+import traceback
+import aiohttp
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -209,9 +211,34 @@ async def get_guide_page(request: Request):
 
 logger = logging.getLogger("uvicorn.error")
 
+
+async def send_discord_webhook(error_msg: str):
+    """비동기 논블로킹 웹훅 전송. Discord API 장애가 본 서버에 영향을 주지 않도록 격리."""
+    webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
+    if not webhook_url:
+        return
+
+    if len(error_msg) > 1900:
+        error_msg = error_msg[:1900] + "\n... [Truncated]"
+
+    payload = {"content": f"```py\n{error_msg}\n```"}
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(webhook_url, json=payload, timeout=5.0) as resp:
+                if resp.status >= 400:
+                    logger.error(f"[Webhook Error] 상태 코드: {resp.status}")
+    except Exception as e:
+        logger.error(f"[Webhook Error] 발송 실패: {str(e)}")
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Internal Server Error: {str(exc)}", exc_info=True)
+
+    tb_str = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    error_log_content = f"API Error: [{request.method}] {request.url.path}\n{tb_str}"
+
+    asyncio.create_task(send_discord_webhook(error_log_content))
 
     return JSONResponse(
         status_code=500,

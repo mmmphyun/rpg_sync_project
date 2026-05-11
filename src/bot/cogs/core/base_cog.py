@@ -26,6 +26,11 @@ class BaseCog(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             await ctx.send("[Error] 해당 명령어 실행 권한이 없습니다.")
         elif isinstance(error, commands.CommandInvokeError):
-            await ctx.send(f"[Error] 명령어 실행 중 예외 발생: {error.original}")
+            await ctx.send("[Error] 명령어 처리 중 서버 내부 오류가 발생했습니다.")
+            if hasattr(self.bot, 'send_error_log'):
+                import traceback
+                orig_err = error.original
+                tb_str = "".join(traceback.format_exception(type(orig_err), orig_err, orig_err.__traceback__))
+                await self.bot.send_error_log(f"Exception in cog command '{ctx.command.name}':\n{tb_str}")
         else:
             print(f"[Command Error] {ctx.command.name if ctx.command else 'Unknown'}: {error}")
