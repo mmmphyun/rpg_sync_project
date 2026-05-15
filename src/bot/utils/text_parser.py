@@ -38,10 +38,14 @@ def parse_job_descriptions(raw_text: str) -> List[Dict[str, Any]]:
 
             # 타입 식별 (Hero/Villain)
             job_type = "정보 없음"
-            if "영웅" in desc_str:
-                job_type = "영웅"
-            elif "빌런" in desc_str:
-                job_type = "빌런"
+            bracket_matches = re.findall(r"\[(.*?)\]", desc_str)
+            for bracket_text in bracket_matches:
+                if "영웅" in bracket_text:
+                    job_type = "영웅"
+                    break
+                elif "빌런" in bracket_text:
+                    job_type = "빌런"
+                    break
 
             # 조건(req_condition) 파싱 및 설명문 정제
             req_condition = "정보 없음"
