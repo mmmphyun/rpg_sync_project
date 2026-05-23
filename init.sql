@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     nickname VARCHAR NOT NULL,
     server_role VARCHAR,
     current_job_id INTEGER REFERENCES public.jobs(job_id),
-    last_voice_exit TIMESTAMP WITHOUT TIME ZONE
+    last_voice_exit TIMESTAMP WITHOUT TIME ZONE,
+    is_guide_completed BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS public.job_patches (

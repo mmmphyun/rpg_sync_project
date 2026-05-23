@@ -12,21 +12,43 @@ services:
     ports:
       - "5432:5432"
 
-  rpg-sync-app:
+  redis:
+    image: redis:7-alpine
+    container_name: rpg-redis-dev
+    ports:
+      - "6379:6379"
+
+  api:
     build: .
-    container_name: rpg-sync-dev
+    container_name: rpg-api-dev
     depends_on:
       - db
+      - redis
     ports:
       - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
     env_file:
       - .env.dev
     volumes:
       - ./public:/app/public
       - ./src/web/templates:/app/src/web/templates
       - ./src:/app/src
-    command: >
-      sh -c "python -m src.bot.main & sleep 3 && uvicorn src.web.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: uvicorn src.web.main:app --host 0.0.0.0 --port 8000 --reload
+
+  bot:
+    build: .
+    container_name: rpg-bot-dev
+    depends_on:
+      - db
+      - redis
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env.dev
+    volumes:
+      - ./src:/app/src
+    command: python -m src.bot.main
 
 volumes:
   dev_db_data:

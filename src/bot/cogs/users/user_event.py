@@ -1,6 +1,7 @@
 import discord
 import re
 import asyncio
+import os
 from discord.ext import commands
 
 from src.bot.cogs.core.base_cog import BaseCog
@@ -9,6 +10,28 @@ from src.database.auth import delete_user_from_db, update_user_voice_exit
 from src.database.cache import delete_cache
 
 class UserEvent(BaseCog):
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        """유저 입장 시 뉴비 역할 부여 확인 (온보딩 보완용 더블체크)"""
+        if member.bot:
+            return
+
+        # 온보딩 완료를 위해 잠시 대기 (10초)
+        await asyncio.sleep(10)
+        
+        newbie_role_id = int(os.getenv("GUIDE_ROLE_ID", 0))
+        if newbie_role_id == 0:
+            print("[Warn] GUIDE_ROLE_ID 환경변수가 설정되지 않았습니다.")
+            return
+
+        role = member.guild.get_role(newbie_role_id)
+        if role and role not in member.roles:
+            try:
+                await member.add_roles(role)
+                print(f"[Join] {member.display_name}에게 뉴비 역할(더블체크) 부여 완료.")
+            except Exception as e:
+                print(f"[Error] 뉴비 역할 부여 실패: {e}")
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):

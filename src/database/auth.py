@@ -107,3 +107,36 @@ def update_user_voice_exit(discord_id: str) -> int:
     finally:
         cursor.close()
         release_connection(conn)
+
+def update_guide_completion(discord_id: str) -> bool:
+    """유저의 가이드 완료 상태를 true로 업데이트합니다."""
+    sql = "UPDATE public.users SET is_guide_completed = true WHERE discord_id = %s"
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (discord_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"[DB Error] update_guide_completion 오류: {e}")
+        return False
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+def is_guide_completed(discord_id: str) -> bool:
+    """유저가 가이드를 완료했는지 확인합니다."""
+    sql = "SELECT is_guide_completed FROM public.users WHERE discord_id = %s"
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (discord_id,))
+        result = cursor.fetchone()
+        return result[0] if result else False
+    except psycopg2.Error as e:
+        print(f"[DB Error] is_guide_completed 조회 오류: {e}")
+        return False
+    finally:
+        cursor.close()
+        release_connection(conn)

@@ -41,3 +41,6 @@ dev_db_data/
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Backup Local Database & R2 Assets
+backup/
