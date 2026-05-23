@@ -53,7 +53,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["X-API-Key", "Content-Type"],
 )
 
@@ -207,7 +207,33 @@ async def serve_tips(request: Request):
 
 @app.get("/guide", response_class=HTMLResponse)
 async def get_guide_page(request: Request):
-    return templates.TemplateResponse(request=request, name="guide.html")
+    """유저 상태에 따른 가이드 페이지 서빙"""
+    token = request.cookies.get("forum_session")
+    user_status = "guest"  # guest, newbie, member
+    
+    if token:
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            discord_id = payload.get("sub")
+            
+            # DB에서 완료 여부 확인
+            is_completed = await asyncio.to_thread(is_guide_completed, discord_id)
+            if is_completed:
+                user_status = "member"
+            else:
+                user_status = "newbie"
+        except Exception:
+            user_status = "guest"
+
+    return templates.TemplateResponse(
+        request=request, 
+        name="guide.html", 
+        context={
+            "request": request, 
+            "user_status": user_status,
+            "discord_invite_url": os.getenv("DISCORD_INVITE_URL", "#") # 초대 링크 환경변수 활용
+        }
+    )
 
 logger = logging.getLogger("uvicorn.error")
 

@@ -1,19 +1,26 @@
 {% extends "base.html" %}
 
-{% block title %}서버 가이드 - Fossile Wiki{% endblock %}
+{% block title %}서버 가이드 - Fossil Wiki{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/guide.css?v=1.0.1">
 {% endblock %}
 
 {% block content %}
+<div class="bg-glow"></div>
 <div class="page-guide viewport-container">
     <div class="guide-container">
 
-        <!-- 페이지 타이틀 영역 -->
-        <div class="guide-page-header">
-            <h2 class="page-title">서버 가이드</h2>
-            <p class="page-desc">화석 서버에 처음 오신 분들을 위한 핵심 안내서입니다.</p>
+        <!-- 에디토리얼 헤더 영역 -->
+        <div class="editorial-header">
+            <div class="editorial-title-container">
+                <span class="sub-title-mono">USER ONBOARDING // HANDBOOK</span>
+                <h1 class="main-title">GUIDE</h1>
+            </div>
+            <div class="editorial-meta-line">
+                <span>EST. 2026</span>
+                <span>INDEX // RULES_AND_OVERVIEW</span>
+            </div>
         </div>
 
         <div class="guide-content">
@@ -115,8 +122,144 @@
                     </ul>
                 </div>
             </section>
+            <!-- 약속 동의 직접 기입 및 완료 버튼 영역 -->
+            <div class="guide-action-section">
+                {% if user_status == 'newbie' %}
+                <div class="promise-container">
+                    <div class="promise-instruction-box">
+                        <p class="promise-target-label"><i class="fas fa-edit"></i> 안전하고 매너 있는 게임 환경을 위해 아래 서약 문구를 정확히 직접 타이핑하여 주십시오.</p>
+                        <div class="promise-target-text" id="promise-target-text">나는 위의 모든 내용을 정독하고 숙지하였음을 동의합니다</div>
+                    </div>
+                    <div class="promise-input-wrapper">
+                        <input type="text" id="promise-input" class="promise-input" placeholder="위 서약 문구를 정확하게 입력하십시오 (복사/붙여넣기 방지)" onpaste="return false;" autocomplete="off">
+                    </div>
+                </div>
+                <div class="button-container">
+                    <button id="complete-btn" class="complete-btn" disabled>
+                        <span>가이드 확인 완료</span>
+                        <i class="fas fa-check-circle"></i>
+                    </button>
+                </div>
+                {% elif user_status == 'member' %}
+                <div class="status-info-box member-box">
+                    <i class="fas fa-check-double"></i>
+                    <p>당신은 이미 화석 서버의 정식 멤버입니다.<br>가이드 내용을 다시 한 번 숙지해 주셔서 감사합니다.</p>
+                    <a href="/" class="return-link">메인 페이지로 돌아가기</a>
+                </div>
+                {% else %}
+                <div class="status-info-box guest-box">
+                    <i class="fab fa-discord"></i>
+                    <p>가이드 완료 및 서버 입장을 위해서는 디스코드 성인 인증이 필요합니다.<br>아래 버튼을 눌러 디스코드 서버에서 모험을 시작하세요!</p>
+                    <a href="{{ discord_invite_url }}" class="discord-btn" target="_blank">디스코드 서버 입장하기</a>
+                </div>
+                {% endif %}
+            </div>
 
         </div>
     </div>
 </div>
+
+<!-- 완료 안내 모달 -->
+<div id="complete-modal" class="modal-overlay hidden">
+    <div class="widget modal-content" style="max-width: 450px; width: 90%; padding: 30px; text-align: center; margin: auto;">
+        <div class="modal-icon" style="font-size: 3.5rem; color: var(--accent-hero); margin-bottom: 20px;">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h3 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 12px; font-weight: 700;">가이드 확인 완료!</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 25px;">
+            축하합니다! 온보딩 절차가 완료되었습니다.<br>
+            디스코드의 정식 멤버 채널들이 개방되었으니,<br>
+            <strong style="color: #fff;">지금 디스코드로 돌아가서 확인해 주세요.</strong>
+        </p>
+        <button id="modal-close-btn" class="status-btn btn-guide" style="width: 100%; cursor: pointer; padding: 12px; border-radius: 0px; border: 1px solid var(--accent-hero); background: transparent; color: var(--accent-hero); font-weight: bold; transition: all 0.2s; font-family: 'Space Mono', monospace; font-size: 0.85rem;">닫기</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const promiseInput = document.getElementById('promise-input');
+    const completeBtn = document.getElementById('complete-btn');
+    const modal = document.getElementById('complete-modal');
+    const closeBtn = document.getElementById('modal-close-btn');
+
+    const targetText = "나는 위의 모든 내용을 정독하고 숙지하였음을 동의합니다";
+
+    // 1. 직접 기입 텍스트 실시간 검증 (모바일 정규식 예외 처리 및 복사 붙여넣기 완전 차단)
+    promiseInput.addEventListener('input', function() {
+        // 앞뒤 공백 제거 및 다중 연속 공백을 단일 공백으로 치환
+        const userInput = this.value.trim().replace(/\s+/g, ' ');
+        
+        if (userInput === targetText) {
+            completeBtn.disabled = false;
+            completeBtn.classList.add('glow-active');
+            promiseInput.classList.add('glow-active');
+        } else {
+            completeBtn.disabled = true;
+            completeBtn.classList.remove('glow-active');
+            promiseInput.classList.remove('glow-active');
+        }
+    });
+
+    // 붙여넣기 시도 시 알림 및 이벤트 완전 차단
+    promiseInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        alert('신성한 서약 문구는 복사/붙여넣기를 할 수 없으며, 반드시 직접 타이핑해 주셔야 합니다.');
+        return false;
+    });
+
+    // 2. 버튼 클릭 시 API 호출
+    completeBtn.addEventListener('click', async function() {
+        if (completeBtn.disabled) return;
+
+        // 로딩 상태 표시
+        const btnText = completeBtn.querySelector('span');
+        const btnIcon = completeBtn.querySelector('i');
+        
+        const originalText = btnText.textContent;
+        const originalIconClass = btnIcon.className;
+
+        completeBtn.disabled = true;
+        completeBtn.classList.remove('glow-active'); // 로딩 중에는 글로우 끄기
+        btnText.textContent = '처리 중...';
+        btnIcon.className = 'fas fa-spinner fa-spin';
+
+        try {
+            const response = await fetch('/api/v1/auth/complete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.message === 'success') {
+                // 성공 모달 띄우기
+                modal.classList.remove('hidden');
+                modal.classList.add('open');
+            } else {
+                alert(result.detail || '가이드 완료 처리 중 오류가 발생했습니다.');
+                completeBtn.disabled = false;
+                completeBtn.classList.add('glow-active');
+                btnText.textContent = originalText;
+                btnIcon.className = originalIconClass;
+            }
+        } catch (error) {
+            console.error('API 호출 에러:', error);
+            alert('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+            completeBtn.disabled = false;
+            completeBtn.classList.add('glow-active');
+            btnText.textContent = originalText;
+            btnIcon.className = originalIconClass;
+        }
+    });
+
+    // 3. 모달 닫기 및 홈으로 리다이렉트
+    closeBtn.addEventListener('click', function() {
+        modal.classList.remove('open');
+        modal.classList.add('hidden');
+        window.location.href = '/';
+    });
+});
+</script>
 {% endblock %}

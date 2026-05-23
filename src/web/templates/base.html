@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Fossile Wiki{% endblock %}</title>
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-    <link rel="stylesheet" href="/static/global.css?v=1.0.1">
+    <link rel="stylesheet" href="/static/global.css?v=1.0.2">
     <link rel="manifest" href="/images/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/rpg-awesome.min.css">
@@ -13,7 +13,8 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -23,7 +24,7 @@
     </div>
 
     <!-- 투명 GNB 헤더 -->
-    <header class="global-header transparent">
+    <header class="global-header transparent" id="global-header">
         <div class="header-inner">
             <a href="/" class="logo" style="text-decoration: none; color: inherit;">Fossile Wiki</a>
             <nav class="gnb-nav">
@@ -44,7 +45,7 @@
 
     <footer class="dash-footer">
         <div class="footer-container">
-            <p>&copy; 2026 Fossile Wiki. All rights reserved.</p>
+            <p>&copy; 2026 Fossile Gate. All rights reserved.</p>
             <p class="attribution">아이디어 및 초기 소스 제공: 나나</p>
         </div>
     </footer>

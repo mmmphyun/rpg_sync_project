@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}팁 게시판 - Fossile Wiki{% endblock %}
+{% block title %}팁 게시판 - Fossil Wiki{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/tips.css?v=1.0.1">
@@ -8,12 +8,21 @@
 
 {% block content %}
 <div class="header-blur-backdrop"></div>
+<div class="bg-glow"></div>
 
 <div class="content-container tips-container">
-    <div class="page-title-area">
-        <button id="writeTipBtn" class="btn-primary" onclick="openWriteModal()" style="display: none;">
+    <div class="editorial-header">
+        <div class="editorial-title-container">
+            <span class="sub-title-mono">TIPS & FORUMS</span>
+            <h1 class="main-title">FORUMS</h1>
+        </div>
+        <button id="writeTipBtn" class="btn-primary editorial-write-btn" onclick="openWriteModal()" style="display: none;">
             <i class="ra ra-quill-ink"></i> 작성하기
         </button>
+        <div class="editorial-meta-line">
+            <span>EST. 2026</span>
+            <span>INDEX // USER_CONTRIBUTED</span>
+        </div>
     </div>
 
     <!-- 비로그인 유저 블러 처리 및 오버레이 -->

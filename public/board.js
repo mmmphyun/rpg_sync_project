@@ -95,7 +95,7 @@ async function loadFeed(page) {
 function renderFeed(notices) {
     const feedArea = document.getElementById("feedArea");
     if (!notices || notices.length === 0) {
-        feedArea.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding: 60px; background: rgba(11, 12, 26, 0.4); border: 1px solid var(--border-color); border-radius: 8px; backdrop-filter: blur(12px);">게시글이 없습니다.</div>';
+        feedArea.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding: 60px; background: rgba(11, 12, 26, 0.4); border: 1px solid var(--border-color); border-radius: 0px; backdrop-filter: blur(12px);">게시글이 없습니다.</div>';
         return;
     }
 
@@ -305,7 +305,7 @@ function removeCardFromDOM(id) {
             if (currentPage > 1) {
                 loadFeed(currentPage - 1);
             } else {
-                feedArea.innerHTML = '<div style="text-align:center; color:#555; padding: 40px; background: #13132b; border-radius: 8px;">게시글이 없습니다.</div>';
+                feedArea.innerHTML = '<div style="text-align:center; color:#555; padding: 40px; background: #13132b; border-radius: 0px;">게시글이 없습니다.</div>';
             }
         }
     }

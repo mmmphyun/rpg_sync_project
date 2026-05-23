@@ -1,17 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}직업 종류 - Fossile Wiki{% endblock %}
+{% block title %}직업 종류 - Fossil Wiki{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/jobs.css?v=1.0.2">
 {% endblock %}
 
 {% block content %}
+<div class="header-blur-backdrop"></div>
+<div class="bg-glow"></div>
 <div class="content-container jobs-container">
 
-    <div class="page-title-area">
-        <div class="meta-info">
-            <span class="job-count" id="jobCount"></span>
+    <div class="editorial-header">
+        <div class="editorial-title-container">
+            <span class="sub-title-mono" id="jobCount">LOADING JOBS DATA...</span>
+            <h1 class="main-title">CLASSES</h1>
+        </div>
+        <div class="editorial-meta-line">
+            <span>EST. 2026</span>
+            <span>INDEX // CLASSIFICATION_SYSTEM</span>
         </div>
     </div>
 

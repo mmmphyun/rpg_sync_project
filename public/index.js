@@ -2,58 +2,126 @@
  * Index Page Controller
  * 메인 대시보드 컴포넌트 렌더링 및 Fetch 체이닝
  */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     renderSkeletons();
 
-    fetchMainDashboardData()
-        .then(() => loadServerStatus())
-        .catch(err => console.error("Dashboard Load Error:", err));
+    // 스크롤 감지하여 GNB 헤더 스타일 전환 (100vh 스냅 스크롤러 감지)
+    const layout = document.querySelector('.index-layout');
+    const header = document.getElementById('global-header');
+    if (layout && header) {
+        layout.addEventListener('scroll', () => {
+            if (layout.scrollTop > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    }
+
+    // 각 위젯 로딩 프로세스를 완전히 격리하여 하나의 에러가 다른 영역을 오염시키는 일을 원천 차단합니다.
+    try {
+        await fetchMainDashboardData();
+    } catch (err) {
+        console.error("fetchMainDashboardData 실행 실패:", err);
+    }
+
+    try {
+        await loadServerStatus();
+    } catch (err) {
+        console.error("loadServerStatus 실행 실패:", err);
+    }
+
+    try {
+        initQuestTimeline();
+    } catch (err) {
+        console.error("initQuestTimeline 실행 실패:", err);
+    }
+
+    try {
+        initJobRotation();
+    } catch (err) {
+        console.error("initJobRotation 실행 실패:", err);
+    }
 });
 
 function renderSkeletons() {
-    const statusContainer = document.getElementById('server-status-content');
+    const statusContainer = document.getElementById('mini-server-status');
     if (statusContainer) {
-        statusContainer.style.display = 'flex';
-        statusContainer.style.flexDirection = 'column';
         statusContainer.innerHTML = `
-            <div>
-                <div style="color: var(--text-muted); font-weight: bold; font-size: 1.2rem;">CHECKING...</div>
-                <div style="margin-top: 8px; color: var(--text-muted);">서버 상태 확인 중</div>
-            </div>
-            <div class="server-status-actions" style="opacity: 0.3; pointer-events: none;">
-                <div class="status-btn btn-discord-icon" style="background: var(--border-color);">
-                    <i class="ra ra-speech-bubble"></i>
-                </div>
-                <div class="status-btn btn-guide" style="border-color: var(--border-color); color: var(--border-color);">
-                    데이터 불러오는 중...
-                </div>
-            </div>
+            <div class="mini-status-wrapper skeleton" style="width: 160px; height: 32px; border: 1px solid rgba(255, 255, 255, 0.05);"></div>
         `;
     }
 
     const postsContainer = document.getElementById('latest-posts');
     if (postsContainer) {
-        postsContainer.innerHTML = '<li class="skeleton" style="height: 34px; margin-bottom: 8px; border-radius: 4px; list-style: none;"></li>'.repeat(5);
+        postsContainer.innerHTML = '<li class="skeleton" style="height: 34px; margin-bottom: 8px; list-style: none;"></li>'.repeat(5);
     }
 
-    const reviewsContainer = document.getElementById('recent-reviews');
+    const reviewsContainer = document.getElementById('recent-reviews-content');
     if (reviewsContainer) {
-        reviewsContainer.innerHTML = '<div class="skeleton" style="height: 97px; margin-bottom: 10px; border-radius: 8px;"></div>'.repeat(2);
+        reviewsContainer.innerHTML = '<div class="skeleton" style="height: 97px; margin-bottom: 10px;"></div>'.repeat(2);
     }
 }
 
 function renderDashboardErrorUI() {
-    const errorHtml = '<div class="placeholder" style="color: var(--accent-villain); padding: 20px; text-align: center; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px dashed var(--border-color);">데이터를 불러오지 못했습니다.</div>';
-
     const bannerWrapper = document.getElementById('banner-wrapper');
-    if (bannerWrapper) bannerWrapper.innerHTML = errorHtml;
+    const heroSwiperEl = document.getElementById('hero-swiper');
+
+    if (bannerWrapper) {
+        bannerWrapper.innerHTML = `
+            <div class="swiper-slide" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; padding: 30px; text-align: center; background: linear-gradient(135deg, #1f1414 0%, #0f0707 100%); border: 1px dashed rgba(231, 76, 60, 0.3); border-radius: 0px; color: var(--text-muted); box-sizing: border-box;">
+                <div style="font-size: 2rem; margin-bottom: 12px; color: #e74c3c;"><i class="ra ra-skull"></i></div>
+                <div style="font-weight: 800; font-size: 1rem; color: #ff7675; margin-bottom: 6px; letter-spacing: 0.5px;">일시적인 접속 실패</div>
+                <div style="font-size: 0.78rem; margin-bottom: 16px; opacity: 0.8; line-height: 1.4;">서버 혹은 네트워크 연결이 원활하지 않습니다.</div>
+                <button onclick="retryDashboardLoad()" style="background: transparent; color: #ff7675; border: 1px solid #ff7675; padding: 6px 16px; border-radius: 0px; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 0 10px rgba(231, 76, 60, 0.15);" onmouseover="this.style.background='#ff7675'; this.style.color='#000'; this.style.boxShadow='0 0 15px rgba(231, 76, 60, 0.4)';" onmouseout="this.style.background='transparent'; this.style.color='#ff7675'; this.style.boxShadow='0 0 10px rgba(231, 76, 60, 0.15)';">다시 시도</button>
+            </div>
+        `;
+        
+        if (typeof Swiper !== 'undefined') {
+            try {
+                new Swiper('#hero-swiper', {
+                    loop: false,
+                    autoplay: false,
+                    pagination: { el: '.swiper-pagination', clickable: true },
+                    navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }
+                });
+            } catch (e) {
+                console.error("Error initializing Swiper in error state:", e);
+            }
+        } else {
+            console.warn("Swiper가 정의되지 않아 오류 UI 폴백 모드로 렌더링합니다.");
+            if (heroSwiperEl) {
+                heroSwiperEl.classList.add('swiper-fallback-active');
+            }
+        }
+    }
 
     const postsList = document.getElementById('latest-posts');
-    if (postsList) postsList.innerHTML = '<li class="placeholder" style="color: var(--accent-villain);">게시글 로드 실패</li>';
+    if (postsList) {
+        postsList.innerHTML = `
+            <li class="widget-list-item" style="cursor: default; background: rgba(231, 76, 60, 0.05); border: 1px dashed rgba(231, 76, 60, 0.15); justify-content: center; padding: 12px; border-radius: 0px;">
+                <span style="color: #ff7675; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                     게시글을 불러오지 못했습니다.
+                </span>
+            </li>
+        `;
+    }
 
-    const reviewsContainer = document.getElementById('recent-reviews');
-    if (reviewsContainer) reviewsContainer.innerHTML = errorHtml;
+    const reviewsContainer = document.getElementById('recent-reviews-content');
+    if (reviewsContainer) {
+        reviewsContainer.innerHTML = `
+            <div style="background: rgba(231, 76, 60, 0.05); border: 1px dashed rgba(231, 76, 60, 0.15); padding: 20px; border-radius: 0px; text-align: center; color: #ff7675; font-size: 0.8rem; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                리뷰를 로드하는 데 실패했습니다.
+            </div>
+        `;
+    }
 }
+
+window.retryDashboardLoad = function() {
+    renderSkeletons();
+    fetchMainDashboardData()
+        .catch(err => console.error("Dashboard Retry Load Error:", err));
+};
 
 function escapeHTML(str) {
     if (!str) return '';
@@ -113,6 +181,10 @@ async function fetchMainDashboardData() {
 
 function renderBanners(banners) {
     const wrapper = document.getElementById('banner-wrapper');
+    const heroSwiperEl = document.getElementById('hero-swiper');
+
+    if (!wrapper) return;
+
     if (!banners || banners.length === 0) {
         wrapper.innerHTML = '<div class="swiper-slide" style="display:flex; justify-content:center; align-items:center; height:100%; color:var(--text-muted); background:var(--bg-surface);">표시할 배너가 없습니다.</div>';
         return;
@@ -127,13 +199,27 @@ function renderBanners(banners) {
         }
     }).join('');
 
-    new Swiper('#hero-swiper', {
-        loop: banners.length > 1,
-        autoplay: { delay: 5000, disableOnInteraction: false },
-        pagination: { el: '.swiper-pagination', clickable: true },
-        navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
-        effect: 'fade', fadeEffect: { crossFade: true }
-    });
+    if (typeof Swiper !== 'undefined') {
+        try {
+            new Swiper('#hero-swiper', {
+                loop: false,
+                autoplay: { delay: 5000, disableOnInteraction: false },
+                pagination: { el: '.swiper-pagination', clickable: true },
+                navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+                effect: 'fade', fadeEffect: { crossFade: true }
+            });
+        } catch (e) {
+            console.error("Swiper 초기화 오류:", e);
+            if (heroSwiperEl) {
+                heroSwiperEl.classList.add('swiper-fallback-active');
+            }
+        }
+    } else {
+        console.warn("Swiper 라이브러리가 로드되지 않았습니다. 폴백 정적 모드로 구동합니다.");
+        if (heroSwiperEl) {
+            heroSwiperEl.classList.add('swiper-fallback-active');
+        }
+    }
 }
 
 async function loadServerStatus() {
@@ -141,36 +227,41 @@ async function loadServerStatus() {
         const response = await fetch('/api/v1/server/status');
         const data = await response.json();
 
-        const container = document.getElementById('server-status-content');
+        const container = document.getElementById('mini-server-status');
+        if (!container) return;
 
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-
-        let statusHtml = `<div>`;
+        let statusHtml = '';
         if (data.online) {
-            statusHtml += `<div style="color: var(--accent-hero); font-weight: bold; font-size: 1.2rem;">ONLINE</div>
-                           <div style="margin-top: 8px;">접속자: ${data.players.online} / ${data.players.max}</div>`;
+            statusHtml = `
+                <div class="mini-status-wrapper online">
+                    <span class="status-indicator">
+                        <span class="pulse"></span>
+                    </span>
+                    <span class="status-text space-mono">SERVER ONLINE</span>
+                    <span class="status-players space-mono">${data.players.online} / ${data.players.max} PLAYERS</span>
+                </div>
+            `;
         } else {
-            statusHtml += `<div style="color: var(--accent-villain); font-weight: bold; font-size: 1.2rem;">OFFLINE</div>`;
+            statusHtml = `
+                <div class="mini-status-wrapper offline">
+                    <span class="status-indicator"></span>
+                    <span class="status-text space-mono">SERVER OFFLINE</span>
+                </div>
+            `;
         }
-        statusHtml += `</div>`;
-
-        statusHtml += `
-            <div class="server-status-actions">
-                <a href="https://discord.gg/jjqMWF5drb" target="_blank" class="status-btn btn-discord-icon" title="공식 디스코드">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36" fill="currentColor" style="width: 22px; height: 22px;">
-                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.1,46,96,53,91,65.69,84.69,65.69Z"/>
-                    </svg>
-                </a>
-                <a href="/guide" class="status-btn btn-guide">
-                    서버가 처음이신가요?
-                </a>
-            </div>
-        `;
 
         container.innerHTML = statusHtml;
     } catch (e) {
-        console.error("서버 상태 로드 실패");
+        console.error("서버 상태 로드 실패:", e);
+        const container = document.getElementById('mini-server-status');
+        if (container) {
+            container.innerHTML = `
+                <div class="mini-status-wrapper offline">
+                    <span class="status-indicator"></span>
+                    <span class="status-text space-mono">STATUS ERROR</span>
+                </div>
+            `;
+        }
     }
 }
 
@@ -199,21 +290,29 @@ function renderLatestPosts(posts) {
 }
 
 function renderRecentReviews(reviews) {
-    const container = document.getElementById('recent-reviews');
+    const container = document.getElementById('recent-reviews-content');
+    if (!container) return;
     if (!reviews || reviews.length === 0) {
         container.innerHTML = '<div class="placeholder">최근 평가가 없습니다.</div>';
         return;
     }
 
-    container.innerHTML = reviews.map(r => `
-        <div style="background: var(--bg-base); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border-color);">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #c89b3c; font-size: 0.8rem;">★ ${r.rating} | ${r.job_name}</span>
+    container.innerHTML = reviews.map(r => {
+        const rating = Math.min(5, Math.max(0, parseInt(r.rating) || 0));
+        const filledGems = '<i class="fas fa-gem rating-gem-filled"></i>'.repeat(rating);
+        const emptyGems = '<i class="fas fa-gem rating-gem-empty"></i>'.repeat(5 - rating);
+
+        return `
+            <div class="review-card">
+                <div class="review-meta">
+                    <span class="review-job-name space-mono">${escapeHTML(r.job_name)}</span>
+                    <span class="review-rating">${filledGems}${emptyGems}</span>
+                </div>
+                <div class="review-comment">"${escapeHTML(r.comment)}"</div>
+                <div class="review-author">- ${escapeHTML(r.nickname)}</div>
             </div>
-            <div style="font-size: 0.85rem; line-height: 1.4; color: var(--text-main);">${r.comment}</div>
-            <div style="text-align: right; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">- ${r.nickname}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function handleEventPopup(popupData) {
@@ -221,7 +320,11 @@ function handleEventPopup(popupData) {
     if (hideUntil && Date.now() < parseInt(hideUntil)) return;
 
     if (popupData && popupData.notice_id) {
-        renderPopup(popupData);
+        try {
+            renderPopup(popupData);
+        } catch (err) {
+            console.error("이벤트 팝업 렌더링 에러:", err);
+        }
     }
 }
 
@@ -230,7 +333,14 @@ function renderPopup(data) {
 
     const modal = document.getElementById('eventPopupModal');
     const imgContainer = document.getElementById('popupImageContainer');
-    document.getElementById('popupTitle').textContent = data.title || '진행 중인 이벤트';
+    const titleEl = document.getElementById('popupTitle');
+
+    if (!modal || !imgContainer || !titleEl) {
+        console.warn("팝업 모달 엘리먼트 중 일부가 누락되었습니다. 렌더링을 스킵합니다.");
+        return;
+    }
+
+    titleEl.textContent = data.title || '진행 중인 이벤트';
 
     let images = data.image_urls || [];
     if (images.length === 0) return;
@@ -288,3 +398,275 @@ window.closePopupForToday = function() {
     localStorage.setItem('hidePopupUntil', midnight.getTime());
     closePopupModal();
 };
+
+/**
+ * 퀘스트 저널 타임라인 인터랙션 초기화
+ */
+function initQuestTimeline() {
+    const container = document.querySelector('.timeline-container');
+    const steps = document.querySelectorAll('.timeline-step');
+    const trackPath = document.getElementById('track-path');
+    const trackActivePath = document.getElementById('track-active-path');
+
+    if (!container || steps.length === 0 || !trackPath || !trackActivePath) return;
+
+    let pathLength = 1000;
+    let segmentLengths = [0, 0, 0, 0];
+
+    // 동적으로 SVG Path를 업데이트하는 함수
+    function updateTimelinePath() {
+        // 모바일(768px 이하)일 때는 동작을 완전히 스킵하고 path를 클리어
+        if (window.innerWidth <= 768) {
+            trackPath.setAttribute('d', '');
+            trackActivePath.setAttribute('d', '');
+            return;
+        }
+
+        const containerRect = container.getBoundingClientRect();
+        const points = [];
+
+        // 각 단계 카드의 중심점을 container 기준 좌표로 구함
+        steps.forEach((step) => {
+            const card = step.querySelector('.step-card');
+            if (!card) return;
+            const cardRect = card.getBoundingClientRect();
+            
+            const x = cardRect.left - containerRect.left + cardRect.width / 2;
+            const y = cardRect.top - containerRect.top + cardRect.height / 2;
+            points.push({ x, y });
+        });
+
+        // 4개의 중심점이 정상적으로 구해졌는지 검증
+        if (points.length < 4) return;
+
+        const P1 = points[0];
+        const P2 = points[1];
+        const P3 = points[2];
+        const P4 = points[3];
+
+        // Z/S자 대각선 S-Curve 수식 조합 (비대칭 최적화 및 곡선화 보정)
+        // P1 ➔ P2 (수평 우측 - 아래로 완만하게 굽어지는 아크 추가)
+        const dx1 = P2.x - P1.x;
+        const C1x = P1.x + dx1 * 0.35;
+        const C1y = P1.y + 40;  /* 아래로 40px 처지는 아크 */
+        const C2x = P2.x - dx1 * 0.35;
+        const C2y = P2.y + 40;
+
+        // P2 ➔ P3 (대각선 좌하향 횡단 - 부드러운 탄젠트 S자 곡선화)
+        const dx2 = P2.x - P3.x;
+        const dy2 = P3.y - P2.y;
+        const C3x = P2.x - dx2 * 0.6;  /* X축 텐션 증폭 */
+        const C3y = P2.y;              /* P2에서 수평으로 탄젠트 탈출 */
+        const C4x = P3.x + dx2 * 0.6;
+        const C4y = P3.y;              /* P3로 수평으로 탄젠트 진입 */
+
+        // P3 ➔ P4 (수평 우측 - 위로 완만하게 솟아오르는 아크 추가)
+        const dx3 = P4.x - P3.x;
+        const C5x = P3.x + dx3 * 0.35;
+        const C5y = P3.y - 40;  /* 위로 40px 솟아오르는 아크 */
+        const C6x = P4.x - dx3 * 0.35;
+        const C6y = P4.y - 40;
+
+        // 3차 베지어 곡선(Cubic Bezier) 조합
+        const d = `M ${P1.x} ${P1.y} ` +
+                  `C ${C1x} ${C1y}, ${C2x} ${C2y}, ${P2.x} ${P2.y} ` +
+                  `C ${C3x} ${C3y}, ${C4x} ${C4y}, ${P3.x} ${P3.y} ` +
+                  `C ${C5x} ${C5y}, ${C6x} ${C6y}, ${P4.x} ${P4.y}`;
+
+        trackPath.setAttribute('d', d);
+        trackActivePath.setAttribute('d', d);
+
+        // 임시 SVG 엘리먼트를 활용해 구간별 정확한 곡선 물리 길이 측정 (mismatch 방어)
+        function getSegmentLength(segmentD) {
+            try {
+                const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                tempPath.setAttribute('d', segmentD);
+                return tempPath.getTotalLength() || 0;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        const len1 = getSegmentLength(`M ${P1.x} ${P1.y} C ${C1x} ${C1y}, ${C2x} ${C2y}, ${P2.x} ${P2.y}`);
+        const len2 = getSegmentLength(`M ${P2.x} ${P2.y} C ${C3x} ${C3y}, ${C4x} ${C4y}, ${P3.x} ${P3.y}`);
+        const len3 = getSegmentLength(`M ${P3.x} ${P3.y} C ${C5x} ${C5y}, ${C6x} ${C6y}, ${P4.x} ${P4.y}`);
+
+        pathLength = len1 + len2 + len3;
+        if (!pathLength || isNaN(pathLength)) pathLength = 1200;
+
+        // 엇갈린 거점 흐름에 맞게 각 단계별 누적 실질 길이 저장
+        segmentLengths = [
+            0,
+            len1,
+            len1 + len2,
+            pathLength
+        ];
+
+        trackActivePath.style.strokeDasharray = pathLength;
+        trackActivePath.style.strokeDashoffset = pathLength;
+    }
+
+    // 초기 및 resize 이벤트 연결
+    updateTimelinePath();
+    window.addEventListener('resize', updateTimelinePath);
+
+    // 호버 이벤트 바인딩
+    steps.forEach((step, index) => {
+        step.addEventListener('mouseenter', () => {
+            if (window.innerWidth <= 768) return; // 모바일 스킵
+            
+            // 호버된 스텝에 비례하여 게이지를 채움 (정밀 보정된 누적 실질 길이 반영)
+            const activeLength = segmentLengths[index];
+            const newOffset = pathLength - activeLength;
+            trackActivePath.style.strokeDashoffset = newOffset;
+
+            // 해당 단계 이하 카드 활성화 효과 부여
+            for (let i = 0; i <= index; i++) {
+                const targetCard = steps[i].querySelector('.step-card');
+                if (targetCard) targetCard.classList.add('glow-active');
+            }
+        });
+
+        step.addEventListener('mouseleave', () => {
+            if (window.innerWidth <= 768) return;
+            
+            trackActivePath.style.strokeDashoffset = pathLength;
+
+            steps.forEach(s => {
+                const targetCard = s.querySelector('.step-card');
+                if (targetCard) targetCard.classList.remove('glow-active');
+            });
+        });
+
+        // 클릭 이벤트
+        step.addEventListener('click', () => {
+            if (index === 0 || index === 1) {
+                window.location.href = '/guide';
+            } else if (index === 2) {
+                window.open('https://discord.gg/jjqMWF5drb', '_blank');
+            }
+        });
+    });
+}
+
+// ---------------------------------------------------------
+// 시즌 직업 및 대사 동적 순환 전환 시스템 ( Mock JSON 로컬 데이터 )
+// ---------------------------------------------------------
+const SEASON_JOBS = [
+    {
+        subtitle: "게이트의 유일한 생존자. 반",
+        narrative: "기억해라. 너희가 남긴 이 오류가, 결국 너희의 심장을 꿰뚫을 테니까."
+    },
+    {
+        subtitle: "전장을 찢는 폭풍, 사토의 가르침. 즈윌링",
+        narrative: "내가 유일하게 인정한 검사, 그분의 이름에 먹칠할 순 없지."
+    },
+    {
+        subtitle: "절대자의 핏줄, 환생한 도깨비 수호신. 신",
+        narrative: "도깨비가 장난기를 거두는 순간이 언제인지 보여주지. 똑똑히 봐라."
+    },
+    {
+        subtitle: "뇌전을 두른 강철 주먹, 제우스의 마지막 투신. 제리",
+        narrative: "제우스의 마지막 뇌전이다. 이 지옥 같은 게이트와 함께 잿더미로 변해라!"
+    },
+    {
+        subtitle: "사토 가문의 의지를 이은 팀 제트의 리더. 사토 신지",
+        narrative: "게이트 Z 링크 완료. 지금부터 사냥을 시작한다."
+    }
+];
+
+let currentJobIndex = 0;
+let jobRotationInterval = null;
+const ROTATION_DELAY = 6000;
+let shuffledJobs = [];
+
+// Fisher-Yates 셔플 알고리즘
+function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+// 셔플된 새 플레이리스트 세트 충전
+function refreshShuffledJobs() {
+    const lastJob = shuffledJobs[shuffledJobs.length - 1];
+    let newSet = shuffleArray(SEASON_JOBS);
+    
+    // 엣지 케이스 방어: 이전 세트의 마지막 직업과 새 세트의 첫 직업이 같을 경우
+    if (lastJob && newSet[0].subtitle === lastJob.subtitle && newSet.length > 1) {
+        // 첫 번째 직업과 두 번째 직업의 위치를 바꿈
+        [newSet[0], newSet[1]] = [newSet[1], newSet[0]];
+    }
+    
+    shuffledJobs = newSet;
+    currentJobIndex = 0;
+}
+
+function initJobRotation() {
+    const subtitleEl = document.querySelector('.hero-subtitle');
+    const narrativeEl = document.querySelector('.narrative-p');
+    
+    if (!subtitleEl || !narrativeEl) return;
+    
+    // 셔플된 배열 초기 설정
+    refreshShuffledJobs();
+    
+    // 초기 타이머 작동
+    startJobRotation();
+    
+    // Page Visibility Tracker 연동 (리소스 해제/재구동)
+    initVisibilityTracker();
+}
+
+function startJobRotation() {
+    const subtitleEl = document.querySelector('.hero-subtitle');
+    const narrativeEl = document.querySelector('.narrative-p');
+    
+    if (!subtitleEl || !narrativeEl) return;
+    if (jobRotationInterval) return;
+    
+    jobRotationInterval = setInterval(() => {
+        // 페이드 아웃
+        subtitleEl.classList.add('fade-out');
+        narrativeEl.classList.add('fade-out');
+        
+        setTimeout(() => {
+            currentJobIndex++;
+            
+            // 모든 직업이 한 바퀴 다 돌았다면 새 셔플 세트 준비
+            if (currentJobIndex >= shuffledJobs.length) {
+                refreshShuffledJobs();
+            }
+            
+            const nextJob = shuffledJobs[currentJobIndex];
+            
+            subtitleEl.textContent = nextJob.subtitle;
+            narrativeEl.textContent = `"${nextJob.narrative}"`;
+            
+            // 페이드 인
+            subtitleEl.classList.remove('fade-out');
+            narrativeEl.classList.remove('fade-out');
+        }, 400); // transition 지속 시간(0.4초)에 최적화
+    }, ROTATION_DELAY);
+}
+
+function stopJobRotation() {
+    if (jobRotationInterval) {
+        clearInterval(jobRotationInterval);
+        jobRotationInterval = null;
+    }
+}
+
+function initVisibilityTracker() {
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopJobRotation();
+        } else {
+            stopJobRotation();
+            startJobRotation();
+        }
+    });
+}
