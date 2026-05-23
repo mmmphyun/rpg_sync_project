@@ -4,9 +4,10 @@ import traceback
 import discord
 import asyncio
 import concurrent.futures
+import json
 from discord.ext import commands
 from dotenv import load_dotenv
-from src.database.cache import init_redis_pool
+from src.database import cache
 
 # 환경변수 로드
 load_dotenv()
@@ -28,6 +29,7 @@ class RPGSyncBot(commands.Bot):
 
         self.error_channel_id = int(os.getenv('ERROR_LOG_CHANNEL_ID', 0)) or None
         self.tree.on_error = self.on_app_command_error
+        self.redis_listener_task = None
 
     async def send_error_log(self, error_content: str):
         """에러 관제 채널로 트레이스백 발송. Discord 메시지 제한(2000자) 고려하여 Truncate 처리."""
@@ -81,11 +83,100 @@ class RPGSyncBot(commands.Bot):
         else:
             await interaction.followup.send(user_msg, ephemeral=True)
 
+    async def listen_to_redis(self):
+        """Redis Pub/Sub을 구독하여 이벤트를 처리합니다. (초안정화 버전)"""
+        while True:
+            try:
+                if not cache.redis_client:
+                    await asyncio.sleep(1)
+                    continue
+
+                pubsub = cache.redis_client.pubsub()
+                async with pubsub as ps:
+                    await ps.subscribe("onboarding:complete")
+                    print("[REDIS] Successfully subscribed to 'onboarding:complete'", flush=True)
+
+                    while True:
+                        # get_message(timeout=None)은 메시지가 올 때까지 무한 대기함
+                        message = await ps.get_message(ignore_subscribe_messages=True, timeout=10.0)
+                        if message:
+                            print(f"[REDIS] Received: {message['data']}", flush=True)
+                            try:
+                                data = json.loads(message["data"])
+                                asyncio.create_task(self.handle_onboarding_complete(data))
+                            except Exception as e:
+                                print(f"[REDIS] Data parsing error: {e}", flush=True)
+                        await asyncio.sleep(0.01) # CPU 과점 방지
+            except Exception as e:
+                if "Timeout" not in str(e):
+                    print(f"[REDIS] Listener error: {e}. Reconnecting in 5s...", flush=True)
+                    await asyncio.sleep(5)
+                continue
+
+    async def handle_onboarding_complete(self, data: dict):
+        """가이드 완료 이벤트를 처리하여 유저 역할을 변경합니다."""
+        discord_id = data.get("discord_id")
+        if not discord_id:
+            print("[ONBOARDING] No discord_id in message data", flush=True)
+            return
+
+        print(f"[ONBOARDING] Start processing for user {discord_id}", flush=True)
+        
+        # 모든 서버(Guild)에서 해당 유저를 찾아 역할 변경 시도
+        for guild in self.guilds:
+            member = guild.get_member(int(discord_id))
+            if not member:
+                continue
+
+            print(f"[ONBOARDING] Found member {member.display_name} in guild {guild.name}", flush=True)
+            try:
+                # GUIDE_ROLE_ID를 '뉴비' 역할 ID로 활용
+                newbie_role_id = int(os.getenv("GUIDE_ROLE_ID", 0))
+                member_role_id = int(os.getenv("MEMBER_ROLE_ID", 0))
+                
+                newbie_role = guild.get_role(newbie_role_id)
+                member_role = guild.get_role(member_role_id)
+
+                if newbie_role:
+                    await member.remove_roles(newbie_role)
+                    print(f"[ONBOARDING] Removed Newbie role ({newbie_role_id}) from {member.display_name}", flush=True)
+                else:
+                    print(f"[ONBOARDING] Newbie role ({newbie_role_id}) not found in guild", flush=True)
+
+                if member_role:
+                    await member.add_roles(member_role)
+                    print(f"[ONBOARDING] Added Member role ({member_role_id}) to {member.display_name}", flush=True)
+                else:
+                    print(f"[ONBOARDING] Member role ({member_role_id}) not found in guild", flush=True)
+                
+                # 온보딩 프라이빗 스레드 삭제 (이름 규칙: 인증-닉네임)
+                onboarding_parent_id = int(os.getenv("ADULT_AUDIT_LOG_CHANNEL_ID", 0))
+                parent_channel = guild.get_channel(onboarding_parent_id)
+                if parent_channel and isinstance(parent_channel, discord.TextChannel):
+                    thread_name = f"인증-{member.display_name}"
+                    existing_thread = discord.utils.get(parent_channel.threads, name=thread_name)
+                    if existing_thread:
+                        await existing_thread.send("가이드 확인이 완료되었습니다. 이 채널을 종료합니다.")
+                        await asyncio.sleep(3)
+                        await existing_thread.delete()
+                        print(f"[ONBOARDING] Deleted thread '{thread_name}'", flush=True)
+                    else:
+                        print(f"[ONBOARDING] Thread '{thread_name}' not found in channel {onboarding_parent_id}", flush=True)
+                else:
+                    print(f"[ONBOARDING] Parent channel {onboarding_parent_id} not found or not a TextChannel", flush=True)
+                
+                print(f"[ONBOARDING] Successfully finished for {member.display_name}", flush=True)
+            except Exception as e:
+                import traceback
+                print(f"[ONBOARDING] Error processing {discord_id}: {traceback.format_exc()}", flush=True)
+
     async def setup_hook(self):
         """봇 구동 시 필요한 확장 모듈을 로드하고 명령어를 동기화합니다."""
         try:
-            await init_redis_pool()
+            await cache.init_redis_pool()
             print("Redis connection pool initialized for Bot.", flush=True)
+            # 리스너 즉시 시작
+            self.redis_listener_task = asyncio.create_task(self.listen_to_redis())
         except Exception as e:
             print(f"Failed to initialize Redis pool: {e}", flush=True)
 
@@ -96,6 +187,7 @@ class RPGSyncBot(commands.Bot):
 
         extensions = [
             "src.bot.cogs.auth.auth_cmd",
+            "src.bot.cogs.auth.onboarding_cmd",
             "src.bot.cogs.jobs.job_cmd",
             "src.bot.cogs.jobs.job_event",
             "src.bot.cogs.board.board_cmd",
