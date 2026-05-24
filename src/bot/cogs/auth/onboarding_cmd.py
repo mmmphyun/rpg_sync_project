@@ -200,7 +200,7 @@ class GuideLinkView(discord.ui.View):
 class OnboardingCmd(BaseCog):
     """온보딩 및 성인 인증 명령어를 관리하는 Cog"""
 
-    @app_commands.command(name="온보딩세업", description="성인 인증 버튼을 현재 채널에 생성합니다. (관리자 전용)")
+    @app_commands.command(name="온보딩", description="성인 인증 버튼을 현재 채널에 생성합니다. (관리자 전용)")
     @app_commands.checks.has_permissions(administrator=True)
     async def setup_onboarding(self, interaction: discord.Interaction):
         embed = discord.Embed(
