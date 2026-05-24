@@ -128,7 +128,7 @@
                 <div class="promise-container">
                     <div class="promise-instruction-box">
                         <p class="promise-target-label"><i class="fas fa-edit"></i> 안전하고 매너 있는 게임 환경을 위해 아래 서약 문구를 정확히 직접 타이핑하여 주십시오.</p>
-                        <div class="promise-target-text" id="promise-target-text">나는 위의 모든 내용을 정독하고 숙지하였음을 동의합니다</div>
+                        <div class="promise-target-text" id="promise-target-text">미숙지로 인한 불이익은 본인 책임임을 동의합니다</div>
                     </div>
                     <div class="promise-input-wrapper">
                         <input type="text" id="promise-input" class="promise-input" placeholder="위 서약 문구를 정확하게 입력하십시오 (복사/붙여넣기 방지)" onpaste="return false;" autocomplete="off">
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('complete-modal');
     const closeBtn = document.getElementById('modal-close-btn');
 
-    const targetText = "나는 위의 모든 내용을 정독하고 숙지하였음을 동의합니다";
+    const targetText = "미숙지로 인한 불이익은 본인 책임임을 동의합니다";
 
     // 1. 직접 기입 텍스트 실시간 검증 (모바일 정규식 예외 처리 및 복사 붙여넣기 완전 차단)
     promiseInput.addEventListener('input', function() {

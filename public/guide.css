@@ -279,7 +279,7 @@ body {
     cursor: not-allowed;
     transition: all 0.2s ease;
     box-shadow: none;
-    font-family: 'Space Mono', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Space Mono', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 .complete-btn:not(:disabled),
@@ -306,4 +306,286 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 0px;
     box-shadow: none;
+}
+
+/* =========================================
+   Task A: Status Info Box Design (Member & Guest)
+   ========================================= */
+.status-info-box {
+    background: var(--bg-widget-medium);
+    border: 1px solid var(--border-color);
+    border-radius: 0px !important; /* 0px 직선화 강제 */
+    padding: 40px 30px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.status-info-box i {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    transition: transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+.status-info-box p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-main);
+    margin-bottom: 25px;
+    font-family: 'Space Mono', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+/* 멤버 박스 전용 고도화 */
+.member-box {
+    border-left: 3px solid var(--accent-hero); /* 좌측 에메랄드 수직 바 */
+}
+
+.member-box i {
+    color: var(--accent-hero);
+    text-shadow: 0 0 15px var(--shadow-hero);
+}
+
+.member-box:hover {
+    border-color: var(--accent-hero);
+    box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.05), 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.member-box:hover i {
+    transform: scale(1.1);
+    text-shadow: 0 0 25px var(--shadow-hero), 0 0 35px rgba(16, 185, 129, 0.4);
+}
+
+/* 게스트 박스 전용 고도화 */
+.guest-box {
+    border-left: 3px solid var(--accent-special); /* 좌측 엠버 골드 수직 바 */
+}
+
+.guest-box i {
+    color: var(--accent-special);
+    text-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.guest-box:hover {
+    border-color: var(--accent-special);
+    box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.03), 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.guest-box:hover i {
+    transform: scale(1.1);
+    text-shadow: 0 0 25px rgba(245, 158, 11, 0.5), 0 0 35px rgba(245, 158, 11, 0.3);
+}
+
+/* =========================================
+   Task B: Premium Buttons & Links
+   ========================================= */
+/* 게스트용 디스코드 버튼 */
+.discord-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 36px;
+    font-family: 'Space Mono', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    background: rgba(88, 101, 242, 0.06);
+    border: 1px solid rgba(88, 101, 242, 0.35);
+    border-radius: 0px !important;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+}
+
+.discord-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(45deg, rgba(88, 101, 242, 0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.discord-btn:hover {
+    background: rgba(88, 101, 242, 0.15);
+    border-color: #5865F2;
+    color: #FFFFFF;
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.35), inset 0 0 10px rgba(88, 101, 242, 0.2);
+    transform: translateY(-2px);
+}
+
+.discord-btn:hover::before {
+    opacity: 1;
+}
+
+.discord-btn:active {
+    transform: translateY(0);
+}
+
+/* 멤버용 돌아가기 링크 (editorial-underline 적용) */
+.return-link {
+    position: relative;
+    text-decoration: none !important;
+    display: inline-block;
+    font-family: 'Space Mono', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+    padding-bottom: 3px;
+}
+
+.return-link::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--accent-hero);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+}
+
+.return-link:hover {
+    color: var(--accent-hero);
+}
+
+.return-link:hover::after {
+    transform: scaleX(1);
+}
+
+/* =========================================
+   Task C: Newbie Pledge Section Refinements
+   ========================================= */
+/* 서약 안내 박스 강화 */
+.promise-instruction-box {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* 서약 문구 박스 에디토리얼 스타일 */
+.promise-target-text {
+    font-family: 'Space Mono', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--accent-special);
+    background: rgba(245, 158, 11, 0.03) !important;
+    border: 1px solid rgba(245, 158, 11, 0.2) !important;
+    padding: 16px 28px !important;
+    margin-top: 15px;
+    border-radius: 0px !important;
+    display: inline-block;
+    letter-spacing: 0.5px;
+    box-shadow: inset 0 0 10px rgba(245, 158, 11, 0.05);
+    user-select: none !important;
+    pointer-events: none; /* 드래그 및 우클릭 복사 철저 차단 */
+}
+
+/* 입력창 포커스 및 글로우 효과 */
+.promise-input {
+    width: 100%;
+    height: 48px !important;
+    background: rgba(13, 17, 23, 0.7) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0px !important;
+    padding: 0 24px !important;
+    color: #FFFFFF !important;
+    font-size: 0.95rem !important;
+    outline: none !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5) !important;
+    letter-spacing: 0.5px;
+}
+
+.promise-input:focus {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    background: rgba(13, 17, 23, 0.9) !important;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.15), inset 0 0 10px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* 일치 완료 시 입력창 */
+.promise-input.glow-active {
+    border-color: var(--accent-hero) !important;
+    background: rgba(16, 185, 129, 0.03) !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2), inset 0 0 10px rgba(0, 0, 0, 0.3) !important;
+    color: var(--accent-hero) !important;
+}
+
+/* 완료 버튼 고도화 */
+.complete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 48px !important;
+    font-size: 0.95rem !important;
+    font-weight: 700;
+    color: var(--text-muted) !important;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0px !important;
+    cursor: not-allowed;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    font-family: 'Space Mono', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.complete-btn:disabled {
+    opacity: 0.6;
+}
+
+/* 서약 완료 시 버튼 */
+.complete-btn:not(:disabled),
+.complete-btn.glow-active {
+    color: #0D1117 !important;
+    background: var(--accent-hero) !important;
+    border-color: var(--accent-hero) !important;
+    cursor: pointer !important;
+    box-shadow: 0 0 25px var(--shadow-hero) !important;
+    opacity: 1 !important;
+    animation: buttonPulse 2s infinite;
+}
+
+.complete-btn:not(:disabled):hover,
+.complete-btn.glow-active:hover {
+    background: #059669 !important; /* 약간 어두운 에메랄드 */
+    border-color: #059669 !important;
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+.complete-btn:not(:disabled):active,
+.complete-btn.glow-active:active {
+    transform: translateY(0);
+}
+
+/* 미세한 펄스 애니메이션 */
+@keyframes buttonPulse {
+    0% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.45);
+    }
+    100% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
 }

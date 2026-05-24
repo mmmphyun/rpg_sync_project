@@ -4,6 +4,7 @@ import logging
 import asyncio
 import traceback
 import aiohttp
+import jwt  # 누락된 JWT 디코더 임포트
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -18,6 +19,8 @@ from src.web.limiter import limiter
 from src.database.jobs import get_all_jobs_for_web
 from src.database.connection import initialize_pool
 from src.database.cache import init_redis_pool, close_redis_pool, get_cache, set_cache
+from src.database.auth import is_guide_completed  # 누락된 DB 함수 임포트
+from src.config import JWT_SECRET, JWT_ALGORITHM  # 누락된 JWT 설정 임포트
 from src.web.routers import auth, jobs, boards, server, tips, dashboard
 
 app = FastAPI(title="Fossile Server Web Dashboard")

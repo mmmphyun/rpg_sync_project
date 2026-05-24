@@ -50,7 +50,7 @@ button, input, select, textarea {
 body {
     background-color: var(--bg-surface);
     color: var(--text-main);
-    font-family: 'Pretendard', sans-serif;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
     overflow-y: auto;
     overflow-x: hidden;
     display: flex;
