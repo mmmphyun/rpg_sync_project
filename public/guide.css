@@ -9,8 +9,22 @@ body {
 
 .global-header {
     position: sticky !important;
-    top: 0;
 }
+
+.header-blur-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 80px;
+    z-index: 990;
+    pointer-events: none;
+
+    background: linear-gradient(to bottom, var(--bg-widget-dark) 0%, var(--bg-widget-medium) 50%, transparent 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+
 
 /* -----------------------------------------
    Container & Header
@@ -587,5 +601,245 @@ body {
     }
     100% {
         box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+    }
+}
+
+/* =========================================
+   Task D: Season 9 Tab System & Minecraft 9x6 Grid
+   ========================================= */
+
+/* 1. Guide Tab System Style */
+.guide-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+}
+
+.guide-tabs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.tab-btn {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 12px 22px;
+    font-family: 'Space Mono', 'Pretendard', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.tab-btn:hover {
+    color: var(--text-main);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    color: #0D1117 !important;
+    background: var(--accent-hero) !important;
+    border-color: var(--accent-hero) !important;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}
+
+.tab-content {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tab-content.active {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    opacity: 1;
+}
+
+/* 2. Minecraft 9x6 Grid Simulation Style */
+.inventory-container {
+    background: #090d13;
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    margin: 25px 0;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.inventory-title-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed var(--border-faint);
+    padding-bottom: 10px;
+}
+
+.inventory-title {
+    font-family: 'Space Mono', 'Jura', sans-serif;
+    font-size: 0.85rem;
+    color: var(--accent-hero);
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin: 0;
+}
+
+.inventory-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.inventory-grid-outer {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    background: #0d1117;
+    border: 3px double #30363d;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.inventory-grid-inner {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9 / 6; /* 9행 6열 마인크래프트 규격 유지 */
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    gap: 4px;
+    background: #8b8b8b; /* 클래식 마크 인벤 배경 투박한 질감 연출 */
+    padding: 4px;
+    box-sizing: border-box;
+    border: 2px solid #373737;
+    box-shadow: inset 3px 3px 10px rgba(0,0,0,0.8), inset -3px -3px 10px rgba(255,255,255,0.2);
+}
+
+.inventory-slot {
+    aspect-ratio: 1;
+    position: relative;
+    cursor: pointer;
+    box-sizing: border-box;
+    border: 2px solid #373737;
+    border-right-color: #FFF;
+    border-bottom-color: #FFF;
+    background-color: #8b8b8b;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.6);
+    background-image: url('/images/menu_screenshot.png');
+    background-size: 900% 600%; /* 9열 6행 전체 스프라이트 */
+    filter: grayscale(100%) brightness(35%) contrast(120%);
+    transition: filter 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+/* 호버 시 해당 슬롯만 컬러 및 빛 복원 */
+.inventory-slot:hover,
+.inventory-slot.active {
+    filter: grayscale(0%) brightness(100%) contrast(100%);
+    transform: scale(1.08);
+    z-index: 10;
+    border: 2px solid var(--accent-special);
+    box-shadow: 0 0 15px var(--accent-special), inset 2px 2px 5px rgba(0,0,0,0);
+}
+
+/* 공백 슬롯 처리 (인게임에서 실제로 없는 칸) */
+.inventory-slot.slot-empty {
+    cursor: default;
+    background-image: none !important;
+    filter: none !important;
+    background-color: #8b8b8b;
+}
+.inventory-slot.slot-empty:hover {
+    transform: none;
+    border: 2px solid #373737;
+    border-right-color: #FFF;
+    border-bottom-color: #FFF;
+    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.6);
+}
+
+/* 3. Dynamic Detail Card Style */
+.menu-detail-card {
+    background: var(--bg-widget-medium);
+    border: 1px solid var(--border-color);
+    border-left: 3px solid var(--accent-info);
+    padding: 20px 24px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+}
+
+.menu-detail-title {
+    font-size: 1.05rem;
+    color: #FFFFFF;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Space Mono', 'Pretendard', sans-serif;
+}
+
+.menu-detail-title span.badge-mono {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color);
+    padding: 2px 8px;
+    color: var(--text-muted);
+}
+
+.menu-detail-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* 모바일 9열 격자 뷰포트 스케일 및 터치 최적화 반응형 패치 */
+@media (max-width: 600px) {
+    .inventory-container {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .inventory-grid-outer {
+        padding: 4px;
+        border-width: 2px;
+    }
+    
+    .inventory-grid-inner {
+        padding: 2px;
+        gap: 2px;
+    }
+    
+    .inventory-slot {
+        border-width: 1px;
+    }
+    
+    /* 모바일에서는 과도한 줌 인에 따른 오터치/오버랩 방지용 컴팩트 스케일링 */
+    .inventory-slot:hover,
+    .inventory-slot.active {
+        transform: scale(1.04);
+        box-shadow: 0 0 8px var(--accent-special);
+    }
+    
+    .menu-detail-card {
+        padding: 16px;
+        min-height: 80px;
+    }
+    
+    .menu-detail-title {
+        font-size: 0.95rem;
     }
 }
