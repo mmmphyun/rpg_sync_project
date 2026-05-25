@@ -215,6 +215,16 @@ class RPGSyncBot(commands.Bot):
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})', flush=True)
         print('------', flush=True)
+        
+        # 봇이 참여 중인 모든 서버(Guild)에 슬래시 커맨드 강제 즉시 동기화
+        for guild in self.guilds:
+            try:
+                self.tree.copy_global_to(guild=guild)
+                synced = await self.tree.sync(guild=guild)
+                print(f"[Sync Success] Synced {len(synced)} command(s) to Guild: {guild.name} ({guild.id})", flush=True)
+            except Exception as e:
+                print(f"[Sync Error] Failed to sync to Guild {guild.name}: {e}", flush=True)
+
 
 
 if __name__ == '__main__':
