@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 읽은 탭 추적 Set 객체 (기본 시작은 tab-wild가 이미 열려 있으므로 1개로 시작)
     const visitedTabs = new Set(['tab-wild']);
-    const totalTabs = 4;
+    const totalTabs = 6;
 
     function checkAllTabsVisited() {
         if (!promiseInput || !lockNotice) return; // 뉴비가 아닌 상태 (이미 멤버/게스트) 예외 처리
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
                 this.value = '';
                 this.blur();
-                alert('가이드의 4개 탭을 모두 위에서부터 차례로 누르고 확인해 주시기 바랍니다.');
+                alert('가이드의 6개 탭을 모두 위에서부터 차례로 누르고 확인해 주시기 바랍니다.');
             }
         });
     }
@@ -167,5 +167,101 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = '/';
             });
         }
+    }
+
+    // === 4. Leaflet.js 픽셀 아트 이미지 오버레이 지도 매핑 엔진 ===
+    const mapContainer = document.getElementById('spawn-leaflet-map');
+    if (mapContainer) {
+        const mapTabBtn = document.querySelector('[data-tab="tab-system"]');
+        let leafletMapInstance = null;
+
+        function initSpawnMap() {
+            if (leafletMapInstance) return;
+
+            // 지도 인스턴스 초기화 (CRS.Simple 방식을 사용하여 지리 위경도가 아닌 이미지 고유 픽셀 좌표 사용)
+            leafletMapInstance = L.map('spawn-leaflet-map', {
+                crs: L.CRS.Simple,
+                minZoom: -1,
+                maxZoom: 2,
+                zoomSnap: 0.5
+            });
+
+            // 스폰 이미지 로드 경로 (public/images/spawn-map.png -> static 매핑)
+            const mapImageUrl = '/static/images/spawn-map.png';
+            const mapBounds = [[0, 0], [1000, 1000]]; // 1000x1000 상대적 픽셀 좌표 바운드 생성
+
+            // 이미지 레이어 얹기
+            L.imageOverlay(mapImageUrl, mapBounds).addTo(leafletMapInstance);
+            leafletMapInstance.fitBounds(mapBounds);
+
+            // === 주요 스폰 시설 핀(Pin) 합성 매핑 ===
+            // 좌표 [y, x] 데이터 정의 (픽셀 맵 상에서의 상대 좌표값)
+            const pins = [
+                {
+                    coords: [506, 648],
+                    title: "📍 서버 중앙 스폰",
+                    desc: "카틀리아 대륙으로 첫 발을 내딛는 스폰 광장이에요! 일일 상점과 교환 상점을 꼭 확인해보세요."
+                },
+                {
+                    coords: [540, 365],
+                    title: "🛠️ 생활 직업 전직 및 강화",
+                    desc: "돈을 벌기 위해선 먼저 일자리를 찾아야겠죠? 현재 전직 가능한 생활 직업이 무엇이 있는지 알아보자구요. <br>전직관의 왼편을 살펴보니 생활 직업 도구를 강화할 수도 있네요!"
+                },
+                {
+                    coords: [650, 530],
+                    title: "💵 잡상인 / 사서 / 연금술사",
+                    desc: "특수 광물, 음식 등을 판매하는 잡상인! <br>인챈트책을 전문적으로 매입하는 사서! <br>추출한 구슬을 사고파는 연금술사! <br>배가 고프면 가장 먼저 찾아가야겠네요!"
+                },
+                {
+                    coords: [385, 380],
+                    title: "💵 농사 / 탐험 / 어부",
+                    desc: "이름에 걸맞는 아이템들을 매입하는 상인들이 자리해 있네요!"
+                },
+                {
+                    coords: [385, 485],
+                    title: "💵 나무 / 광물 / 사냥",
+                    desc: "이름에 걸맞는 아이템들을 매입하는 상인들이 자리해 있네요!"
+                },
+                {
+                    coords: [400, 160],
+                    title: "💵 무기 / 도구 / 갑옷 / 소비",
+                    desc: "이름에 걸맞는 아이템들을 매입하는 상인들이 자리해 있네요!"
+                },
+                {
+                    coords: [710, 835],
+                    title: "👤 레미",
+                    desc: "무언가 아픈 기억을 가진 듯한 한 남자가 서 있네요.. 한 번 이야기를 들어주는 게 어떨까요?"
+                },
+                {
+                    coords: [775, 910],
+                    title: "🗡️ 지옥문",
+                    desc: "네더는 위험해요! 머리부터 발끝까지 다시 한번 확인해 보죠. 준비되셨나요?"
+                }
+            ];
+
+            // 핀 추가하기
+            pins.forEach(pin => {
+                const customIcon = L.divIcon({
+                    className: 'custom-map-pin',
+                    html: '<div class="pin-pulse-ring"></div>',
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                });
+
+                L.marker(pin.coords, { icon: customIcon })
+                    .addTo(leafletMapInstance)
+                    .bindPopup(`<strong style="color: var(--accent-hero); font-size: 0.95rem;">${pin.title}</strong><p style="margin-top: 6px; font-size: 0.85rem; line-height: 1.4; color: var(--text-main);">${pin.desc}</p>`);
+            });
+        }
+
+        // 탭 전환 감시 및 렌더링 교정 (display: none 상태에서 로드 시 깨짐 예방)
+        mapTabBtn.addEventListener('click', function() {
+            setTimeout(() => {
+                initSpawnMap();
+                if (leafletMapInstance) {
+                    leafletMapInstance.invalidateSize();
+                }
+            }, 100);
+        });
     }
 });

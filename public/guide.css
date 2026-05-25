@@ -843,3 +843,248 @@ body {
         font-size: 0.95rem;
     }
 }
+
+/* =========================================
+   Command & Config Custom Tab Styling
+   ========================================= */
+#tab-commands .command-group-container {
+    display: grid;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+#tab-commands .command-block-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-faint);
+    padding: 12px;
+    border-radius: 8px;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+/* 프리미엄 동적 호버 인터랙션 */
+#tab-commands .command-block-wrapper:hover {
+    border-color: rgba(16, 185, 129, 0.25);
+    transform: translateY(-2px);
+}
+
+#tab-commands .command-block-wrapper h4 {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    /* h4 타이틀 메인 테마 에메랄드/민트로 색상 일괄 통일 */
+    color: var(--accent-hero);
+}
+
+/* 프리미엄 고정폭/고해상도 코드 블록 스타일 */
+#tab-commands .command-code-block {
+    background: var(--bg-dark);
+    padding: 12px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, 'Liberation Mono', 'Pretendard', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    overflow-x: auto;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 인라인 code 태그 폰트 개선 */
+#tab-commands code {
+    background: var(--bg-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, 'Liberation Mono', 'Pretendard', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* =========================================
+   Leaflet Premium Dark Map Custom Styling
+   ========================================= */
+.leaflet-container {
+    background-color: var(--bg-dark) !important;
+    font-family: 'Pretendard', sans-serif !important;
+}
+
+/* 픽셀 아트 전용 이미지 렌더링 교정 (도트 강제 살리기) */
+#spawn-leaflet-map img.leaflet-image-layer {
+    image-rendering: pixelated !important;
+    image-rendering: crisp-edges !important;
+    -ms-interpolation-mode: nearest-neighbor !important;
+}
+
+/* 팝업 말풍선 다크 프리미엄화 */
+.leaflet-popup-content-wrapper {
+    background: var(--bg-surface) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px var(--shadow-dark) !important;
+}
+
+.leaflet-popup-tip {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+/* 줌 조절 버튼 프리미엄화 */
+.leaflet-bar {
+    border: 1px solid var(--border-color) !important;
+    box-shadow: none !important;
+}
+
+.leaflet-bar a {
+    background-color: var(--bg-surface) !important;
+    color: var(--text-main) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    transition: background 0.2s;
+}
+
+.leaflet-bar a:hover {
+    background-color: var(--border-color) !important;
+    color: var(--accent-hero) !important;
+}
+
+/* 에메랄드 펄스 애니메이션 핀 커스텀 스타일 (바깥쪽 포지셔닝 컨테이너) */
+.custom-map-pin {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 내부 실제 핀 모양 및 펄스 링 (transform 충돌 예방 격리) */
+.pin-pulse-ring {
+    width: 12px;
+    height: 12px;
+    background: var(--accent-hero);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: map-pulse 1.6s infinite;
+    box-sizing: border-box;
+}
+
+@keyframes map-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+/* =========================================
+   6-Tab Grid Equalizer & Mobile Responsive
+   ========================================= */
+.guide-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+
+.tab-btn {
+    width: 100% !important;
+    text-align: center !important;
+    padding: 10px 4px !important; /* 좁은 폭에서도 텍스트 안 잘리게 조정 */
+    font-size: 0.82rem !important; /* 900px 가로 한 줄 균형 핏 */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* 모바일 뷰 최적화 반응형 가로 터치 스크롤 스위칭 */
+@media (max-width: 768px) {
+    .guide-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 6px !important;
+        padding-bottom: 8px !important;
+    }
+    
+    .tab-btn {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        padding: 8px 16px !important;
+        font-size: 0.85rem !important;
+    }
+}
+
+/* =========================================
+   Skeleton Cards / Routine Styles
+   ========================================= */
+.skeleton-card {
+    background: rgba(13, 17, 23, 0.45) !important;
+    border: 1px dashed var(--border-color) !important;
+    padding: 24px !important;
+    margin-top: 24px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    border-radius: 0px !important; /* 픽셀 테마 느낌을 위한 직각 유지 */
+}
+
+/* 그레이 아웃 및 픽셀 블러 글로우 효과를 위한 쉬머 효과 */
+.skeleton-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -150%;
+    width: 50%; height: 100%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: skewX(-25deg);
+    animation: shimmer 3.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -150%; }
+    50% { left: 150%; }
+    100% { left: 150%; }
+}
+
+.skeleton-card:hover {
+    border-style: solid !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    background: rgba(13, 17, 23, 0.65) !important;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05) !important;
+}
+
+.skeleton-card.glow-emerald {
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+.skeleton-card.glow-emerald:hover {
+    border-color: var(--accent-hero) !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), inset 0 0 15px rgba(16, 185, 129, 0.05) !important;
+}
+
+.skeleton-card.glow-amber {
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+.skeleton-card.glow-amber:hover {
+    border-color: var(--accent-special) !important;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), inset 0 0 15px rgba(245, 158, 11, 0.05) !important;
+}
+
+.skeleton-card.glow-blue {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+.skeleton-card.glow-blue:hover {
+    border-color: var(--accent-info) !important;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), inset 0 0 15px rgba(59, 130, 246, 0.05) !important;
+}
