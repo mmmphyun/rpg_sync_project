@@ -8,6 +8,7 @@ from src.bot.cogs.core.base_cog import BaseCog
 from src.database.connection import sync_users_to_db
 from src.database.auth import delete_user_from_db, update_user_voice_exit
 from src.database.cache import delete_cache
+from src.bot.utils.text_parser import parse_user_nickname
 
 class UserEvent(BaseCog):
 
@@ -42,32 +43,11 @@ class UserEvent(BaseCog):
         if before.display_name == after.display_name:
             return
 
-        # 닉네임 파싱 (양식: 후원등급ㅣ직급ㅣ닉네임ㅣ직업명)
-        display_name = after.display_name
-        parts = [p.strip() for p in re.split(r'[ㅣ\|]', display_name)]
-
-        job_name = None
-        actual_nickname = display_name
-        server_role = "유저"
-
-        if len(parts) >= 4:
-            server_role = parts[-3]
-            actual_nickname = parts[-2]
-            job_name = parts[-1].replace(" ", "").lower()
-        elif len(parts) == 3:
-            server_role = parts[-3]
-            actual_nickname = parts[-2]
-            job_name = parts[-1].replace(" ", "").lower()
-        elif len(parts) == 2:
-            actual_nickname = parts[-2]
-            job_name = parts[-1].replace(" ", "").lower()
-        elif len(parts) == 1:
-            actual_nickname = parts[0]
-
-        if not server_role:
-            server_role = "유저"
-        if job_name and not job_name.strip():
-            job_name = None
+        # 공통 파서 유틸리티를 사용하여 닉네임 파싱 및 정제
+        parsed = parse_user_nickname(after.display_name)
+        actual_nickname = parsed["nickname"]
+        server_role = parsed["server_role"]
+        job_name = parsed["job_name"]
 
         user_data = {
             "discord_id": str(after.id),

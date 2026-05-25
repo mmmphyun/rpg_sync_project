@@ -157,3 +157,50 @@ def parse_job_illustration(raw_text: str) -> Optional[str]:
         # DB 조회를 위해 공백이 제거된 ID 형태 반환
         return re.sub(r"\s+", "", job_name)
     return None
+
+
+def parse_user_nickname(display_name: str) -> dict:
+    """
+    유저 닉네임 문자열을 파싱하여 실제 닉네임, 서버 역할, 직업명을 추출합니다.
+    """
+    if not display_name:
+        return {
+            "nickname": "",
+            "server_role": "유저",
+            "job_name": None
+        }
+
+    # 1. 스태프 식별 (대소문자 무관 STF 또는 이모지 🌈)
+    lower_name = display_name.lower()
+    is_staff = "stf" in lower_name or "🌈" in display_name
+    server_role = "STAFF" if is_staff else "유저"
+
+    # 2. 스태프 관련 키워드 및 대괄호/괄호 노이즈 제거
+    cleaned = re.sub(r'[\(\[\{]?(?:STF|stf)[\)\]\}]?|🌈', '', display_name)
+
+    # 3. 구분자 'ㅣ' 또는 '|' 기준으로 분할하되, 공백 제거 및 빈 요소 제외
+    parts = [p.strip() for p in re.split(r'[ㅣ\|]', cleaned) if p.strip()]
+
+    actual_nickname = display_name.strip()
+    job_name = None
+
+    # 4. 요소의 개수에 따른 매핑 규칙 적용
+    if len(parts) == 1:
+        # [닉네임]
+        actual_nickname = parts[0]
+    elif len(parts) == 2:
+        # [닉네임, 생활직업] -> 생활직업은 DB에 저장하지 않으므로 무시
+        actual_nickname = parts[0]
+    elif len(parts) >= 3:
+        # [생활직업, 닉네임, RPG직업] -> RPG직업은 DB jobs와 연동되므로 job_name으로 저장
+        actual_nickname = parts[-2]
+        job_name = parts[-1].replace(" ", "").lower()
+
+    if job_name and not job_name.strip():
+        job_name = None
+
+    return {
+        "nickname": actual_nickname,
+        "server_role": server_role,
+        "job_name": job_name
+    }

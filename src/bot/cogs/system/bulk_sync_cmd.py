@@ -15,7 +15,7 @@ from src.database.board import upsert_notice
 from src.database.connection import sync_users_to_db, sync_jobs_to_db, sync_job_patch_to_db
 from src.database.tip import upsert_tip
 
-from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration
+from src.bot.utils.text_parser import parse_job_descriptions, parse_job_patches, parse_job_illustration, parse_user_nickname
 from src.bot.utils.s3_client import upload_to_r2
 
 class BulkSyncCmd(BaseCog):
@@ -29,37 +29,11 @@ class BulkSyncCmd(BaseCog):
         users_data = []
         for member in ctx.guild.members:
             if not member.bot:
-                # 닉네임 파싱 (양식: 후원등급ㅣ직급ㅣ닉네임ㅣ직업명)
-                display_name = member.display_name
-                parts = [p.strip() for p in re.split(r'[ㅣ\|]', display_name)]
-
-                job_name = None
-                actual_nickname = display_name
-                server_role = "유저"  # 파싱 실패 또는 누락 시 기본값
-
-                if len(parts) >= 4:
-                    # [후원등급, 직급, 닉네임, 직업명] (요소가 더 많아도 뒤에서부터 매핑)
-                    server_role = parts[-3]
-                    actual_nickname = parts[-2]
-                    job_name = parts[-1].replace(" ", "").lower()
-                elif len(parts) == 3:
-                    # [직급, 닉네임, 직업명] (후원등급 누락 케이스)
-                    server_role = parts[-3]
-                    actual_nickname = parts[-2]
-                    job_name = parts[-1].replace(" ", "").lower()
-                elif len(parts) == 2:
-                    # [닉네임, 직업명]
-                    actual_nickname = parts[-2]
-                    job_name = parts[-1].replace(" ", "").lower()
-                elif len(parts) == 1:
-                    # [닉네임]
-                    actual_nickname = parts[0]
-
-                # 빈 문자열 처리
-                if not server_role:
-                    server_role = "유저"
-                if job_name and not job_name.strip():
-                    job_name = None
+                # 공통 파서 유틸리티를 사용하여 닉네임 파싱 및 정제
+                parsed = parse_user_nickname(member.display_name)
+                actual_nickname = parsed["nickname"]
+                server_role = parsed["server_role"]
+                job_name = parsed["job_name"]
 
                 users_data.append({
                     "discord_id": str(member.id),
