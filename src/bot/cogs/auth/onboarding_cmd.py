@@ -93,7 +93,11 @@ class TicketStaffView(discord.ui.View):
         self.thread_id = thread_id
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if not interaction.user.guild_permissions.manage_roles:
+        staff_role_id = int(os.getenv("STAFF_ROLE_ID", 0))
+        has_staff_role = any(role.id == staff_role_id for role in interaction.user.roles)
+        has_manage_roles = interaction.user.guild_permissions.manage_roles
+
+        if not (has_staff_role or has_manage_roles):
             await interaction.response.send_message("스태프 권한이 필요합니다.", ephemeral=True)
             return False
         return True
