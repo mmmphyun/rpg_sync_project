@@ -537,15 +537,6 @@ function initQuestTimeline() {
                 if (targetCard) targetCard.classList.remove('glow-active');
             });
         });
-
-        // 클릭 이벤트
-        step.addEventListener('click', () => {
-            if (index === 0 || index === 1) {
-                window.location.href = '/guide';
-            } else if (index === 2) {
-                window.open('https://discord.gg/3prVGQud2c', '_blank');
-            }
-        });
     });
 }
 
