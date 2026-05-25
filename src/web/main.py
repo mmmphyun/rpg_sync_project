@@ -20,10 +20,17 @@ from src.database.jobs import get_all_jobs_for_web
 from src.database.connection import initialize_pool
 from src.database.cache import init_redis_pool, close_redis_pool, get_cache, set_cache
 from src.database.auth import is_guide_completed  # 누락된 DB 함수 임포트
-from src.config import JWT_SECRET, JWT_ALGORITHM  # 누락된 JWT 설정 임포트
+from src.config import JWT_SECRET, JWT_ALGORITHM, DISCORD_INVITE_URL
 from src.web.routers import auth, jobs, boards, server, tips, dashboard
 
 app = FastAPI(title="Fossile Server Web Dashboard")
+
+# 전역 템플릿 변수 설정
+@app.middleware("http")
+async def add_global_template_vars(request: Request, call_next):
+    # 디스코드 초대 링크를 환경변수/중앙설정에서 가져와 request.state에 저장
+    request.state.discord_invite_url = DISCORD_INVITE_URL
+    return await call_next(request)
 
 @app.on_event("startup")
 async def startup_event():
@@ -125,7 +132,10 @@ async def serve_index(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"request": request}
+        context={
+            "request": request,
+            "discord_invite_url": request.state.discord_invite_url
+        }
     )
 
 
@@ -139,7 +149,11 @@ async def serve_jobs(request: Request):
         return templates.TemplateResponse(
             request=request,
             name="jobs.html",
-            context={"request": request, "jobs_data": cached_jobs}
+            context={
+                "request": request, 
+                "jobs_data": cached_jobs,
+                "discord_invite_url": request.state.discord_invite_url
+            }
         )
 
     jobs_data = await asyncio.to_thread(get_all_jobs_for_web)
@@ -173,7 +187,11 @@ async def serve_jobs(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="jobs.html",
-        context={"request": request, "jobs_data": formatted_jobs}
+        context={
+            "request": request, 
+            "jobs_data": formatted_jobs,
+            "discord_invite_url": request.state.discord_invite_url
+        }
     )
 
 @app.get("/notice")
@@ -181,7 +199,11 @@ async def serve_notice(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="board.html",
-        context={"request": request, "board_type": "notice"}
+        context={
+            "request": request, 
+            "board_type": "notice",
+            "discord_invite_url": request.state.discord_invite_url
+        }
     )
 
 @app.get("/event")
@@ -189,7 +211,11 @@ async def serve_event(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="board.html",
-        context={"request": request, "board_type": "event"}
+        context={
+            "request": request, 
+            "board_type": "event",
+            "discord_invite_url": request.state.discord_invite_url
+        }
     )
 
 @app.get("/tips", response_class=HTMLResponse)
@@ -204,7 +230,8 @@ async def serve_tips(request: Request):
         name="tips.html",
         context={
             "request": request,
-            "is_logged_in": is_logged_in
+            "is_logged_in": is_logged_in,
+            "discord_invite_url": request.state.discord_invite_url
         }
     )
 
@@ -234,7 +261,7 @@ async def get_guide_page(request: Request):
         context={
             "request": request, 
             "user_status": user_status,
-            "discord_invite_url": os.getenv("DISCORD_INVITE_URL", "#") # 초대 링크 환경변수 활용
+            "discord_invite_url": request.state.discord_invite_url
         }
     )
 

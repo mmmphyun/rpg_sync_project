@@ -543,7 +543,7 @@ function initQuestTimeline() {
             if (index === 0 || index === 1) {
                 window.location.href = '/guide';
             } else if (index === 2) {
-                window.open('https://discord.gg/jjqMWF5drb', '_blank');
+                window.open('https://discord.gg/3prVGQud2c', '_blank');
             }
         });
     });

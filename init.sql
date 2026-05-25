@@ -82,4 +82,4 @@ CREATE TABLE IF NOT EXISTS public.skills (
     cost_value VARCHAR,
     coefficient VARCHAR,
     is_mobility CHAR DEFAULT 'N'
-);
+    );
