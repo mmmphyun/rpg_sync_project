@@ -5,6 +5,174 @@
 {% block extra_css %}
 <link rel="stylesheet" href="/static/guide.css?v=1.0.2">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+/* 프리미엄 스토리 세션 내부 컨텐츠 전용 CSS - 외부 테마는 100% 동일 상속 */
+.story-teaser-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.story-season-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent-special);
+    letter-spacing: 2px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 12px;
+}
+.story-lead-quote {
+    font-size: 1.15rem;
+    color: #FFFFFF !important;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    border-left: 3px solid var(--accent-hero);
+    padding-left: 15px;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+}
+.story-summary-text {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    letter-spacing: -0.2px;
+}
+.story-identity-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.identity-side {
+    display: flex;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-faint);
+    padding: 14px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 0px !important;
+}
+.identity-side:hover {
+    border-color: var(--border-light);
+    background: rgba(255, 255, 255, 0.02);
+}
+.side-bar {
+    width: 3px;
+    align-self: stretch;
+    margin-right: 12px;
+}
+.hero-side .side-bar {
+    background: linear-gradient(to bottom, var(--accent-hero), #059669);
+    box-shadow: 0 0 10px var(--shadow-hero);
+}
+.villain-side .side-bar {
+    background: linear-gradient(to bottom, var(--accent-villain), #ef4444);
+    box-shadow: 0 0 10px var(--shadow-villain);
+}
+.side-content h5 {
+    margin: 0 0 4px 0;
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+}
+.hero-side .side-content h5 { color: var(--accent-hero); }
+.villain-side .side-content h5 { color: var(--accent-villain); }
+.side-content p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: 'Pretendard', -apple-system, sans-serif;
+}
+.story-highlight-desc {
+    font-size: 0.95rem;
+    color: var(--text-main);
+    line-height: 1.6;
+    background: rgba(16, 185, 129, 0.02);
+    border: 1px dashed var(--border-color);
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    letter-spacing: -0.3px;
+}
+.story-action-container {
+    display: flex;
+    justify-content: flex-end;
+}
+.story-read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: 1px solid var(--accent-hero);
+    color: var(--accent-hero);
+    padding: 12px 24px;
+    font-family: 'Space Mono', 'Pretendard', monospace;
+    font-size: 0.82rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 0px !important;
+}
+.story-read-btn:hover {
+    background: var(--accent-hero);
+    color: var(--bg-base);
+    box-shadow: 0 0 20px var(--shadow-hero);
+    transform: translateY(-1px);
+}
+.story-read-btn:active {
+    transform: translateY(0);
+}
+
+/* 스토리 모달 세부 스타일 */
+.story-modal-content {
+    max-width: 650px !important;
+    text-align: left !important;
+    padding: 40px !important;
+    background: var(--bg-widget-dark) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0px !important;
+}
+.story-modal-body {
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-bottom: 25px;
+}
+.story-modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+.story-modal-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+.story-modal-body::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+}
+.story-modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hero);
+}
+.story-paragraph {
+    font-size: 0.95rem;
+    color: var(--text-main);
+    line-height: 1.8;
+    margin-bottom: 20px;
+    text-align: justify;
+    word-break: keep-all;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    letter-spacing: -0.3px;
+}
+.story-paragraph strong {
+    color: #FFFFFF;
+}
+
+@media (max-width: 600px) {
+    .story-identity-box {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -43,15 +211,40 @@
                 <section class="guide-section">
                     <div class="section-header">
                         <i class="ra ra-book"></i>
-                        <h3>이전 시즌 세계관 및 스토리</h3>
+                        <h3>시즌 세계관 및 스토리</h3>
                     </div>
-                    <div class="section-body">
-                        <ul>
-                            <li><strong>"카틀리아는 여전히 전쟁 중입니다. 고대도시 로스트와 말이죠."</strong></li>
-                            <li>데미안의 거침없는 영토 확장으로 카틀리아는 큰 위협에 처했습니다. 악마에게 나라를 빼앗긴 로스트, 그리고 이제 카틀리아를 노리는 데미안.</li>
-                            <li>과거와 미래의 시간선을 잇고 공간도 비트는 <strong>'게이트'</strong>가 열리며 운명은 한 치 앞을 알 수 없게 되었습니다.</li>
-                            <li>스토리의 주인공으로서, 위기에 빠진 세계를 구하는 위대한 여정이 기다립니다.</li>
-                        </ul>
+                    <div class="section-body story-teaser-content">
+                        <span class="story-season-badge">SEASON 9 // THE TIME WANDERER</span>
+                        <h4 class="story-lead-quote">"최전방 '게이트 L'이 마족의 압도적인 진격 앞에 함락되던 날, 대륙의 시간은 찢어졌습니다."</h4>
+                        <p class="story-summary-text">
+                            금단의 '시간의 힘' 폭주가 가져온 30년 뒤의 미래. 동료들은 기억의 파편을 난도질당한 채 대륙 전역의 게이트로 뿔뿔이 흩어졌습니다. 자신이 누구인지, 왜 싸워야 하는지조차 잊어버린 채로.
+                        </p>
+                        <div class="story-identity-box">
+                            <div class="identity-side hero-side">
+                                <div class="side-bar"></div>
+                                <div class="side-content">
+                                    <h5>영웅 (HEROES)</h5>
+                                    <p>지워진 과거의 영광을 되찾을 각성자</p>
+                                </div>
+                            </div>
+                            <div class="identity-side villain-side">
+                                <div class="side-bar"></div>
+                                <div class="side-content">
+                                    <h5>빌런 (VILLAINS)</h5>
+                                    <p>혼돈의 시대에 부역할 또 다른 주인공</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="story-highlight-desc">
+                            <strong>"스토리 속 주인공들이 곧 당신의 직업입니다."</strong><br>
+                            과거의 단서들을 추적해 지워진 자신의 힘을 각성하고, 미처 완결하지 못했던 그날의 전쟁을 완결하십시오!
+                        </p>
+                        <div class="story-action-container">
+                            <button type="button" class="story-read-btn" id="story-read-trigger">
+                                <span>⚔️ 전쟁의 기록 전문 읽기</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </section>
 
@@ -249,7 +442,7 @@
                 </section>
 
                 <!-- 5-2. 유용한 채팅 명령어 목록 -->
-                <section class="guide-section" style="margin-top: 24px; border-top: 1px dashed var(--border-faint); padding-top: 24px;">
+                <section class="guide-section" style="margin-top: 24px; padding-top: 24px;">
                     <div class="section-header">
                         <i class="ra ra-speech-bubble"></i>
                         <h3>알아두면 든든한 채팅 명령어</h3>
@@ -426,7 +619,7 @@
                 </section>
 
                 <!-- 6-2. 용의 구슬 전직 심화 안내 -->
-                <section class="guide-section" style="margin-top: 24px; border-top: 1px dashed var(--border-faint); padding-top: 24px;">
+                <section class="guide-section" style="margin-top: 24px; padding-top: 24px;">
                     <div class="section-header">
                         <i class="ra ra-dragon"></i>
                         <h3>추출 및 사용처</h3>
@@ -440,7 +633,7 @@
                 </section>
 
                 <!-- 6-3. 서버 스폰 지역 픽셀 지도 -->
-                <section class="guide-section" style="margin-top: 24px; border-top: 1px dashed var(--border-faint); padding-top: 24px;">
+                <section class="guide-section" style="margin-top: 24px; padding-top: 24px;">
                     <div class="section-header">
                         <i class="ra ra-compass"></i>
                         <h3>서버 스폰 지역 픽셀 안내도</h3>
@@ -514,6 +707,85 @@
     </div>
 </div>
 
+<!-- 스토리 전문 모달 -->
+<div id="story-modal" class="modal-overlay hidden">
+    <div class="widget modal-content story-modal-content" style="width: 90%; margin: auto; position: relative;">
+        <!-- 닫기 버튼 -->
+        <button id="story-modal-close-x" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; transition: color 0.2s;"><i class="fas fa-times"></i></button>
+        
+        <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; margin-bottom: 25px;">
+            <span class="sub-title-mono" style="color: var(--accent-special); font-size: 0.65rem; letter-spacing: 3px; display: block; margin-bottom: 4px;">ARCHIVE // WAR_OF_ARCANA</span>
+            <h3 style="font-size: 1.4rem; color: var(--text-main); margin: 0; font-weight: 800; letter-spacing: -0.5px;">아르카나 전쟁의 기록</h3>
+        </div>
+        
+        <div class="story-modal-body">
+            <p class="story-paragraph">
+                인류의 운명을 건 <strong>'아르카나 전쟁'</strong>의 끝은 참혹했습니다. 최전방 방어선이었던 <strong>‘게이트 L’</strong>이 마족의 압도적인 진격 앞에 함락되던 날, 부대의 절반이 넘는 동료들이 차가운 시신이 되어 전장에 뒤엉켰습니다.
+            </p>
+            <p class="story-paragraph">
+                더 이상의 희망이 없음을 직감한 <strong>'스톤(Stone)'</strong>은 결단을 내려야 했습니다. 그는 금단으로 여겨던 <strong>'시간의 힘'</strong>을 폭주시켜, 살아남은 잔존 병력과 함께 대륙의 시공간을 통째로 건너뛰는 극단적인 선택을 감행합니다.
+            </p>
+            <p class="story-paragraph">
+                그렇게 눈을 뜬 곳은 <strong>30년 뒤의 미래</strong>.
+            </p>
+            <p class="story-paragraph">
+                하지만 인류의 멸망을 막기 위해 지불한 시간 도약의 대가는 너무나도 가혹했습니다. 시공간의 균열 속에서 모든 동료는 기억의 파편을 난도질당한 채, 마족들에게 이미 유린당해 황폐해진 게이트 A부터 Z까지 대륙 전역으로 뿔뿔이 흩어져 버렸습니다. 자신이 누구인지, 왜 싸워야 하는지조차 잊어버린 채로.
+            </p>
+            <p class="story-paragraph">
+                이제 시간의 방랑자가 된 '스톤'은 턱밑까지 차오른 마족의 위협을 뚫고, 다시 무기를 들어야 합니다. 게이트 속에 숨겨진 단서들을 추적하고, 과거의 인연들을 하나씩 찾아내어 그들의 지워진 기억을 깨워야 합니다.
+            </p>
+            <p class="story-paragraph">
+                30년 전 전멸의 현장이었던 통곡의 벽, 게이트 L을 넘어 마계의 심장부로.
+            </p>
+            <p class="story-paragraph" style="margin-bottom: 0;">
+                흩어진 영웅들을 모아, 미처 끝내지 못했던 <strong>그날의 전쟁을 완결하십시오.</strong>
+            </p>
+        </div>
+        
+        <button id="story-modal-close-btn" class="status-btn btn-guide" style="width: 100%; cursor: pointer; padding: 12px; border-radius: 0px; border: 1px solid var(--accent-hero); background: transparent; color: var(--accent-hero); font-weight: bold; transition: all 0.2s; font-family: 'Space Mono', monospace; font-size: 0.82rem;">기록 닫기</button>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="/static/guide.js?v=1.0.2"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const storyModal = document.getElementById('story-modal');
+        const trigger = document.getElementById('story-read-trigger');
+        const closeX = document.getElementById('story-modal-close-x');
+        const closeBtn = document.getElementById('story-modal-close-btn');
+
+        if (storyModal && trigger) {
+            // 열기
+            trigger.addEventListener('click', () => {
+                storyModal.classList.remove('hidden');
+                storyModal.classList.add('open');
+            });
+
+            // X 버튼으로 닫기
+            if (closeX) {
+                closeX.addEventListener('click', () => {
+                    storyModal.classList.remove('open');
+                    storyModal.classList.add('hidden');
+                });
+            }
+
+            // 하단 버튼으로 닫기
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    storyModal.classList.remove('open');
+                    storyModal.classList.add('hidden');
+                });
+            }
+
+            // 바깥 영역 클릭 시 닫기
+            storyModal.addEventListener('click', (e) => {
+                if (e.target === storyModal) {
+                    storyModal.classList.remove('open');
+                    storyModal.classList.add('hidden');
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
