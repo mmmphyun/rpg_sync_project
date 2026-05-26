@@ -736,6 +736,8 @@ body {
     box-shadow: inset 2px 2px 5px rgba(0,0,0,0.6);
     background-image: url('/images/menu_screenshot.png');
     background-size: 900% 600%; /* 9열 6행 전체 스프라이트 */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
     filter: grayscale(100%) brightness(35%) contrast(120%);
     transition: filter 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
 }
