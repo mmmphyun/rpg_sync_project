@@ -106,7 +106,7 @@ function renderTips(tips) {
         }
 
         // 마크다운 파싱 (marked.js 필요)
-        const parsedContent = typeof marked !== 'undefined' ? marked.parse(tip.content, { breaks: true }) : `<p>${escapeHTML(tip.content)}</p>`;
+        const parsedContent = typeof marked !== 'undefined' ? DOMPurify.sanitize(marked.parse(tip.content, { breaks: true })) : `<p>${escapeHTML(tip.content)}</p>`;
 
         // QNA 카테고리일 경우 댓글 영역 추가
         const commentSection = (tip.category === "QNA") ? `

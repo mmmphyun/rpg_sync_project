@@ -141,7 +141,7 @@ function renderFeed(notices) {
 
         const cleanContent = removeDiscordMentions(notice.content);
         const safeContent = cleanContent.replace(/```/g, "");
-        const parsedContent = marked.parse(cleanContent, { breaks: true });
+        const parsedContent = DOMPurify.sanitize(marked.parse(cleanContent, { breaks: true }));
 
         const safeTitle = notice.title ? escapeHTML(notice.title) : "";
         const titleHtml = `<h3 id="notice-title-${notice.notice_id}" class="board-card-title" style="${safeTitle ? '' : 'display: none;'}">${safeTitle}</h3>`;
