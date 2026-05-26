@@ -180,6 +180,7 @@ async def serve_jobs(request: Request):
         context={
             "request": request,
             "jobs": jobs_list,
+            "jobs_data": jobs_list,
             "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
