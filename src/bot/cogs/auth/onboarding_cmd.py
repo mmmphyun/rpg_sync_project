@@ -1,12 +1,12 @@
 import discord
 import os
 import asyncio
-import re
 from discord import app_commands
 from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
 from src.database.auth import create_magic_token, check_user_exists, is_guide_completed
 from src.database.connection import sync_users_to_db
+from src.bot.utils.text_parser import parse_user_nickname
 
 class VerificationRequestView(discord.ui.View):
     """#성인인증 채널에 표시될 [성인 인증] 버튼 뷰"""
@@ -214,21 +214,13 @@ class GuideLinkView(discord.ui.View):
             if not user_exists:
                 role_name = interaction.user.top_role.name if interaction.user.top_role else "유저"
                 display_name = interaction.user.display_name
-                parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
-
-                job_name = None
-                actual_nickname = display_name
-                if len(parts) >= 2:
-                    actual_nickname = parts[-2]
-                    job_name = parts[-1].replace(" ", "")
-                elif len(parts) == 1:
-                    actual_nickname = parts[0]
+                parsed = parse_user_nickname(display_name)
 
                 user_data = [{
                     "discord_id": discord_id,
-                    "nickname": actual_nickname,
+                    "nickname": parsed["nickname"],
                     "server_role": role_name,
-                    "job_name": job_name
+                    "job_name": parsed["job_name"]
                 }]
                 await asyncio.to_thread(sync_users_to_db, user_data)
         except Exception as e:

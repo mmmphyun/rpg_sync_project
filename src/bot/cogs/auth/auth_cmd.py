@@ -1,12 +1,12 @@
 import discord
 import os
-import re
 import asyncio
 from discord import app_commands
 from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
 from src.database.connection import sync_users_to_db
 from src.database.auth import check_user_exists, create_magic_token
+from src.bot.utils.text_parser import parse_user_nickname
 
 class AuthCmd(BaseCog):
 
@@ -22,24 +22,13 @@ class AuthCmd(BaseCog):
             if not user_exists:
                 role_name = interaction.user.top_role.name if interaction.user.top_role else "유저"
                 display_name = interaction.user.display_name
-                parts = [p.strip() for p in re.split(r'[ㅣ]', display_name)]
-
-                job_name = None
-                actual_nickname = display_name
-                if len(parts) >= 2:
-                    actual_nickname = parts[-2]
-                    job_name = parts[-1].replace(" ", "")
-                elif len(parts) == 1:
-                    actual_nickname = parts[0]
-
-                if job_name and not job_name.strip():
-                    job_name = None
+                parsed = parse_user_nickname(display_name)
 
                 user_data = [{
                     "discord_id": discord_id,
-                    "nickname": actual_nickname,
+                    "nickname": parsed["nickname"],
                     "server_role": role_name,
-                    "job_name": job_name
+                    "job_name": parsed["job_name"]
                 }]
 
                 sync_result = await asyncio.to_thread(sync_users_to_db, user_data)
