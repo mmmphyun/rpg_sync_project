@@ -1,12 +1,9 @@
 import os
-import psycopg2
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel, Field
-from psycopg2.extras import RealDictCursor
 from src.web.dependencies import get_required_user
-from src.database.reviews import get_recent_reviews_for_web
+from src.database.reviews import get_job_reviews_data, upsert_job_review_db
 from src.web.limiter import limiter
-from src.database.connection import get_connection, release_connection
 
 router = APIRouter()
 
@@ -17,57 +14,16 @@ class ReviewPayload(BaseModel):
 @router.get("/{job_id}/reviews")
 @limiter.limit("60/minute")
 def get_job_reviews(request: Request, job_id: int):
-    conn = get_connection()
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        cursor.execute("""
-            SELECT 
-                r.rating, 
-                r.comment, 
-                r.created_at, 
-                u.nickname, 
-                COALESCE(j.display_name, '직업 없음') AS job_name
-            FROM job_reviews r
-            JOIN users u ON r.discord_id = u.discord_id
-            LEFT JOIN jobs j ON u.current_job_id = j.job_id
-            WHERE r.job_id = %s
-            ORDER BY r.created_at DESC
-        """, (job_id,))
-        reviews = cursor.fetchall()
-
-        cursor.execute("SELECT COALESCE(ROUND(AVG(rating), 1), 0) as avg_rating FROM job_reviews WHERE job_id = %s",
-                       (job_id,))
-        avg_rating = cursor.fetchone()['avg_rating']
-
-        return {"avg_rating": avg_rating, "reviews": reviews}
+        return get_job_reviews_data(job_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        release_connection(conn)
 
 @router.post("/{job_id}/reviews", status_code=status.HTTP_200_OK)
 @limiter.limit("5/minute")
 def upsert_job_review(request: Request, job_id: int, payload: ReviewPayload, user: dict = Depends(get_required_user)):
     discord_id = user.get("sub")
-
-    conn = get_connection()
-    cursor = conn.cursor()
     try:
-        cursor.execute("""
-            INSERT INTO job_reviews (job_id, discord_id, rating, comment)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (job_id, discord_id) 
-            DO UPDATE SET 
-                rating = EXCLUDED.rating, 
-                comment = EXCLUDED.comment, 
-                updated_at = CURRENT_TIMESTAMP
-        """, (job_id, discord_id, payload.rating, payload.comment))
-        conn.commit()
-        return {"message": "success"}
+        return upsert_job_review_db(job_id, discord_id, payload.rating, payload.comment)
     except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cursor.close()
-        release_connection(conn)
+        raise HTTPException(status_code=500, detail=str(e))
