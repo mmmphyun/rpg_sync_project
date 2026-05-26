@@ -13,6 +13,36 @@ from src.database import cache
 load_dotenv()
 
 
+# ---------------------------------------------------------------------
+# Discord UI View 전역 에러 관제 Monkey Patch
+# ---------------------------------------------------------------------
+async def global_view_on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item) -> None:
+    """모든 discord.ui.View 콜백 내부에서 터지는 예외를 캐치하여 에러 관제 채널로 전송"""
+    tb_str = "".join(traceback.format_exception(type(error), error, error.__traceback__))
+    view_name = self.__class__.__name__
+    item_name = item.label if hasattr(item, "label") else "Unknown"
+    error_msg = f"Exception in UI View '{view_name}' (Item '{item_name}'):\n{tb_str}"
+
+    print(error_msg, file=sys.stderr)
+
+    # interaction.client(즉, Bot 인스턴스)의 send_error_log 파이프라인 호출
+    if hasattr(interaction, "client") and hasattr(interaction.client, "send_error_log"):
+        await interaction.client.send_error_log(error_msg)
+
+    # 사용자에게 비정상 종료 알림 (에러가 전파되어 유저 화면이 굳는 것 방어)
+    user_msg = "인터랙션 처리 중 오류가 발생했습니다. 관리자에게 문의해주세요."
+    try:
+        if not interaction.response.is_done():
+            await interaction.response.send_message(user_msg, ephemeral=True)
+        else:
+            await interaction.followup.send(user_msg, ephemeral=True)
+    except Exception:
+        pass
+
+# View 클래스의 기본 on_error 메서드를 커스텀 핸들러로 글로벌 교체
+discord.ui.View.on_error = global_view_on_error
+
+
 class RPGSyncBot(commands.Bot):
     def __init__(self):
         # Intents 설정: 메시지 내용과 멤버 정보 접근 권한 필요
@@ -36,17 +66,21 @@ class RPGSyncBot(commands.Bot):
         if not self.error_channel_id:
             return
 
-        channel = self.get_channel(self.error_channel_id)
-        if not channel:
-            try:
-                channel = await self.fetch_channel(self.error_channel_id)
-            except discord.NotFound:
-                return
+        try:
+            channel = self.get_channel(self.error_channel_id)
+            if not channel:
+                try:
+                    channel = await self.fetch_channel(self.error_channel_id)
+                except (discord.NotFound, discord.Forbidden):
+                    return
 
-        if len(error_content) > 1900:
-            error_content = error_content[:1900] + "\n... [Truncated]"
+            if channel:
+                if len(error_content) > 1900:
+                    error_content = error_content[:1900] + "\n... [Truncated]"
 
-        await channel.send(f"```py\n{error_content}\n```")
+                await channel.send(f"```py\n{error_content}\n```")
+        except Exception as e:
+            print(f"[Error Log Pipeline Failure] Failed to send error log to channel {self.error_channel_id}: {e}", file=sys.stderr)
 
     async def on_error(self, event_method: str, /, *args, **kwargs):
         """봇 이벤트(on_ready, on_message 등) 루프 내 Uncaught Exception 관제탑 전송"""
