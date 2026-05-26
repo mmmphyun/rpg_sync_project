@@ -351,7 +351,7 @@ function renderPopup(data) {
             <div id="popupSlider" style="display: flex; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); width: ${images.length * 100}%;">
                 ${images.map(url => `
                     <div style="width: ${100 / images.length}%; flex-shrink: 0; cursor: pointer;" onclick="location.href='/event?id=${data.notice_id}'">
-                        <img src="${url}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: rgba(11, 12, 26, 0.8);">
+                        <img src="${escapeHTML(url)}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: rgba(11, 12, 26, 0.8);">
                     </div>
                 `).join('')}
             </div>
@@ -361,7 +361,7 @@ function renderPopup(data) {
     } else {
         // 단일 이미지 렌더링
         imgHtml = `<div style="cursor: pointer;" onclick="location.href='/event?id=${data.notice_id}'">
-            <img src="${images[0]}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: rgba(11, 12, 26, 0.8);">
+            <img src="${escapeHTML(images[0])}" style="width: 100%; height: auto; display: block; max-height: 400px; object-fit: contain; background: rgba(11, 12, 26, 0.8);">
         </div>`;
     }
 

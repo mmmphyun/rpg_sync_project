@@ -149,7 +149,7 @@ function renderFeed(notices) {
         let imagesHtml = "";
         if (notice.image_urls && notice.image_urls.length > 0) {
             imagesHtml = `<div class="board-card-images">
-                ${notice.image_urls.map(url => `<img src="${url}" onclick="openLightbox('${url}')">`).join('')}
+                ${notice.image_urls.map(url => `<img src="${escapeHTML(url)}" onclick="openLightbox('${escapeHTML(url)}')">`).join('')}
             </div>`;
         }
 

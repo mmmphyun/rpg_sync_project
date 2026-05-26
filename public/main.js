@@ -134,7 +134,7 @@ function renderTile(job, idx) {
 
     const hasPlayers = job.players && job.players.length > 0;
     const dot = hasPlayers ? `<div class="active-dot"></div>` : "";
-    const tooltip = hasPlayers ? `<div class="player-tooltip">${job.players.join(", ")}</div>` : "";
+    const tooltip = hasPlayers ? `<div class="player-tooltip">${job.players.map(p => escapeHTML(p)).join(", ")}</div>` : "";
 
     let typeClass = "";
     if (job.type === "영웅") typeClass = "type-hero";
