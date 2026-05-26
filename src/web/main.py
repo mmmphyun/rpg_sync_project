@@ -172,7 +172,7 @@ async def serve_jobs(request: Request):
         jobs_list = cached_jobs
     else:
         jobs_list = await asyncio.to_thread(get_all_jobs_for_web)
-        await set_cache(cache_key, jobs_list, expire=600)
+        await set_cache(cache_key, jobs_list, ex=600)
 
     return templates.TemplateResponse(
         request=request,
@@ -208,14 +208,42 @@ async def serve_guide(request: Request):
         }
     )
 
-@app.get("/board", response_class=HTMLResponse)
+@app.get("/notice", response_class=HTMLResponse)
 @limiter.limit("30/minute")
-async def serve_board(request: Request):
+async def serve_notice(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="board.html",
         context={
             "request": request,
+            "board_type": "notice",
+            "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
+        }
+    )
+
+@app.get("/event", response_class=HTMLResponse)
+@limiter.limit("30/minute")
+async def serve_event(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="board.html",
+        context={
+            "request": request,
+            "board_type": "event",
+            "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
+        }
+    )
+
+@app.get("/board", response_class=HTMLResponse)
+@limiter.limit("30/minute")
+async def serve_board(request: Request, type: str = "notice"):
+    board_type = "event" if type == "event" else "notice"
+    return templates.TemplateResponse(
+        request=request,
+        name="board.html",
+        context={
+            "request": request,
+            "board_type": board_type,
             "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
