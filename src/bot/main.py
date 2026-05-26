@@ -149,21 +149,36 @@ class RPGSyncBot(commands.Bot):
                 else:
                     print(f"[ONBOARDING] Member role ({member_role_id}) not found in guild", flush=True)
                 
-                # 온보딩 프라이빗 스레드 삭제 (이름 규칙: 인증-닉네임)
+                # 온보딩 프라이빗 스레드 삭제 (개선안: Discord ID 해싱 접미사 매칭 기법)
+                import hashlib
+                user_hash = hashlib.md5(str(discord_id).encode()).hexdigest()[:8]
+                
+                # 기본 탐색 대상 채널 설정
                 onboarding_parent_id = int(os.getenv("ADULT_AUDIT_LOG_CHANNEL_ID", 0))
                 parent_channel = guild.get_channel(onboarding_parent_id)
+                
+                # 1단계: 지정된 부모 채널 내 스레드에서 먼저 고유 해시로 검색
+                existing_thread = None
                 if parent_channel and isinstance(parent_channel, discord.TextChannel):
-                    thread_name = f"인증-{member.display_name}"
-                    existing_thread = discord.utils.get(parent_channel.threads, name=thread_name)
-                    if existing_thread:
-                        await existing_thread.send("가이드 확인이 완료되었습니다. 이 채널을 종료합니다.")
-                        await asyncio.sleep(3)
-                        await existing_thread.delete()
-                        print(f"[ONBOARDING] Deleted thread '{thread_name}'", flush=True)
-                    else:
-                        print(f"[ONBOARDING] Thread '{thread_name}' not found in channel {onboarding_parent_id}", flush=True)
+                    for t in parent_channel.threads:
+                        if t.name.endswith(f"-{user_hash}"):
+                            existing_thread = t
+                            break
+
+                # 2단계: 부모 채널 설정이 누락되었거나 찾지 못했다면, 길드 전체의 캐시된 활성 스레드에서 검색 (폴백)
+                if not existing_thread:
+                    for t in guild.threads:
+                        if t.name.endswith(f"-{user_hash}"):
+                            existing_thread = t
+                            break
+
+                if existing_thread:
+                    await existing_thread.send("가이드 확인이 완료되었습니다. 이 채널을 종료합니다.")
+                    await asyncio.sleep(3)
+                    await existing_thread.delete()
+                    print(f"[ONBOARDING] Deleted thread '{existing_thread.name}' for user {discord_id}", flush=True)
                 else:
-                    print(f"[ONBOARDING] Parent channel {onboarding_parent_id} not found or not a TextChannel", flush=True)
+                    print(f"[ONBOARDING] Verification thread with hash suffix '-{user_hash}' not found for user {discord_id}", flush=True)
                 
                 print(f"[ONBOARDING] Successfully finished for {member.display_name}", flush=True)
             except Exception as e:

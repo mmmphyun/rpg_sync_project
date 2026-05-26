@@ -5,7 +5,7 @@ import re
 from discord import app_commands
 from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
-from src.database.auth import create_magic_token, check_user_exists
+from src.database.auth import create_magic_token, check_user_exists, is_guide_completed
 from src.database.connection import sync_users_to_db
 
 class VerificationRequestView(discord.ui.View):
@@ -33,9 +33,18 @@ class VerificationRequestView(discord.ui.View):
             )
             return
 
-        # 2. 중복 스레드 체크
-        thread_name = f"인증-{interaction.user.display_name}"
-        existing_thread = discord.utils.get(interaction.channel.threads, name=thread_name)
+        # 2. 고유 해시값 생성 (보안 및 심미성을 위해 Discord ID를 MD5 해싱한 8자리 사용)
+        import hashlib
+        user_id_str = str(interaction.user.id)
+        user_hash = hashlib.md5(user_id_str.encode()).hexdigest()[:8]
+        thread_name = f"인증-{interaction.user.display_name}-{user_hash}"
+        
+        # 중복 스레드 체크 (닉네임이 도중에 변경되었을 수 있으므로 고유 해시로 탐색)
+        existing_thread = None
+        for t in interaction.channel.threads:
+            if t.name.endswith(f"-{user_hash}"):
+                existing_thread = t
+                break
         
         if existing_thread:
             await interaction.followup.send(
@@ -158,6 +167,18 @@ class GuideLinkView(discord.ui.View):
             return
 
         discord_id = str(interaction.user.id)
+        
+        # 0. 이미 가이드 완료된 유저인지 체크하여 1차 방어 (중복 토큰 발급 및 불필요 트래픽 방지)
+        try:
+            completed = await asyncio.to_thread(is_guide_completed, discord_id)
+            if completed:
+                await interaction.response.send_message(
+                    "이미 가이드 서약을 완료하고 정식 멤버가 되셨습니다! 추가적인 가이드 진행이 필요하지 않습니다.",
+                    ephemeral=True
+                )
+                return
+        except Exception as e:
+            print(f"[Onboarding] 가이드 완료 여부 확인 오류: {e}")
         
         # 1. 유저가 DB에 있는지 확인하고 없으면 등록
         try:

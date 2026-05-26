@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request, Form, Response, Cookie, status, HTTPExce
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timedelta
-from src.database.auth import verify_and_consume_magic_token, update_guide_completion
+from src.database.auth import verify_and_consume_magic_token, update_guide_completion, is_guide_completed
 from src.database.cache import publish_message
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from src.config import JWT_SECRET, JWT_ALGORITHM
@@ -24,6 +24,11 @@ async def complete_guide(forum_session: str = Cookie(None)):
         payload = jwt.decode(forum_session, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         discord_id = payload.get("sub")
         
+        # 0. 이미 가이드 서약이 완료된 유저인지 체크하여 2차 방어 (중복 서약 및 Redis 신호 중복 발송 차단)
+        already_completed = await asyncio.to_thread(is_guide_completed, discord_id)
+        if already_completed:
+            raise HTTPException(status_code=400, detail="이미 가이드 서약이 완료된 정식 멤버입니다.")
+            
         # 1. DB 업데이트
         success = await asyncio.to_thread(update_guide_completion, discord_id)
         if not success:
@@ -42,7 +47,15 @@ async def complete_guide(forum_session: str = Cookie(None)):
 
 @router.get("/login", response_class=HTMLResponse)
 def auto_login_form(request: Request, token: str, redirect: str = "main"):
-    return templates.TemplateResponse("login.html", {"request": request, "token": token, "redirect": redirect})
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={
+            "request": request,
+            "token": token,
+            "redirect": redirect
+        }
+    )
 
 @router.post("/verify")
 @limiter.limit("5/minute")
