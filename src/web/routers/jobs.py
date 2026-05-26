@@ -6,6 +6,7 @@ from psycopg2.extras import RealDictCursor
 from src.web.dependencies import get_required_user
 from src.database.reviews import get_recent_reviews_for_web
 from src.web.limiter import limiter
+from src.database.connection import get_connection, release_connection
 
 router = APIRouter()
 
@@ -13,16 +14,10 @@ class ReviewPayload(BaseModel):
     rating: int = Field(..., ge=1, le=5)
     comment: str = Field(..., max_length=255)
 
-def get_db_connection():
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        raise RuntimeError("DATABASE_URL 환경 변수가 설정되지 않았습니다.")
-    return psycopg2.connect(db_url)
-
 @router.get("/{job_id}/reviews")
 @limiter.limit("60/minute")
 def get_job_reviews(request: Request, job_id: int):
-    conn = get_db_connection()
+    conn = get_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
         cursor.execute("""
@@ -45,16 +40,18 @@ def get_job_reviews(request: Request, job_id: int):
         avg_rating = cursor.fetchone()['avg_rating']
 
         return {"avg_rating": avg_rating, "reviews": reviews}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)
 
 @router.post("/{job_id}/reviews", status_code=status.HTTP_200_OK)
 @limiter.limit("5/minute")
 def upsert_job_review(request: Request, job_id: int, payload: ReviewPayload, user: dict = Depends(get_required_user)):
     discord_id = user.get("sub")
 
-    conn = get_db_connection()
+    conn = get_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("""
@@ -73,4 +70,4 @@ def upsert_job_review(request: Request, job_id: int, payload: ReviewPayload, use
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
-        conn.close()
+        release_connection(conn)

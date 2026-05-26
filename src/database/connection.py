@@ -12,7 +12,7 @@ def initialize_pool():
     if _db_pool is None:
         try:
             _db_pool = pool.ThreadedConnectionPool(
-                1, 5,
+                2, 8,
                 dsn=os.getenv("DATABASE_URL"),
                 keepalives=1,
                 keepalives_idle=30,
