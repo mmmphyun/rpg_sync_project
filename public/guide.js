@@ -3,6 +3,19 @@
  * Est. 2026
  */
 document.addEventListener('DOMContentLoaded', function() {
+    // === 0. 범용 모달 제어 시스템 ===
+    function openModal(modalEl) {
+        if (!modalEl) return;
+        modalEl.classList.remove('hidden');
+        modalEl.classList.add('open');
+    }
+
+    function closeModal(modalEl) {
+        if (!modalEl) return;
+        modalEl.classList.remove('open');
+        modalEl.classList.add('hidden');
+    }
+
     // === 1. 탭 시스템 전환 및 읽기 락(Lock) 검증 로직 ===
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -190,8 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
 
                 if (response.ok && result.message === 'success') {
-                    modal.classList.remove('hidden');
-                    modal.classList.add('open');
+                    openModal(modal);
                 } else {
                     alert(result.detail || '가이드 완료 처리 중 오류가 발생했습니다.');
                     completeBtn.disabled = false;
@@ -212,8 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 모달 닫기 및 홈으로 리다이렉트
         if (closeBtn) {
             closeBtn.addEventListener('click', function() {
-                modal.classList.remove('open');
-                modal.classList.add('hidden');
+                closeModal(modal);
                 window.location.href = '/';
             });
         }
@@ -313,6 +324,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     leafletMapInstance.invalidateSize();
                 }
             }, 100);
+        });
+    }
+
+    // === 5. 스토리 전문 보기 모달 로직 ===
+    const storyModal = document.getElementById('story-modal');
+    const storyTrigger = document.getElementById('story-read-trigger');
+    const storyCloseX = document.getElementById('story-modal-close-x');
+    const storyCloseBtn = document.getElementById('story-modal-close-btn');
+
+    if (storyModal && storyTrigger) {
+        // 열기
+        storyTrigger.addEventListener('click', () => openModal(storyModal));
+
+        // X 버튼 닫기
+        if (storyCloseX) {
+            storyCloseX.addEventListener('click', () => closeModal(storyModal));
+        }
+
+        // 하단 버튼 닫기
+        if (storyCloseBtn) {
+            storyCloseBtn.addEventListener('click', () => closeModal(storyModal));
+        }
+
+        // 바깥 영역 클릭 시 닫기
+        storyModal.addEventListener('click', (e) => {
+            if (e.target === storyModal) {
+                closeModal(storyModal);
+            }
         });
     }
 });

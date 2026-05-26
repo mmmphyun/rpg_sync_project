@@ -338,7 +338,7 @@
                                 <pre class="command-code-block">
 /돈 보내기 [닉네임] [금액] : 믿음직한 친구에게 돈을 안전하게 송금해요.
 /수표 발행 [금액] : 실물 지폐 아이템으로 수표를 만들어서 거래할 때 써요!
-/신고 [플레이어] [사유] : 비매너/어뷰징 유저를 발견했다면 주저 말고 신고해 주세요. <br>(※ 명령어보다는 디코 스태프 DM이 훨씬 빠른 조치가 가능하답니다 🤫)</pre>
+/신고 [플레이어] [사유] : 비매너/어뷰징 유저를 발견했다면 주저 말고 신고해 주세요. <br>(※ 명령어보다는 스태프에게 DM 주시는 편이 훨씬 빠른 조치가 가능하답니다 🤫)</pre>
                             </div>
                         </div>
                     </div>
@@ -535,7 +535,7 @@
             디스코드의 정식 멤버 채널들이 개방되었으니,<br>
             <strong style="color: #fff;">지금 디스코드로 돌아가서 확인해 주세요.</strong>
         </p>
-        <button id="modal-close-btn" class="status-btn btn-guide" style="width: 100%; cursor: pointer; padding: 12px; border-radius: 0px; border: 1px solid var(--accent-hero); background: transparent; color: var(--accent-hero); font-weight: bold; transition: all 0.2s; font-family: 'Space Mono', monospace; font-size: 0.85rem;">닫기</button>
+        <button id="modal-close-btn" class="status-btn btn-guide" style="width: 100%; cursor: pointer; padding: 12px; border-radius: 0px; border: 1px solid var(--accent-hero); background: transparent; color: var(--accent-hero); font-weight: bold; transition: all 0.2s; font-family: 'Space Mono', 'Pretendard', sans-serif; font-size: 0.85rem;">닫기</button>
     </div>
 </div>
 
@@ -574,50 +574,10 @@
             </p>
         </div>
         
-        <button id="story-modal-close-btn" class="status-btn btn-guide" style="width: 100%; cursor: pointer; padding: 12px; border-radius: 0px; border: 1px solid var(--accent-hero); background: transparent; color: var(--accent-hero); font-weight: bold; transition: all 0.2s; font-family: 'Space Mono', monospace; font-size: 0.82rem;">기록 닫기</button>
+        <button id="story-modal-close-btn" class="status-btn btn-guide" style="width: 100%; cursor: pointer; padding: 12px; border-radius: 0px; border: 1px solid var(--accent-hero); background: transparent; color: var(--accent-hero); font-weight: bold; transition: all 0.2s; font-family: 'Space Mono', 'Pretendard', sans-serif; font-size: 0.82rem;">기록 닫기</button>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="/static/guide.js?v=1.0.2"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const storyModal = document.getElementById('story-modal');
-        const trigger = document.getElementById('story-read-trigger');
-        const closeX = document.getElementById('story-modal-close-x');
-        const closeBtn = document.getElementById('story-modal-close-btn');
-
-        if (storyModal && trigger) {
-            // 열기
-            trigger.addEventListener('click', () => {
-                storyModal.classList.remove('hidden');
-                storyModal.classList.add('open');
-            });
-
-            // X 버튼으로 닫기
-            if (closeX) {
-                closeX.addEventListener('click', () => {
-                    storyModal.classList.remove('open');
-                    storyModal.classList.add('hidden');
-                });
-            }
-
-            // 하단 버튼으로 닫기
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => {
-                    storyModal.classList.remove('open');
-                    storyModal.classList.add('hidden');
-                });
-            }
-
-            // 바깥 영역 클릭 시 닫기
-            storyModal.addEventListener('click', (e) => {
-                if (e.target === storyModal) {
-                    storyModal.classList.remove('open');
-                    storyModal.classList.add('hidden');
-                }
-            });
-        }
-    });
-</script>
 {% endblock %}

@@ -1197,7 +1197,7 @@ body {
     border: 1px solid var(--accent-hero);
     color: var(--accent-hero);
     padding: 12px 24px;
-    font-family: 'Space Mono', monospace;
+    font-family: 'Space Mono', 'Pretendard', sans-serif;
     font-size: 0.82rem;
     font-weight: bold;
     cursor: pointer;
