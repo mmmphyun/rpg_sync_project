@@ -1,6 +1,7 @@
 import discord
 import os
 import asyncio
+import re
 from discord import app_commands
 from discord.ext import commands
 from src.bot.cogs.core.base_cog import BaseCog
@@ -83,7 +84,7 @@ class VerificationRequestView(discord.ui.View):
                     description=f"유저: {interaction.user.mention} ({interaction.user.display_name})\n채널: {thread.mention}",
                     color=discord.Color.blue()
                 )
-                await staff_channel.send(embed=embed, view=TicketStaffView(interaction.user.id, thread.id))
+                await staff_channel.send(embed=embed, view=TicketStaffView())
             
             await interaction.followup.send(
                 f"프라이빗 인증 채널이 생성되었습니다: {thread.mention}\n해당 채널로 이동하여 신분증 사진을 올려주세요.", 
@@ -212,7 +213,8 @@ class GuideLinkView(discord.ui.View):
         try:
             user_exists = await asyncio.to_thread(check_user_exists, discord_id)
             if not user_exists:
-                role_name = interaction.user.top_role.name if interaction.user.top_role else "유저"
+                has_role = hasattr(interaction.user, 'top_role') and interaction.user.top_role
+                role_name = interaction.user.top_role.name if has_role else "유저"
                 display_name = interaction.user.display_name
                 parsed = parse_user_nickname(display_name)
 

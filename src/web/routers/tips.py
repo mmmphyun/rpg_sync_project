@@ -169,7 +169,7 @@ async def remove_tip(tip_id: int, user: dict = Depends(get_current_user)):
 
 
 @router.delete("/{tip_id}/comments/{comment_id}")
-async def remove_comment(comment_id: int, user: dict = Depends(get_current_user)):
+async def remove_comment(tip_id: int, comment_id: int, user: dict = Depends(get_current_user)):
     if not user or not user.get("is_logged_in"):
         raise HTTPException(status_code=401, detail="인증이 필요합니다.")
 

@@ -1,3 +1,10 @@
+if (typeof escapeHTML === 'undefined') {
+    window.escapeHTML = function(str) {
+        if (!str) return "";
+        return String(str).replace(/[&<>'"]/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[m]));
+    };
+}
+
 /**
  * View Controller & Event Listeners
  * API 연동 기반 DOM 조작 및 사용자 인터랙션 처리
@@ -636,7 +643,14 @@ async function submitReview(event) {
             document.getElementById('reviewComment').value = '';
 
             const listContainer = document.getElementById('reviewList');
-            const existingReview = listContainer.querySelector(`.review-item[data-nickname="${currentUserNickname}"]`);
+            let existingReview = null;
+            const items = listContainer.querySelectorAll('.review-item');
+            for (const item of items) {
+                if (item.dataset.nickname === currentUserNickname) {
+                    existingReview = item;
+                    break;
+                }
+            }
 
             if (existingReview) {
                 existingReview.querySelector('.review-rating').textContent = '★'.repeat(rating);

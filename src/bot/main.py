@@ -154,7 +154,7 @@ class RPGSyncBot(commands.Bot):
                 user_hash = hashlib.md5(str(discord_id).encode()).hexdigest()[:8]
                 
                 # 기본 탐색 대상 채널 설정
-                onboarding_parent_id = int(os.getenv("ADULT_AUDIT_LOG_CHANNEL_ID", 0))
+                onboarding_parent_id = int(os.getenv("ADULT_VERIFY_LOG_CHANNEL_ID", 0))
                 parent_channel = guild.get_channel(onboarding_parent_id)
                 
                 # 1단계: 지정된 부모 채널 내 스레드에서 먼저 고유 해시로 검색

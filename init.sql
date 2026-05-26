@@ -63,7 +63,8 @@ CREATE TABLE IF NOT EXISTS public.job_reviews (
     rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment VARCHAR NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_job_user_review UNIQUE (job_id, discord_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.magic_tokens (

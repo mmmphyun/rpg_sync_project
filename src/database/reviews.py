@@ -40,7 +40,7 @@ def get_job_reviews_data(job_id: int) -> dict:
                 COALESCE(j.display_name, '직업 없음') AS job_name
             FROM job_reviews r
             JOIN users u ON r.discord_id = u.discord_id
-            LEFT JOIN jobs j ON u.current_job_id = j.job_id
+            LEFT JOIN jobs j ON r.job_id = j.job_id
             WHERE r.job_id = %s
             ORDER BY r.created_at DESC
         """, (job_id,))

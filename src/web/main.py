@@ -6,7 +6,7 @@ import traceback
 import aiohttp
 import jwt  # 누락된 JWT 디코더 임포트
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Cookie
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -168,43 +168,117 @@ async def serve_jobs(request: Request):
     cache_key = "cache:jobs:all"
 
     cached_jobs = await get_cache(cache_key)
-    if cached_jobs:
-        jobs_list = cached_jobs
-    else:
-        jobs_list = await asyncio.to_thread(get_all_jobs_for_web)
-        await set_cache(cache_key, jobs_list, ex=600)
+    if cached_jobs and isinstance(cached_jobs, list) and len(cached_jobs) > 0:
+        # 캐싱된 데이터의 첫 번째 요소가 포맷팅된 구조인지 엄격히 검증
+        first_item = cached_jobs[0]
+        if isinstance(first_item, dict) and "desc" in first_item and "searchName" in first_item:
+            return templates.TemplateResponse(
+                request=request,
+                name="jobs.html",
+                context={
+                    "request": request, 
+                    "jobs": cached_jobs,
+                    "jobs_data": cached_jobs,
+                    "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
+                }
+            )
+        else:
+            # 원시 데이터 등으로 오염된 캐시 감지 시 자가 치유(Purge)
+            print(f"[Warning] Invalid/Raw jobs cache format detected. Purging key '{cache_key}'.", flush=True)
+            try:
+                from src.database.cache import delete_cache
+                await delete_cache(cache_key)
+            except Exception as ce:
+                print(f"[Error] Failed to purge invalid cache: {ce}", flush=True)
+
+    jobs_data = await asyncio.to_thread(get_all_jobs_for_web)
+
+    formatted_jobs = []
+    for row in jobs_data:
+        photos = [p for p in [row.get('photo_1'), row.get('photo_2'), row.get('photo_3'), row.get('photo_4')] if p]
+
+        formatted_jobs.append({
+            "job_id": row.get('job_id'),
+            "name": row.get('display_name'),
+            "searchName": row.get('name'),
+            "gate": row.get('gate') or "정보 없음",
+            "group": row.get('job_group') or "정보 없음",
+            "desc": row.get('description') or "설명이 없습니다.",
+            "range": row.get('range_type') or "정보 없음",
+            "position": row.get('position') or "정보 없음",
+            "resource": row.get('resource_type') or "정보 없음",
+            "type": row.get('type') or "정보 없음",
+            "img": row.get('img', ''),
+            "photos": photos,
+            "limit": True if row.get('is_limit') == 'Y' else False,
+            "req_condition": row.get('req_condition') or "정보 없음",
+            "patches": row.get('patches', []),
+            "players": row.get('players', []),
+            "weapons": row.get('weapons', [])
+        })
+
+    await set_cache(cache_key, formatted_jobs, ex=600)
 
     return templates.TemplateResponse(
         request=request,
         name="jobs.html",
         context={
-            "request": request,
-            "jobs": jobs_list,
-            "jobs_data": jobs_list,
+            "request": request, 
+            "jobs": formatted_jobs,
+            "jobs_data": formatted_jobs,
             "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
 
 @app.get("/tips", response_class=HTMLResponse)
 @limiter.limit("30/minute")
-async def serve_tips(request: Request):
+async def serve_tips(request: Request, forum_session: str = Cookie(None)):
+    """팁 게시판 서빙 (게스트 접근 차단)"""
+    is_logged_in = False
+    if forum_session:
+        try:
+            # JWT 디코딩을 통한 엄격한 세션 만료 및 무결성 검증
+            jwt.decode(forum_session, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            is_logged_in = True
+        except Exception:
+            is_logged_in = False
+
     return templates.TemplateResponse(
         request=request,
         name="tips.html",
         context={
             "request": request,
+            "is_logged_in": is_logged_in,
             "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
 
 @app.get("/guide", response_class=HTMLResponse)
 @limiter.limit("20/minute")
-async def serve_guide(request: Request):
+async def serve_guide(request: Request, forum_session: str = Cookie(None)):
+    """유저 상태에 따른 가이드 페이지 서빙"""
+    user_status = "guest"  # guest, newbie, member
+    
+    if forum_session:
+        try:
+            payload = jwt.decode(forum_session, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            discord_id = payload.get("sub")
+            
+            # DB에서 완료 여부 확인
+            is_completed = await asyncio.to_thread(is_guide_completed, discord_id)
+            if is_completed:
+                user_status = "member"
+            else:
+                user_status = "newbie"
+        except Exception:
+            user_status = "guest"
+
     return templates.TemplateResponse(
         request=request,
         name="guide.html",
         context={
             "request": request,
+            "user_status": user_status,
             "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )

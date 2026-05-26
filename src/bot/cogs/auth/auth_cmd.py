@@ -20,7 +20,8 @@ class AuthCmd(BaseCog):
             user_exists = await asyncio.to_thread(check_user_exists, discord_id)
 
             if not user_exists:
-                role_name = interaction.user.top_role.name if interaction.user.top_role else "유저"
+                has_role = hasattr(interaction.user, 'top_role') and interaction.user.top_role
+                role_name = interaction.user.top_role.name if has_role else "유저"
                 display_name = interaction.user.display_name
                 parsed = parse_user_nickname(display_name)
 

@@ -20,8 +20,8 @@ async function initGlobalAuthUI() {
 
             area.innerHTML = `
                 <div class="user-card logged-in" style="display:flex; align-items:center; gap:8px;">
-                    <span class="user-job-tag" style="color:var(--accent-hero); font-size:0.75rem; border:1px solid var(--accent-hero); padding:2px 6px; border-radius:4px; background:rgba(0, 242, 254, 0.05);">${session.job_name}</span>
-                    <span class="user-nick" style="font-weight:bold; color:${nickColor};">${session.nickname}</span>
+                    <span class="user-job-tag" style="color:var(--accent-hero); font-size:0.75rem; border:1px solid var(--accent-hero); padding:2px 6px; border-radius:4px; background:rgba(0, 242, 254, 0.05);">${escapeHTML(session.job_name)}</span>
+                    <span class="user-nick" style="font-weight:bold; color:${nickColor};">${escapeHTML(session.nickname)}</span>
                     <button onclick="logout()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">로그아웃</button>
                 </div>
             `;
