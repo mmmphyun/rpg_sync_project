@@ -1,10 +1,10 @@
-/**
- * Board Controller (Notice & Event)
- */
+if (typeof escapeHTML === 'undefined') {
+    window.escapeHTML = function(str) {
+        if (!str) return "";
+        return String(str).replace(/[&<>'"]/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[m]));
+    };
+}
 
-// =============================================
-//  State & Configurations
-// =============================================
 const API_BASE = '/api/v1/boards';
 const BOARD_TYPE = window.BOARD_TYPE;
 let currentPage = 1;

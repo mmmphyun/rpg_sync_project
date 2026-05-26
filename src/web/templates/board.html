@@ -3,7 +3,7 @@
 {% block title %}{{ "공지사항" if board_type == "notice" else "이벤트" }} - Fossil Wiki{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/board.css?v=1.0.1">
+<link rel="stylesheet" href="/static/board.css?v=1.0.2">
 {% endblock %}
 
 {% block content %}
@@ -88,5 +88,5 @@
 <script>
     window.BOARD_TYPE = "{{ board_type }}";
 </script>
-<script src="/static/board.js?v=1.0.1"></script>
+<script src="/static/board.js?v=1.0.2"></script>
 {% endblock %}

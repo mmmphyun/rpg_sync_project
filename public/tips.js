@@ -1,3 +1,10 @@
+if (typeof escapeHTML === 'undefined') {
+    window.escapeHTML = function(str) {
+        if (!str) return "";
+        return String(str).replace(/[&<>'"]/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[m]));
+    };
+}
+
 let currentCategory = 'BUILD';
 let currentPage = 1;
 let currentEditingId = null;
