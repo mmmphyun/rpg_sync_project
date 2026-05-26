@@ -12,12 +12,7 @@ let currentTag = "";
 let isAdmin = false;
 let currentEditNoticeId = null;
 
-function escapeHTML(str) {
-    if (!str) return '';
-    return str.replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-    }[tag] || tag));
-}
+
 
 function removeDiscordMentions(str) {
     if (!str) return '';

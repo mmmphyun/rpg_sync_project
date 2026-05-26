@@ -123,12 +123,7 @@ window.retryDashboardLoad = function() {
         .catch(err => console.error("Dashboard Retry Load Error:", err));
 };
 
-function escapeHTML(str) {
-    if (!str) return '';
-    return str.replace(/[&<>'"]/g, tag => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-    }[tag] || tag));
-}
+
 
 function stripMarkdown(text) {
     if (!text) return '';

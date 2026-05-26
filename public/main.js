@@ -64,13 +64,7 @@ function getInitials(name) {
     return clean.slice(0, 2);
 }
 
-function escapeHTML(str) {
-    if (!str) return "";
-    return String(str).replace(/[&<>'"]/g, match => {
-        const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
-        return escapeMap[match];
-    });
-}
+
 
 function formatRangeDisplay(range) {
     if (range === "근거리, 원거리" || range === "근거리,원거리") {

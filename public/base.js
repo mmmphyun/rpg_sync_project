@@ -60,3 +60,11 @@ document.addEventListener("DOMContentLoaded", () => {
         gnbLink.style.display = 'inline-block';
     }
 });
+
+function escapeHTML(str) {
+    if (!str) return "";
+    return String(str).replace(/[&<>'"]/g, match => {
+        const escapeMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+        return escapeMap[match];
+    });
+}
