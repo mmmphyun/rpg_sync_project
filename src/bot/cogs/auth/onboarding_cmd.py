@@ -197,11 +197,14 @@ class GuideLinkView(discord.ui.View):
             await interaction.response.send_message("본인의 링크만 확인할 수 있습니다.", ephemeral=True)
             return
         
+        # 비동기 DB 조회가 시작되기 전 인터랙션 응답 유효시간을 연장(defer)
+        await interaction.response.defer(ephemeral=True)
+        
         # 2. 이미 가이드 완료된 유저인지 체크하여 1차 방어 (중복 토큰 발급 및 불필요 트래픽 방지)
         try:
             completed = await asyncio.to_thread(is_guide_completed, discord_id)
             if completed:
-                await interaction.response.send_message(
+                await interaction.followup.send(
                     "이미 가이드 서약을 완료하고 정식 멤버가 되셨습니다! 추가적인 가이드 진행이 필요하지 않습니다.",
                     ephemeral=True
                 )
@@ -234,7 +237,7 @@ class GuideLinkView(discord.ui.View):
             domain = os.getenv("WEB_DOMAIN", "https://fossile-wiki.cloud")
             guide_url = f"{domain}/api/v1/auth/login?token={token}&redirect=guide"
 
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 f"아래 링크를 통해 가이드 페이지로 이동하여 내용을 확인해주세요.\n"
                 f"모든 내용을 확인한 후 하단의 버튼을 누르면 정식 멤버가 됩니다.\n\n"
                 f"[가이드 페이지 바로가기]({guide_url})",
@@ -242,7 +245,7 @@ class GuideLinkView(discord.ui.View):
             )
         except Exception as e:
             print(f"매직링크 생성 에러: {e}")
-            await interaction.response.send_message("인증 링크 발급 중 시스템 오류가 발생했습니다.", ephemeral=True)
+            await interaction.followup.send("인증 링크 발급 중 시스템 오류가 발생했습니다.", ephemeral=True)
 
 class OnboardingCmd(BaseCog):
     """온보딩 및 성인 인증 명령어를 관리하는 Cog"""
