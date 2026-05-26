@@ -3,6 +3,7 @@ import jwt
 import asyncio
 from fastapi import APIRouter, Request, Form, Response, Cookie, status, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from datetime import datetime, timedelta
 from src.database.auth import verify_and_consume_magic_token, update_guide_completion
 from src.database.cache import publish_message
@@ -11,6 +12,7 @@ from src.config import JWT_SECRET, JWT_ALGORITHM
 from src.web.limiter import limiter
 
 router = APIRouter()
+templates = Jinja2Templates(directory="src/web/templates")
 
 @router.post("/complete")
 async def complete_guide(forum_session: str = Cookie(None)):
@@ -39,24 +41,8 @@ async def complete_guide(forum_session: str = Cookie(None)):
         raise HTTPException(status_code=500, detail="시스템 오류가 발생했습니다.")
 
 @router.get("/login", response_class=HTMLResponse)
-def auto_login_form(token: str, redirect: str = "main"):
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="ko">
-    <head>
-        <meta charset="UTF-8">
-        <title>인증 처리 중</title>
-    </head>
-    <body onload="document.getElementById('login-form').submit();" style="background: #0a0a1a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif;">
-        <p>보안 인증 처리 중입니다...</p>
-        <form id="login-form" action="/api/v1/auth/verify" method="POST" style="display: none;">
-            <input type="hidden" name="token" value="{token}">
-            <input type="hidden" name="redirect_to" value="{redirect}">
-        </form>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
+def auto_login_form(request: Request, token: str, redirect: str = "main"):
+    return templates.TemplateResponse("login.html", {"request": request, "token": token, "redirect": redirect})
 
 @router.post("/verify")
 @limiter.limit("5/minute")
