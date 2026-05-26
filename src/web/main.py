@@ -11,6 +11,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.types import ASGIApp, Scope, Receive, Send
+from starlette.datastructures import MutableHeaders, URL
 
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -23,14 +25,93 @@ from src.database.auth import is_guide_completed  # 누락된 DB 함수 임포�
 from src.config import JWT_SECRET, JWT_ALGORITHM, DISCORD_INVITE_URL
 from src.web.routers import auth, jobs, boards, server, tips, dashboard
 
+# ---------------------------------------------------------------------
+# Pure ASGI Middleware Implementation (Fixed & Hardened)
+# ---------------------------------------------------------------------
+class SecurityMiddleware:
+    def __init__(self, app: ASGIApp):
+        self.app = app
+        # 화이트리스트 도메인 정리 (공백 제거)
+        self.allowed_origins = [
+            origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "https://fossile-wiki.cloud").split(",")
+        ]
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        # 1. request.state 안전성 확보: scope["state"]를 확실히 초기화하여 주입
+        if "state" not in scope:
+            scope["state"] = {}
+        scope["state"]["discord_invite_url"] = DISCORD_INVITE_URL
+
+        request = Request(scope, receive)
+        start_time = time.time()
+        url = URL(scope=scope)
+
+        # 2. CSRF Protection (Hardened: Boundary check)
+        if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
+            origin = request.headers.get("origin")
+            referer = request.headers.get("referer")
+            
+            def is_trusted(value: str):
+                if not value: return False
+                # 단순 startswith가 아닌, 도메인 끝이 /이거나 정확히 일치하는지 체크하여 .attacker.com 우회 차단
+                for allowed in self.allowed_origins:
+                    if value == allowed or value.startswith(f"{allowed}/"):
+                        return True
+                return False
+
+            if not (is_trusted(origin) or is_trusted(referer)):
+                print(f"[Security Block] CSRF 시도 차단: Method={request.method}, Origin={origin}, Referer={referer}")
+                response = JSONResponse(
+                    status_code=403,
+                    content={"detail": "비정상적인 접근입니다. (CSRF 차단)"}
+                )
+                await response(scope, receive, send)
+                return
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                
+                # 3. Security Headers
+                process_time = time.time() - start_time
+                headers["X-Process-Time"] = str(process_time)
+                headers["X-Frame-Options"] = "DENY"
+                headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+                headers["X-Content-Type-Options"] = "nosniff"
+                
+                # 4. HSTS Lockout 방지: localhost/127.0.0.1일 경우 HSTS 제외
+                host = url.hostname or ""
+                if host not in ["localhost", "127.0.0.1"]:
+                    headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+                
+                if process_time > 0.5:
+                    print(f"[Warning] Slow API Call: [{request.method}] {request.url.path} - {process_time:.4f}s")
+
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+# ---------------------------------------------------------------------
+# FastAPI App Initialization
+# ---------------------------------------------------------------------
 app = FastAPI(title="Fossile Server Web Dashboard")
 
-# 전역 템플릿 변수 설정
-@app.middleware("http")
-async def add_global_template_vars(request: Request, call_next):
-    # 디스코드 초대 링크를 환경변수/중앙설정에서 가져와 request.state에 저장
-    request.state.discord_invite_url = DISCORD_INVITE_URL
-    return await call_next(request)
+# Apply custom ASGI middleware first
+app.add_middleware(SecurityMiddleware)
+
+# Apply CORS middleware
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://fossile-wiki.cloud").split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["X-API-Key", "Content-Type"],
+)
 
 @app.on_event("startup")
 async def startup_event():
@@ -57,63 +138,6 @@ async def shutdown_event():
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Middleware & Static Files
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://fossile-wiki.cloud").split(",")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["X-API-Key", "Content-Type"],
-)
-
-@app.middleware("http")
-async def csrf_protection_middleware(request: Request, call_next):
-    if request.method not in ["POST", "PUT", "PATCH", "DELETE"]:
-        return await call_next(request)
-
-    origin = request.headers.get("origin")
-    referer = request.headers.get("referer")
-
-    is_valid_origin = origin and any(origin == allowed.strip() for allowed in ALLOWED_ORIGINS)
-    is_valid_referer = referer and any(referer.startswith(allowed.strip()) for allowed in ALLOWED_ORIGINS)
-
-    if not (is_valid_origin or is_valid_referer):
-        print(f"[Security Block] CSRF 시도 차단: Method={request.method}, Origin={origin}, Referer={referer}")
-        return JSONResponse(
-            status_code=403,
-            content={"detail": "비정상적인 접근입니다. (CSRF 차단)"}
-        )
-
-    return await call_next(request)
-
-@app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    """
-    [Security & Monitoring] 보안 헤더 삽입 및 API 처리 시간 로깅 미들웨어
-    """
-    start_time = time.time()
-
-    response = await call_next(request)
-
-    process_time = time.time() - start_time
-    if process_time > 0.5:
-        print(f"[Warning] Slow API Call: [{request.method}] {request.url.path} - {process_time:.4f}s")
-
-    response.headers["X-Process-Time"] = str(process_time)
-
-    # 클릭재킹 방어
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
-
-    # MIME 스니핑 방어
-    response.headers["X-Content-Type-Options"] = "nosniff"
-
-    # 강제 HTTPS 접속 처리
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-
-    return response
-
 os.makedirs("public/images", exist_ok=True)
 app.mount("/images", StaticFiles(directory="public/images"), name="images")
 app.mount("/static", StaticFiles(directory="public"), name="static")
@@ -134,10 +158,9 @@ async def serve_index(request: Request):
         name="index.html",
         context={
             "request": request,
-            "discord_invite_url": request.state.discord_invite_url
+            "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
-
 
 @app.get("/jobs", response_class=HTMLResponse)
 @limiter.limit("30/minute")
@@ -146,157 +169,64 @@ async def serve_jobs(request: Request):
 
     cached_jobs = await get_cache(cache_key)
     if cached_jobs:
-        return templates.TemplateResponse(
-            request=request,
-            name="jobs.html",
-            context={
-                "request": request, 
-                "jobs_data": cached_jobs,
-                "discord_invite_url": request.state.discord_invite_url
-            }
-        )
-
-    jobs_data = await asyncio.to_thread(get_all_jobs_for_web)
-
-    formatted_jobs = []
-    for row in jobs_data:
-        photos = [p for p in [row.get('photo_1'), row.get('photo_2'), row.get('photo_3'), row.get('photo_4')] if p]
-
-        formatted_jobs.append({
-            "job_id": row.get('job_id'),
-            "name": row.get('display_name'),
-            "searchName": row.get('name'),
-            "gate": row.get('gate'),
-            "group": row.get('job_group'),
-            "desc": row.get('description'),
-            "range": row.get('range_type'),
-            "position": row.get('position'),
-            "resource": row.get('resource_type'),
-            "type": row.get('type'),
-            "img": row.get('img', ''),
-            "photos": photos,
-            "limit": True if row.get('is_limit') == 'Y' else False,
-            "req_condition": row.get('req_condition'),
-            "patches": row.get('patches', []),
-            "players": row.get('players', []),
-            "weapons": row.get('weapons', [])
-        })
-
-    await set_cache(cache_key, formatted_jobs, ex=86400)
+        jobs_list = cached_jobs
+    else:
+        jobs_list = await asyncio.to_thread(get_all_jobs_for_web)
+        await set_cache(cache_key, jobs_list, expire=600)
 
     return templates.TemplateResponse(
         request=request,
         name="jobs.html",
         context={
-            "request": request, 
-            "jobs_data": formatted_jobs,
-            "discord_invite_url": request.state.discord_invite_url
-        }
-    )
-
-@app.get("/notice")
-async def serve_notice(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="board.html",
-        context={
-            "request": request, 
-            "board_type": "notice",
-            "discord_invite_url": request.state.discord_invite_url
-        }
-    )
-
-@app.get("/event")
-async def serve_event(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="board.html",
-        context={
-            "request": request, 
-            "board_type": "event",
-            "discord_invite_url": request.state.discord_invite_url
+            "request": request,
+            "jobs": jobs_list,
+            "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
 
 @app.get("/tips", response_class=HTMLResponse)
+@limiter.limit("30/minute")
 async def serve_tips(request: Request):
-    """팁 게시판 서빙 (게스트 접근 차단)"""
-    token = request.cookies.get("forum_session")
-
-    is_logged_in = bool(token)
-
     return templates.TemplateResponse(
         request=request,
         name="tips.html",
         context={
             "request": request,
-            "is_logged_in": is_logged_in,
-            "discord_invite_url": request.state.discord_invite_url
+            "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
 
 @app.get("/guide", response_class=HTMLResponse)
-async def get_guide_page(request: Request):
-    """유저 상태에 따른 가이드 페이지 서빙"""
-    token = request.cookies.get("forum_session")
-    user_status = "guest"  # guest, newbie, member
-    
-    if token:
-        try:
-            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-            discord_id = payload.get("sub")
-            
-            # DB에서 완료 여부 확인
-            is_completed = await asyncio.to_thread(is_guide_completed, discord_id)
-            if is_completed:
-                user_status = "member"
-            else:
-                user_status = "newbie"
-        except Exception:
-            user_status = "guest"
-
+@limiter.limit("20/minute")
+async def serve_guide(request: Request):
     return templates.TemplateResponse(
-        request=request, 
-        name="guide.html", 
+        request=request,
+        name="guide.html",
         context={
-            "request": request, 
-            "user_status": user_status,
-            "discord_invite_url": request.state.discord_invite_url
+            "request": request,
+            "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
 
-logger = logging.getLogger("uvicorn.error")
+@app.get("/board", response_class=HTMLResponse)
+@limiter.limit("30/minute")
+async def serve_board(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="board.html",
+        context={
+            "request": request,
+            "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
+        }
+    )
 
-
-async def send_discord_webhook(error_msg: str):
-    """비동기 논블로킹 웹훅 전송. Discord API 장애가 본 서버에 영향을 주지 않도록 격리."""
-    webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
-    if not webhook_url:
-        return
-
-    if len(error_msg) > 1900:
-        error_msg = error_msg[:1900] + "\n... [Truncated]"
-
-    payload = {"content": f"```py\n{error_msg}\n```"}
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(webhook_url, json=payload, timeout=5.0) as resp:
-                if resp.status >= 400:
-                    logger.error(f"[Webhook Error] 상태 코드: {resp.status}")
-    except Exception as e:
-        logger.error(f"[Webhook Error] 발송 실패: {str(e)}")
-
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Internal Server Error: {str(exc)}", exc_info=True)
-
-    tb_str = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-    error_log_content = f"API Error: [{request.method}] {request.url.path}\n{tb_str}"
-
-    asyncio.create_task(send_discord_webhook(error_log_content))
-
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요."}
+@app.get("/login", response_class=HTMLResponse)
+def serve_login(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={
+            "request": request,
+            "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
+        }
     )
