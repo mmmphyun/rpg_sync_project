@@ -954,6 +954,9 @@ body {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* 내부 실제 핀 모양 및 펄스 링 (transform 충돌 예방 격리) */

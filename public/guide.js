@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const visitedTabs = new Set(['tab-wild']);
     const totalTabs = 6;
 
+    // 인벤토리 상태 관리 변수 정의
+    let clickedSlot = null;
+    let hoveredSlot = null;
+
     function checkAllTabsVisited() {
         if (!promiseInput || !lockNotice) return; // 뉴비가 아닌 상태 (이미 멤버/게스트) 예외 처리
         
@@ -46,6 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // 탭 읽음 추적 추가
             visitedTabs.add(targetTab);
             checkAllTabsVisited();
+
+            // 탭 전환 시 인벤토리 선택 상태 초기화
+            if (typeof updateUI === 'function') {
+                clickedSlot = null;
+                hoveredSlot = null;
+                updateUI();
+            }
         });
     });
 
@@ -67,20 +78,59 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuBadge = document.getElementById('menu-badge');
     const menuDesc = document.getElementById('menu-desc');
 
+    const defaultData = {
+        name: "인벤토리 슬롯에 마우스를 올려보세요!",
+        badge: "SYSTEM",
+        desc: "각 메뉴의 이름과 기능을 자세히 설명해드릴게요."
+    };
+
     function updateDetailCard(name, badge, desc) {
         menuTitle.innerHTML = `${name} <span class="badge-mono" id="menu-badge">${badge}</span>`;
         menuDesc.textContent = desc;
     }
 
-    invSlots.forEach(slot => {
-        slot.addEventListener('mouseenter', function() {
-            invSlots.forEach(s => s.classList.remove('active'));
-            this.classList.add('active');
-            
-            const name = this.getAttribute('data-name');
-            const badge = this.getAttribute('data-badge');
-            const desc = this.getAttribute('data-desc');
+    function updateUI() {
+        // 모든 슬롯에서 active 클래스 제거
+        invSlots.forEach(slot => slot.classList.remove('active'));
+
+        // 호버 슬롯이 있으면 호버 우선, 없으면 클릭 슬롯 적용
+        const targetSlot = hoveredSlot || clickedSlot;
+
+        if (targetSlot) {
+            targetSlot.classList.add('active');
+            const name = targetSlot.getAttribute('data-name');
+            const badge = targetSlot.getAttribute('data-badge');
+            const desc = targetSlot.getAttribute('data-desc');
             updateDetailCard(name, badge, desc);
+        } else {
+            // 둘 다 없으면 기본 정보 복원
+            updateDetailCard(defaultData.name, defaultData.badge, defaultData.desc);
+        }
+    }
+
+    invSlots.forEach(slot => {
+        // 마우스 호버 시작
+        slot.addEventListener('mouseenter', function() {
+            hoveredSlot = this;
+            updateUI();
+        });
+
+        // 마우스 호버 해제
+        slot.addEventListener('mouseleave', function() {
+            if (hoveredSlot === this) {
+                hoveredSlot = null;
+            }
+            updateUI();
+        });
+
+        // 마우스 클릭 (토글)
+        slot.addEventListener('click', function() {
+            if (clickedSlot === this) {
+                clickedSlot = null;
+            } else {
+                clickedSlot = this;
+            }
+            updateUI();
         });
     });
 
@@ -240,12 +290,13 @@ document.addEventListener('DOMContentLoaded', function() {
             ];
 
             // 핀 추가하기
+            const PIN_HITBOX_SIZE = 40; // 👈 클릭 감지 영역 범위 설정 (기본값: 40px)
             pins.forEach(pin => {
                 const customIcon = L.divIcon({
                     className: 'custom-map-pin',
                     html: '<div class="pin-pulse-ring"></div>',
-                    iconSize: [12, 12],
-                    iconAnchor: [6, 6]
+                    iconSize: [PIN_HITBOX_SIZE, PIN_HITBOX_SIZE],
+                    iconAnchor: [PIN_HITBOX_SIZE / 2, PIN_HITBOX_SIZE / 2]
                 });
 
                 L.marker(pin.coords, { icon: customIcon })
