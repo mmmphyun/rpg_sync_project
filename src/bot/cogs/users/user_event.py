@@ -43,6 +43,37 @@ class UserEvent(BaseCog):
             print(f"[Warn] 유저 정보 변경 동기화 실패: {after.display_name} ({after.id})")
 
     @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        """가입 신청(Apply to Join) 승인 직후 유저에게 안내 DM 발송"""
+        if member.bot:
+            return
+
+        discord_id = str(member.id)
+        try:
+            from src.database.auth import create_magic_token
+            
+            # 매직링크 생성
+            token = await asyncio.to_thread(create_magic_token, discord_id)
+            domain = os.getenv("WEB_DOMAIN", "https://fossile-wiki.cloud")
+
+            # DM 전송
+            embed = discord.Embed(
+                title="🎉 화석 서버 가입 완료!",
+                description=(
+                    f"**화석 서버**에 오신 것을 진심으로 환영합니다~\n\n"
+                    "**가이드** 채널의 안내를 따라가며 정식 모험가가 되어보세요!\n\n"
+                ),
+                color=discord.Color.green()
+            )
+            await member.send(embed=embed)
+            print(f"[Onboarding] {member.display_name} ({discord_id})님에게 승인 안내 DM 발송 완료")
+        except discord.Forbidden:
+            # DM 차단 유저는 조용히 무시 (포기)
+            print(f"[Onboarding] {member.display_name} ({discord_id})님이 DM을 차단하여 알림 발송을 생략했습니다.")
+        except Exception as e:
+            print(f"[Onboarding Error] {member.display_name} ({discord_id}) 가입 이벤트 처리 중 오류: {e}")
+
+    @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         """서버 퇴장 시 DB에서 유저 정보 삭제"""
         try:
