@@ -4,6 +4,14 @@
 .inner-scroll { overflow-y: auto; }
 .inner-scroll::-webkit-scrollbar { width: 6px; }
 .inner-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 0px; }
+.content-container {
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+}
 
 body {
     overflow-y: auto !important;
