@@ -247,8 +247,161 @@ class GuideLinkView(discord.ui.View):
             print(f"매직링크 생성 에러: {e}")
             await interaction.followup.send("인증 링크 발급 중 시스템 오류가 발생했습니다.", ephemeral=True)
 
+class FeedbackView(discord.ui.View):
+    """미숙지/미동의 유저들이 이탈 전 피드백을 남기거나 구제받을 수 있는 버튼 뷰 (Persistent)"""
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    async def _send_feedback(self, interaction: discord.Interaction, reason: str):
+        # 0. 인터랙션 응답 연장 및 지연
+        await interaction.response.defer(ephemeral=True)
+
+        # 1. 환경 변수에서 관제 채널 ID 로드
+        verify_log_channel_id = int(os.getenv("ADULT_VERIFY_LOG_CHANNEL_ID", 0))
+        guild = interaction.guild
+        log_channel = guild.get_channel(verify_log_channel_id) if guild else None
+
+        if log_channel:
+            try:
+                # 100% 익명성 보장을 위해 어떠한 유저 ID나 닉네임도 기록하지 않음
+                embed = discord.Embed(
+                    title="피드백 수집",
+                    description=f"유저 한 분이 가입 절차 중 아래 사유로 피드백을 제출했습니다.\n\n**사유:** {reason}",
+                    color=discord.Color.orange()
+                )
+                await log_channel.send(embed=embed)
+            except Exception as e:
+                print(f"[Feedback] 익명 피드백 전송 실패: {e}")
+
+        # 2. 유저에게는 안심 에페메럴 메시지 전송
+        await interaction.followup.send(
+            "소중한 의견을 전해주셔서 대단히 감사합니다. 본 피드백은 100% 익명으로 전달될 예정이며, "
+            "더 안전하고 신뢰받는 서버가 될 수 있도록 시스템 개선에 적극 반영하겠습니다. 좋은 하루 되세요!",
+            ephemeral=True
+        )
+
+    @discord.ui.button(label="🛡️ 개인정보 노출 걱정", style=discord.ButtonStyle.secondary, custom_id="feedback_privacy")
+    async def privacy(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self._send_feedback(interaction, "개인정보 노출 걱정 (신분증 인증 불안)")
+
+    @discord.ui.button(label="📖 가이드 규칙이 엄격함", style=discord.ButtonStyle.secondary, custom_id="feedback_rules")
+    async def rules(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self._send_feedback(interaction, "가이드 규칙이 너무 엄격함 (위키 및 규정 부담)")
+
+    @discord.ui.button(label="⚙️ 절차가 복잡하고 귀찮음", style=discord.ButtonStyle.secondary, custom_id="feedback_complex")
+    async def complex_proc(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self._send_feedback(interaction, "인증 절차가 너무 번거롭고 어려움")
+
+    @discord.ui.button(label="❓ 기타 / 단순 마음 변화", style=discord.ButtonStyle.secondary, custom_id="feedback_etc")
+    async def etc(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self._send_feedback(interaction, "기타 사유 / 단순 마음 변화 및 이탈")
+
+    @discord.ui.button(label="🔄 다시 인증해볼래요", style=discord.ButtonStyle.success, custom_id="retry_verification", row=1)
+    async def retry(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # 0. 인터랙션 응답 연장 (권한이 즉시 날아가므로 에페메럴 처리 필수)
+        await interaction.response.defer(ephemeral=True)
+
+        member = interaction.user
+        if not isinstance(member, discord.Member):
+            await interaction.followup.send("서버 멤버만 이용할 수 있습니다.", ephemeral=True)
+            return
+
+        # 1. 환경 변수에서 역할 ID들 로드
+        guide_role_id = int(os.getenv("GUIDE_ROLE_ID", 0))
+        unverified_guide_role_id = int(os.getenv("UNVERIFIED_GUIDE_ROLE_ID", 0))
+        unverified_auth_role_id = int(os.getenv("UNVERIFIED_AUTH_ROLE_ID", 0))
+        adult_verify_channel_id = int(os.getenv("ADULT_AUDIT_LOG_CHANNEL_ID", 0))
+
+        # 2. 역할 교체 준비
+        guild = interaction.guild
+        guide_role = guild.get_role(guide_role_id) if guild else None
+        unverified_guide_role = guild.get_role(unverified_guide_role_id) if guild else None
+        unverified_auth_role = guild.get_role(unverified_auth_role_id) if guild else None
+        verify_channel = guild.get_channel(adult_verify_channel_id) if guild else None
+
+        if not guide_role:
+            await interaction.followup.send("시스템 역할 설정(GUIDE_ROLE_ID)이 올바르지 않습니다. 관리자에게 문의하세요.", ephemeral=True)
+            return
+
+        roles_to_remove = []
+        if unverified_guide_role and unverified_guide_role in member.roles:
+            roles_to_remove.append(unverified_guide_role)
+        if unverified_auth_role and unverified_auth_role in member.roles:
+            roles_to_remove.append(unverified_auth_role)
+
+        # 3. 역할 교체 적용
+        try:
+            if roles_to_remove:
+                await member.remove_roles(*roles_to_remove, reason="유저 요청으로 미인증 상태 역할 복구 및 재인증 진행")
+            await member.add_roles(guide_role, reason="유저 요청으로 뉴비 역할 다시 복구")
+            
+            verify_channel_mention = verify_channel.mention if verify_channel else "#성인인증"
+            await interaction.followup.send(
+                f"다시 생각해주셔서 감사합니다! 이제 아래 채널로 이동하여 다시 인증 및 가이드를 진행하실 수 있습니다.\n\n"
+                f"👉 {verify_channel_mention} 채널로 이동하기",
+                ephemeral=True
+            )
+        except Exception as e:
+            print(f"[Onboarding Retry Error] 역할 교체 실패: {e}")
+            await interaction.followup.send("역할을 변경하는 도중 오류가 발생했습니다. 관리자에게 권한 부여 상태를 문의해주세요.", ephemeral=True)
+
 class OnboardingCmd(BaseCog):
     """온보딩 및 성인 인증 명령어를 관리하는 Cog"""
+
+    @commands.Cog.listener()
+    async def on_member_update(self, before: discord.Member, after: discord.Member):
+        """역할 변경 시점에 미인증 상태가 부여되었는지 체크하고 피드백 채널로 안전한 웰컴 멘션 안내 발송 (60초 뒤 폭파)"""
+        # 1. 역할 변경이 아닐 경우 스킵
+        if before.roles == after.roles:
+            return
+
+        # 2. 환경 변수에서 타겟 정보 로드
+        unverified_guide_role_id = int(os.getenv("UNVERIFIED_GUIDE_ROLE_ID", 0))
+        unverified_auth_role_id = int(os.getenv("UNVERIFIED_AUTH_ROLE_ID", 0))
+        feedback_channel_id = int(os.getenv("FEEDBACK_CHANNEL_ID", 0))
+
+        if not feedback_channel_id:
+            return
+
+        # 3. 변경 시점 신규 획득 역할 파싱
+        before_role_ids = {r.id for r in before.roles}
+        after_role_ids = {r.id for r in after.roles}
+        newly_added_ids = after_role_ids - before_role_ids
+
+        is_guide_unverified = unverified_guide_role_id in newly_added_ids
+        is_auth_unverified = unverified_auth_role_id in newly_added_ids
+
+        # 4. '미숙지' 또는 '미동의' 역할이 새로 주어졌다면 안내 멘션 발송
+        if is_guide_unverified or is_auth_unverified:
+            guild = after.guild
+            channel = guild.get_channel(feedback_channel_id)
+            if not channel:
+                return
+            
+            try:
+                # 1회성 알림 멘션 발송 (디스코드 채널 뱃지 유도를 위해)
+                mention_msg = await channel.send(
+                    f"{after.mention}님, 가입 절차 진행 중 **가이드 숙지 또는 인증 관련 미동의** 사유로 보류되었습니다. 🛑\n\n"
+                    f"💡 **혹시 개인정보 노출이 많이 불안하셨나요?**\n"
+                    f"주민번호 뒷자리, 상세주소, 얼굴 등 민감한 정보는 개인정보 보호를 위해 **필수로 가려서 올려주셔야 합니다.** 스태프는 오직 생년만 확인하고 사진은 **즉시 영구 삭제**하니, 안심하고 편하게 진행해 주세요!\n\n"
+                    f"설명을 확인하고 다시 용기를 내어 모험을 시작하고 싶으시다면 초록색 **[🔄 다시 인증해볼래요]** 버튼을 눌러주세요. "
+                    f"가입 절차 상 개선할 점이 있다면 위의 익명 버튼으로 피드백을 남겨주셔도 귀중한 도움이 됩니다. 😊",
+                    allowed_mentions=discord.AllowedMentions(users=True)
+                )
+
+                # 프라이버시 보호 및 깔끔한 채널 상태 유지를 위해 60초(1분) 뒤 자동 메시지 삭제
+                async def auto_delete_msg(msg: discord.Message, delay: int = 60):
+                    await asyncio.sleep(delay)
+                    try:
+                        await msg.delete()
+                    except Exception:
+                        pass # 유저가 수동 삭제했거나 이미 교체 완료된 상황 무시
+
+                # 백그라운드 태스크 구동
+                asyncio.create_task(auto_delete_msg(mention_msg))
+
+            except Exception as e:
+                print(f"[Onboarding Listener Error] 안전한 웰컴 멘션 전송 실패: {e}")
 
     @app_commands.command(name="온보딩", description="성인 인증 버튼을 현재 채널에 생성합니다. (관리자 전용)")
     @app_commands.checks.has_permissions(administrator=True)
@@ -265,9 +418,30 @@ class OnboardingCmd(BaseCog):
         await interaction.response.send_message("온보딩 시스템 메시지를 생성합니다.", ephemeral=True)
         await interaction.channel.send(embed=embed, view=VerificationRequestView())
 
+    @app_commands.command(name="피드백", description="온보딩 이탈 유저용 익명 피드백 및 복구 버튼을 생성합니다. (관리자 전용)")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def setup_feedback(self, interaction: discord.Interaction):
+        embed = discord.Embed(
+            title="모험가님, 잠시만요! 🛑",
+            description=(
+                "이 채널까지 오게 되어 대단히 아쉽고 죄송한 마음입니다.\n\n"
+                "혹시 서버 인증 단계나 규칙에 대해 부담스럽거나 걱정되는 부분이 있으셨나요?\n"
+                "아래의 피드백 버튼을 사용해 의견을 남겨주시면 서버 발전에 큰 도움이 됩니다!\n\n"
+                "**🔒 안심하고 눌러주세요!** 피드백은 실시간으로 전송되지 않으며, 다른 분들의 피드백과 섞여 일정한 시간 뒤에 익명으로 전달되어 스태프들은 누가 눌렀는지 절대 추적할 수 없습니다.\n\n"
+                "**💡 다시 모험을 시작하고 싶으신가요?**\n"
+                "설명을 읽고 마음이 바뀌셨다면 초록색 **[🔄 다시 인증해볼래요]** 버튼을 누르시면 "
+                "다시 인증과 가이드를 시도하실 수 있습니다!\n\n"
+                "*저희 화석 서버는 유저 한 분 한 분의 안전과 편안한 플레이를 가장 소중히 여깁니다.*"
+            ),
+            color=discord.Color.orange()
+        )
+        await interaction.response.send_message("피드백 및 복구 시스템 메시지를 생성합니다.", ephemeral=True)
+        await interaction.channel.send(embed=embed, view=FeedbackView())
+
 async def setup(bot: commands.Bot):
     # Persistent Views 등록 (봇 재시작 시에도 버튼 작동을 위해)
     bot.add_view(VerificationRequestView())
     bot.add_view(TicketStaffView())
     bot.add_view(GuideLinkView())
+    bot.add_view(FeedbackView())
     await bot.add_cog(OnboardingCmd(bot))
