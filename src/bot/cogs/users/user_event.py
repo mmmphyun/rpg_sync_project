@@ -50,12 +50,6 @@ class UserEvent(BaseCog):
 
         discord_id = str(member.id)
         try:
-            from src.database.auth import create_magic_token
-            
-            # 매직링크 생성
-            token = await asyncio.to_thread(create_magic_token, discord_id)
-            domain = os.getenv("WEB_DOMAIN", "https://fossile-wiki.cloud")
-
             # DM 전송
             embed = discord.Embed(
                 title="🎉 화석 서버 가입 완료!",
