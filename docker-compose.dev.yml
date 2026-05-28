@@ -17,6 +17,9 @@ services:
     container_name: rpg-redis-dev
     ports:
       - "6379:6379"
+    env_file:
+      - .env.dev
+    command: redis-server --requirepass ${REDIS_PASSWORD}
 
   api:
     build: .

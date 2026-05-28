@@ -45,3 +45,6 @@ Thumbs.db
 # Backup Local Database & R2 Assets
 backup/
 public/archive/
+
+# Documents
+docs/
