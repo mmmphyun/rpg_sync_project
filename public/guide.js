@@ -3,6 +3,9 @@
  * Est. 2026
  */
 document.addEventListener('DOMContentLoaded', function() {
+    // 온보딩 규칙 모달 읽기 및 동의 여부 플래그
+    let isRulesRead = false;
+
     // === 0. 범용 모달 제어 시스템 ===
     function openModal(modalEl) {
         if (!modalEl) return;
@@ -21,6 +24,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabContents = document.querySelectorAll('.tab-content');
     const promiseInput = document.getElementById('promise-input');
     const lockNotice = document.getElementById('lock-notice');
+    const completeBtn = document.getElementById('complete-btn');
+    const rulesModal = document.getElementById('rules-modal');
+    const rulesAgreeChk = document.getElementById('rules-agree-chk');
+    const rulesConfirmBtn = document.getElementById('rules-modal-confirm-btn');
+    const rulesCloseX = document.getElementById('rules-modal-close-x');
+    const completeModal = document.getElementById('complete-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
     
     // 읽은 탭 추적 Set 객체 (기본 시작은 tab-wild가 이미 열려 있으므로 1개로 시작)
     const visitedTabs = new Set(['tab-wild']);
@@ -31,16 +41,22 @@ document.addEventListener('DOMContentLoaded', function() {
     let hoveredSlot = null;
 
     function checkAllTabsVisited() {
-        if (!promiseInput || !lockNotice) return; // 뉴비가 아닌 상태 (이미 멤버/게스트) 예외 처리
+        if (!lockNotice) return; // 뉴비가 아닌 상태 (이미 멤버/게스트) 예외 처리
         
         const count = visitedTabs.size;
         lockNotice.innerHTML = `<i class="fas fa-lock"></i> 가이드의 모든 탭을 차례로 읽으셔야 작성이 가능합니다. (확인 완료: ${count}/${totalTabs})`;
         
         if (count === totalTabs) {
-            promiseInput.disabled = false;
-            promiseInput.placeholder = "위 문구를 정확하게 입력하고 버튼을 눌러주세요!";
+            if (completeBtn) {
+                completeBtn.disabled = false;
+                completeBtn.classList.add('glow-active');
+                const btnSpan = completeBtn.querySelector('span');
+                const btnIcon = completeBtn.querySelector('i');
+                if (btnSpan) btnSpan.textContent = '중요 수칙 확인 및 동의하기';
+                if (btnIcon) btnIcon.className = 'fas fa-arrow-right';
+            }
             lockNotice.style.color = "var(--accent-hero)";
-            lockNotice.innerHTML = `<i class="fas fa-unlock"></i> 가이드 완료!`;
+            lockNotice.innerHTML = `<i class="fas fa-unlock"></i> 가이드 확인 완료! 아래 중요 수칙을 확인하고 동의해 주세요.`;
         }
     }
 
@@ -76,11 +92,76 @@ document.addEventListener('DOMContentLoaded', function() {
     // 얌체 유저 방지 락 (F12 등으로 disabled 강제 제거 시 2차 차단 방어막)
     if (promiseInput) {
         promiseInput.addEventListener('keydown', function(e) {
-            if (visitedTabs.size < totalTabs) {
+            if (visitedTabs.size < totalTabs || !isRulesRead) {
                 e.preventDefault();
                 this.value = '';
                 this.blur();
-                alert('가이드의 6개 탭을 모두 위에서부터 차례로 누르고 확인해 주시기 바랍니다.');
+                alert('가이드의 6개 탭을 모두 위에서부터 차례로 누르고 확인한 뒤, 중요 수칙 동의까지 완료해 주시기 바랍니다.');
+            }
+        });
+    }
+
+    // === 1-2. 중요 수칙 모달 이벤트 바인딩 ===
+    if (rulesModal) {
+        // X 버튼 닫기
+        if (rulesCloseX) {
+            rulesCloseX.addEventListener('click', function() {
+                closeModal(rulesModal);
+            });
+        }
+
+        // 바깥 영역 클릭 시 닫기
+        rulesModal.addEventListener('click', (e) => {
+            if (e.target === rulesModal) {
+                closeModal(rulesModal);
+            }
+        });
+    }
+
+    if (rulesAgreeChk && rulesConfirmBtn) {
+        // 동의 체크박스 상태 변경 시 확인 버튼 활성화 여부 및 동적 피드백 바인딩
+        rulesAgreeChk.addEventListener('change', function() {
+            rulesConfirmBtn.disabled = !this.checked;
+            if (this.checked) {
+                rulesConfirmBtn.classList.add('glow-active');
+            } else {
+                rulesConfirmBtn.classList.remove('glow-active');
+            }
+        });
+    }
+
+    if (rulesConfirmBtn && rulesModal) {
+        // 수칙 확인 완료 시 플래그 켜고 서약 영역 활성화
+        rulesConfirmBtn.addEventListener('click', function() {
+            closeModal(rulesModal);
+            isRulesRead = true;
+
+            // 메인 페이지의 #complete-btn 버튼 재정비
+            if (completeBtn) {
+                completeBtn.disabled = true;
+                completeBtn.classList.remove('glow-active');
+                const btnSpan = completeBtn.querySelector('span');
+                const btnIcon = completeBtn.querySelector('i');
+                if (btnSpan) btnSpan.textContent = '가이드 확인 완료';
+                if (btnIcon) btnIcon.className = 'fas fa-check-circle';
+            }
+
+            // 서약 안내 락 공지 배지 #lock-notice 내용 교체
+            if (lockNotice) {
+                lockNotice.innerHTML = `가이드 완료! 최종 서약을 위 텍스트와 동일하게 타이핑해주세요.`;
+            }
+
+            // 감춰져 있던 서약 인풋 wrapper의 fade-out-input 클래스 제거
+            const promiseInputWrapper = promiseInput ? promiseInput.closest('.promise-input-wrapper') : null;
+            if (promiseInputWrapper) {
+                promiseInputWrapper.classList.remove('fade-out-input');
+            }
+
+            // promiseInput 활성화 및 포커스
+            if (promiseInput) {
+                promiseInput.disabled = false;
+                promiseInput.placeholder = "위 문구를 정확하게 입력하고 버튼을 눌러주세요!";
+                promiseInput.focus();
             }
         });
     }
@@ -148,11 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // === 3. 서약 동의 실시간 타이핑 검증 (복사/붙여넣기 차단) ===
-    if (promiseInput) {
-        const completeBtn = document.getElementById('complete-btn');
-        const modal = document.getElementById('complete-modal');
-        const closeBtn = document.getElementById('modal-close-btn');
-
+    if (promiseInput && completeBtn) {
         const targetText = "미숙지로 인한 불이익은 본인 책임임을 동의합니다";
 
         // 직접 기입 텍스트 실시간 검증
@@ -177,20 +254,29 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         });
 
-        // 완료 버튼 클릭 시 API 호출
+        // 완료 버튼 클릭 시 API 호출 또는 중요 수칙 모달 열기
         completeBtn.addEventListener('click', async function() {
             if (completeBtn.disabled) return;
 
+            // 1. 중요 수칙을 아직 읽지 않았다면 모달 띄우기
+            if (!isRulesRead) {
+                if (rulesModal) {
+                    openModal(rulesModal);
+                }
+                return;
+            }
+
+            // 2. 중요 수칙을 동의했다면 기존 서약 제출 API Fetch 진행
             const btnText = completeBtn.querySelector('span');
             const btnIcon = completeBtn.querySelector('i');
             
-            const originalText = btnText.textContent;
-            const originalIconClass = btnIcon.className;
+            const originalText = btnText ? btnText.textContent : '처리 중...';
+            const originalIconClass = btnIcon ? btnIcon.className : 'fas fa-spinner fa-spin';
 
             completeBtn.disabled = true;
             completeBtn.classList.remove('glow-active');
-            btnText.textContent = '처리 중...';
-            btnIcon.className = 'fas fa-spinner fa-spin';
+            if (btnText) btnText.textContent = '처리 중...';
+            if (btnIcon) btnIcon.className = 'fas fa-spinner fa-spin';
 
             try {
                 const response = await fetch('/api/v1/auth/complete', {
@@ -203,28 +289,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
 
                 if (response.ok && result.message === 'success') {
-                    openModal(modal);
+                    if (completeModal) openModal(completeModal);
                 } else {
                     alert(result.detail || '가이드 완료 처리 중 오류가 발생했습니다.');
                     completeBtn.disabled = false;
                     completeBtn.classList.add('glow-active');
-                    btnText.textContent = originalText;
-                    btnIcon.className = originalIconClass;
+                    if (btnText) btnText.textContent = originalText;
+                    if (btnIcon) btnIcon.className = originalIconClass;
                 }
             } catch (error) {
                 console.error('API 호출 에러:', error);
                 alert('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
                 completeBtn.disabled = false;
                 completeBtn.classList.add('glow-active');
-                btnText.textContent = originalText;
-                btnIcon.className = originalIconClass;
+                if (btnText) btnText.textContent = originalText;
+                if (btnIcon) btnIcon.className = originalIconClass;
             }
         });
 
         // 모달 닫기 및 홈으로 리다이렉트
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function() {
-                closeModal(modal);
+        if (modalCloseBtn) {
+            modalCloseBtn.addEventListener('click', function() {
+                if (completeModal) closeModal(completeModal);
                 window.location.href = '/';
             });
         }

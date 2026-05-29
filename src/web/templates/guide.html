@@ -93,6 +93,7 @@
                             <li><strong>꼭 읽어주세요!</strong> 극초반 유저가 RPG 몬스터를 직접 처치하기에는 스펙이 턱없이 부족합니다.</li>
                             <li>초반에는 <strong>반야생 구역</strong>에서 안전하게 내실을 다져야 합니다. 농사, 낚시, 광질을 통해 숙련도를 쌓고 재화를 벌어 기본적인 초반 장비를 장만하는 것을 강력히 추천드립니다!</li>
                             <li>자원을 축적하고, 충분한 준비가 끝난 후에 차근차근 스토리 속으로 빠져들어봐요!</li>
+                            <li>10분마다 랜덤한 유저 근처에 생성되어 3분간 유지되는 야생 게이트를 사용해 친구와 함께 즐겨보세요.</li>
                         </ul>
                     </div>
                 </section>
@@ -522,14 +523,14 @@
                         <p class="promise-target-label" id="lock-notice" style="color: var(--accent-special); font-weight: bold; transition: all 0.3s ease;"><i class="fas fa-lock"></i> 가이드의 모든 탭을 차례로 읽으셔야 작성이 가능합니다. (확인 완료: 1/6)</p>
                         <div class="promise-target-text" id="promise-target-text">미숙지로 인한 불이익은 본인 책임임을 동의합니다</div>
                     </div>
-                    <div class="promise-input-wrapper">
+                    <div class="promise-input-wrapper fade-out-input">
                         <input type="text" id="promise-input" class="promise-input" placeholder="⚠️ 모든 가이드 탭 확인 후 서약 작성이 활성화됩니다." onpaste="return false;" autocomplete="off" disabled>
                     </div>
                 </div>
                 <div class="button-container">
                     <button id="complete-btn" class="complete-btn" disabled>
-                        <span>가이드 확인 완료</span>
-                        <i class="fas fa-check-circle"></i>
+                        <span>중요 수칙 확인 및 동의하기</span>
+                        <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
                 {% elif user_status == 'member' %}
@@ -604,8 +605,105 @@
         
         <button id="story-modal-close-btn" class="status-btn btn-guide" style="width: 100%; cursor: pointer; padding: 12px; border-radius: 0px; border: 1px solid var(--accent-hero); background: transparent; color: var(--accent-hero); font-weight: bold; transition: all 0.2s; font-family: 'Space Mono', 'Pretendard', sans-serif; font-size: 0.82rem;">기록 닫기</button>
     </div>
+ </div>
+ 
+<!-- 중요 수칙 동의 모달 -->
+<div id="rules-modal" class="modal-overlay hidden">
+    <div class="widget modal-content story-modal-content" style="width: 90%; margin: auto; position: relative; max-width: 650px;">
+        <!-- 닫기 버튼 -->
+        <button id="rules-modal-close-x" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; transition: color 0.2s;"><i class="fas fa-times"></i></button>
+        
+        <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; margin-bottom: 25px;">
+            <span class="sub-title-mono" style="color: var(--accent-special); font-size: 0.65rem; letter-spacing: 3px; display: block; margin-bottom: 4px;">ONBOARDING // RULES</span>
+            <h3 style="font-size: 1.4rem; color: var(--text-main); margin: 0; font-weight: 800; letter-spacing: -0.5px;">서버 이용 중요 수칙</h3>
+        </div>
+        
+        <div class="rules-modal-body">
+            <!-- 금지 수칙 -->
+            <div class="rules-section" style="margin-bottom: 25px;">
+                <h4 style="color: var(--accent-villain); font-size: 1rem; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <span>서버 필수 금지 수칙 - 위반 시 무조건 즉시 제재</span>
+                </h4>
+                <ul style="list-style: none; padding-left: 0; margin: 0;">
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-villain);">❯</span>
+                        메뉴 내 랜덤야생 버튼 반복 클릭 금지
+                    </li>
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-villain);">❯</span>
+                        몬스터 스포너 악용 금지
+                    </li>
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-villain);">❯</span>
+                        개인 인챈트 및 인게임 내 상점 미판매 장비 사용 금지
+                    </li>
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-villain);">❯</span>
+                        지정 맵 탈출 금지
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- 인게임 규칙 -->
+            <div class="rules-section" style="margin-bottom: 25px;">
+                <h4 style="color: var(--accent-special); font-size: 1rem; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <span>IN-GAME LAW - 경제 및 플레이 규칙</span>
+                </h4>
+                <ul style="list-style: none; padding-left: 0; margin: 0;">
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-special);">❯</span>
+                        무분별한 돈/장비 지원 및 대가 없는 돈 거래 금지
+                    </li>
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-special);">❯</span>
+                        길드원 장비 거래 50% 할인가 고정
+                    </li>
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-special);">❯</span>
+                        유저상점 시세 ±20% 준수
+                    </li>
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-special);">❯</span>
+                        난파선/유적 등 야생 내 자연 스폰 상자 열어서 확인 금지 (부숴서 파밍)
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- 커뮤니티 기본 매너 -->
+            <div class="rules-section" style="margin-bottom: 25px;">
+                <h4 style="color: var(--accent-hero); font-size: 1rem; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                    <span>COMMUNITY - 디스코드 및 기본 매너</span>
+                </h4>
+                <ul style="list-style: none; padding-left: 0; margin: 0;">
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-hero);">❯</span>
+                        모든 애로사항 및 건의사항은 담당 스태프에게 DM
+                    </li>
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-hero);">❯</span>
+                        부적절 언행 금지
+                    </li>
+                    <li style="position: relative; padding-left: 20px; margin-bottom: 8px; color: var(--text-main); font-size: 0.88rem; line-height: 1.6;">
+                        <span style="position: absolute; left: 0; color: var(--accent-hero);">❯</span>
+                        경고 3회 누적 시 밴
+                    </li>
+                </ul>
+            </div>
+
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">
+                ⚠ 본 수칙 외의 축약/생략된 상세 규칙 및 실시간 조항은 디스코드 [#🔖ㅣ규칙] 채널을 통해 상시 업데이트됩니다. 디스코드 내 규칙 전문을 최종 확인하지 않아 발생하는 모든 책임은 유저 본인에게 있습니다.
+            </p>
+        </div>
+        
+        <div style="border-top: 1px dashed var(--border-color); padding-top: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; justify-content: center;">
+            <input type="checkbox" id="rules-agree-chk" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="rules-agree-chk" style="color: var(--text-main); font-size: 0.9rem; font-weight: bold; cursor: pointer; user-select: none;">위의 모든 중요 수칙을 숙지하였으며, 위반 시 제재 조치에 동의합니다.</label>
+        </div>
+        
+        <button id="rules-modal-confirm-btn" class="status-btn btn-guide rules-confirm-btn" disabled>수칙 확인 완료</button>
+    </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="/static/guide.js?v=1.0.2"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+ <script src="/static/guide.js?v=1.0.2"></script>
 {% endblock %}

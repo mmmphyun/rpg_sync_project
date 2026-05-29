@@ -246,6 +246,18 @@ body {
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
+    opacity: 1;
+    max-height: 100px;
+    transition: opacity 0.4s ease, max-height 0.4s ease;
+    overflow: hidden;
+}
+
+.promise-input-wrapper.fade-out-input {
+    opacity: 0;
+    max-height: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
 }
 
 .promise-input {
@@ -1264,4 +1276,75 @@ body {
     .story-identity-box {
         grid-template-columns: 1fr;
     }
+}
+
+/* =========================================
+   Onboarding Rules Modal & Action Styles
+   ========================================= */
+
+
+.rules-modal-body {
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-bottom: 25px;
+}
+
+.rules-modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.rules-modal-body::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.rules-modal-body::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+}
+
+.rules-modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-hero);
+}
+
+/* 테마 변수를 활용한 수칙 강조 색상 유틸리티 */
+.rules-theme-villain {
+    color: var(--accent-villain) !important;
+}
+
+.rules-theme-special {
+    color: var(--accent-special) !important;
+}
+
+.rules-theme-hero {
+    color: var(--accent-hero) !important;
+}
+
+.rules-confirm-btn {
+    width: 100%;
+    padding: 12px !important;
+    font-size: 0.85rem !important;
+    font-weight: bold !important;
+    font-family: 'Space Mono', 'Pretendard', sans-serif !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-muted) !important;
+    background: rgba(22, 27, 34, 0.5) !important;
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.rules-confirm-btn:not(:disabled),
+.rules-confirm-btn.glow-active {
+    border-color: var(--accent-hero) !important;
+    color: var(--accent-hero) !important;
+    background: rgba(16, 185, 129, 0.03) !important;
+    opacity: 1 !important;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.2) !important;
+    cursor: pointer !important;
+}
+
+.rules-confirm-btn:not(:disabled):hover,
+.rules-confirm-btn.glow-active:hover {
+    background: rgba(16, 185, 129, 0.08) !important;
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.35) !important;
 }
