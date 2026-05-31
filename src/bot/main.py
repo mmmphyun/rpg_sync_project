@@ -7,6 +7,7 @@ import concurrent.futures
 import json
 from discord.ext import commands
 from dotenv import load_dotenv
+import aiohttp
 from src.database import cache
 
 # 환경변수 로드
@@ -60,6 +61,14 @@ class RPGSyncBot(commands.Bot):
         self.error_channel_id = int(os.getenv('ERROR_LOG_CHANNEL_ID', 0)) or None
         self.tree.on_error = self.on_app_command_error
         self.redis_listener_task = None
+        self.session = None
+
+    async def close(self):
+        """봇 종료 시 전역 ClientSession 자원 안전 해제"""
+        if self.session and not self.session.closed:
+            await self.session.close()
+            print("[HTTP] Bot aiohttp ClientSession closed.", flush=True)
+        await super().close()
 
     async def send_error_log(self, error_content: str):
         """에러 관제 채널로 트레이스백 발송. Discord 메시지 제한(2000자) 고려하여 Truncate 처리."""
@@ -222,6 +231,14 @@ class RPGSyncBot(commands.Bot):
     async def setup_hook(self):
         """봇 구동 시 필요한 확장 모듈을 로드하고 명령어를 동기화합니다."""
         try:
+            # 커넥션 풀을 관리할 TCPConnector 옵션(Stale Connection 방지) 구성
+            connector = aiohttp.TCPConnector(limit=10, ttl_dns_cache=300)
+            self.session = aiohttp.ClientSession(connector=connector)
+            print("[HTTP] Global aiohttp ClientSession configured with TCPConnector.", flush=True)
+        except Exception as http_err:
+            print(f"[HTTP] Failed to initialize global session: {http_err}", flush=True)
+
+        try:
             await cache.init_redis_pool()
             print("Redis connection pool initialized for Bot.", flush=True)
             # 리스너 즉시 시작
@@ -243,6 +260,7 @@ class RPGSyncBot(commands.Bot):
             "src.bot.cogs.board.board_event",
             "src.bot.cogs.board.tip_event",
             "src.bot.cogs.users.user_event",
+            "src.bot.cogs.users.user_cmd",
             "src.bot.cogs.system.bulk_sync_cmd",
             "src.bot.cogs.system.banner_cmd"
         ]

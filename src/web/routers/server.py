@@ -1,6 +1,7 @@
 import time
 from fastapi import APIRouter
 from mcstatus import JavaServer
+from src.config import MINECRAFT_SERVER_ADDRESS
 
 router = APIRouter(
     tags=["server"]
@@ -13,7 +14,7 @@ cache = {
 }
 
 CACHE_TTL = 60  # 60초 동안은 MC 서버를 찌르지 않고 캐시된 데이터 반환
-SERVER_ADDRESS = "fossil.playit.plus:25565"
+SERVER_ADDRESS = MINECRAFT_SERVER_ADDRESS
 
 
 @router.get("/status")

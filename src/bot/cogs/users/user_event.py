@@ -2,12 +2,13 @@ import discord
 import re
 import asyncio
 import os
+import json
 from discord.ext import commands
 
 from src.bot.cogs.core.base_cog import BaseCog
 from src.database.connection import sync_users_to_db
-from src.database.auth import delete_user_from_db, update_user_voice_exit
-from src.database.cache import delete_cache
+from src.database.auth import delete_user_from_db, get_user_minecraft_info
+from src.database.cache import delete_cache, redis_client, publish_message
 from src.bot.utils.text_parser import parse_user_nickname
 
 class UserEvent(BaseCog):
@@ -83,19 +84,74 @@ class UserEvent(BaseCog):
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState,
                                     after: discord.VoiceState):
-        """음성 채널 퇴장 감지 및 시간 기록"""
+        """실시간 음성 상태 감지 최적화 (Redis 연동 및 캐싱)"""
         if member.bot:
             return
 
-        # 이전 채널이 존재하고, 이동할 채널이 없는 경우 (완전 퇴장)
-        if before.channel is not None and after.channel is None:
-            try:
-                discord_id = str(member.id)
-                affected_rows = await asyncio.to_thread(update_user_voice_exit, discord_id)
-                if affected_rows > 0:
-                    print(f"[Info] 음성 채널 퇴장 시간 기록 완료: {member.display_name}")
-            except Exception as e:
-                print(f"[Error] 음성 채널 퇴장 시간 기록 실패: {e}")
+        from src.database.cache import is_redis_disabled
+        if is_redis_disabled:
+            return
+
+        # 입장 판별 (이전 채널 없음, 이후 채널 있음)
+        is_join = before.channel is None and after.channel is not None
+        # 퇴장 판별 (이전 채널 있음, 이후 채널 없음)
+        is_leave = before.channel is not None and after.channel is None
+
+        if not (is_join or is_leave):
+            return
+
+        try:
+            discord_id = str(member.id)
+            mc_uuid = None
+            mc_username = ""
+
+            # 1. Redis 캐시에서 맵핑 정보 획득 시도 (DB I/O 배제 - JSON 파싱)
+            cached_data = await redis_client.get(f"rpgsync:user_mc:{discord_id}")
+
+            if cached_data:
+                try:
+                    data = json.loads(cached_data)
+                    mc_uuid = data.get("uuid")
+                    mc_username = data.get("username", "")
+                except Exception as parse_err:
+                    print(f"[Voice Event] 캐시 파싱 실패: {parse_err}")
+            
+            if not mc_uuid:
+                # 2. 캐시 유실 시 백업용 DB 1회성 조회 및 재캐싱
+                info = await asyncio.to_thread(get_user_minecraft_info, discord_id)
+                if info:
+                    mc_uuid = info["uuid"]
+                    mc_username = info["username"]
+                    # Redis에 재캐싱 (JSON 구조)
+                    cache_data = {
+                        "uuid": mc_uuid,
+                        "username": mc_username
+                    }
+                    await redis_client.set(f"rpgsync:user_mc:{discord_id}", json.dumps(cache_data, ensure_ascii=False))
+
+            if not mc_uuid:
+                return
+
+            if is_join:
+                # 음성 채널 입장 -> active_minecraft_users Set에 추가
+                await redis_client.sadd("active_minecraft_users", mc_uuid)
+                print(f"[Voice Event] 입장 감지 SADD: {member.display_name} ({mc_uuid})")
+
+            elif is_leave:
+                # 음성 채널 퇴장 -> active_minecraft_users Set에서 제거
+                await redis_client.srem("active_minecraft_users", mc_uuid)
+                print(f"[Voice Event] 퇴장 감지 SREM: {member.display_name} ({mc_uuid})")
+                
+                # 실시간 퇴장 이벤트 Pub/Sub 발행
+                payload = {
+                    "uuid": mc_uuid,
+                    "minecraft_username": mc_username
+                }
+                await publish_message("rpgsync:voice_leave", payload)
+                print(f"[Voice Event] 퇴장 Pub/Sub 발행 완료: {member.display_name}")
+
+        except Exception as e:
+            print(f"[Voice Event Error] 음성 이벤트 처리 오류: {e}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(UserEvent(bot))

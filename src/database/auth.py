@@ -1,5 +1,6 @@
 import psycopg2
 import secrets
+from psycopg2 import errors
 from psycopg2.extras import RealDictCursor
 from src.database.connection import get_connection, release_connection
 from datetime import datetime, timedelta
@@ -90,24 +91,6 @@ def delete_user_from_db(discord_id: str) -> int:
         cursor.close()
         release_connection(conn)
 
-def update_user_voice_exit(discord_id: str) -> int:
-    """음성 채널 퇴장 시간 갱신 (CURRENT_TIMESTAMP 사용)"""
-    sql = "UPDATE users SET last_voice_exit = CURRENT_TIMESTAMP WHERE discord_id = %s"
-    conn = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(sql, (discord_id,))
-        affected_rows = cursor.rowcount
-        conn.commit()
-        return affected_rows
-    except psycopg2.Error as e:
-        conn.rollback()
-        print(f"[DB Error] update_user_voice_exit 오류: {e}")
-        return 0
-    finally:
-        cursor.close()
-        release_connection(conn)
-
 def update_guide_completion(discord_id: str) -> bool:
     """유저의 가이드 완료 상태를 true로 업데이트합니다."""
     sql = "UPDATE public.users SET is_guide_completed = true WHERE discord_id = %s"
@@ -137,6 +120,58 @@ def is_guide_completed(discord_id: str) -> bool:
     except psycopg2.Error as e:
         print(f"[DB Error] is_guide_completed 조회 오류: {e}")
         return False
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+def register_verified_user(discord_id: str, nickname: str, server_role: str, mc_uuid: str, mc_username: str, bypass_voice_check: bool = False) -> bool:
+    """성인인증 완료된 유저를 DB에 업서트합니다."""
+    sql = """
+        INSERT INTO public.users (discord_id, nickname, server_role, minecraft_uuid, minecraft_username, bypass_voice_check)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        ON CONFLICT (discord_id) DO UPDATE SET
+            nickname = EXCLUDED.nickname,
+            server_role = EXCLUDED.server_role,
+            minecraft_uuid = EXCLUDED.minecraft_uuid,
+            minecraft_username = EXCLUDED.minecraft_username,
+            bypass_voice_check = EXCLUDED.bypass_voice_check
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (discord_id, nickname, server_role, mc_uuid, mc_username, bypass_voice_check))
+        conn.commit()
+        return cursor.rowcount > 0
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"[DB Error] register_verified_user 오류: {e}")
+        # UNIQUE_VIOLATION (23505) 예외 세밀 매핑 처리
+        if e.pgcode == '23505':
+            err_msg = str(e)
+            if "minecraft_uuid" in err_msg:
+                return "UUID_DUPLICATE"
+            elif "minecraft_username" in err_msg:
+                return "MC_NAME_DUPLICATE"
+            return "DUPLICATE"
+        return False
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+def get_user_minecraft_info(discord_id: str) -> dict:
+    """디스코드 ID에 연동된 마인크래프트 UUID 및 username 정보를 조회합니다."""
+    sql = "SELECT minecraft_uuid, minecraft_username FROM public.users WHERE discord_id = %s"
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (discord_id,))
+        row = cursor.fetchone()
+        if row and row[0]:
+            return {"uuid": row[0], "username": row[1] or ""}
+        return None
+    except psycopg2.Error as e:
+        print(f"[DB Error] get_user_minecraft_info 조회 오류: {e}")
+        return None
     finally:
         cursor.close()
         release_connection(conn)

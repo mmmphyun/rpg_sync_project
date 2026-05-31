@@ -9,6 +9,16 @@ from src.database.auth import create_magic_token, check_user_exists, is_guide_co
 from src.database.connection import sync_users_to_db
 from src.bot.utils.text_parser import parse_user_nickname
 
+class NicknameTriggerView(discord.ui.View):
+    """티켓 내부 채널에 전송할 [닉네임 설정하기] 버튼 뷰"""
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="닉네임 설정하기", style=discord.ButtonStyle.success, custom_id="trigger_nickname_modal")
+    async def trigger_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
+        from src.bot.cogs.auth.onboarding_modal import UserNicknameVerificationModal
+        await interaction.response.send_modal(UserNicknameVerificationModal())
+
 class VerificationRequestView(discord.ui.View):
     """#성인인증 채널에 표시될 [성인 인증] 버튼 뷰"""
     def __init__(self):
@@ -63,16 +73,17 @@ class VerificationRequestView(discord.ui.View):
             self._creation_log.append(current_time)
             await thread.add_user(interaction.user)
             
-            # 유저에게는 안내만
+            # 유저에게 안내 및 닉네임 설정 버튼 전송
             await thread.send(
                 f"**{interaction.user.mention}님, 성인 인증을 위한 프라이빗 티켓이 생성되었습니다.**\n\n"
-                f"아래 내용을 순서대로 진행해주세요.\n"
-                f"1. **주민등록증 사진**을 올려주세요. (생년 부분 외 민감한 정보는 모두 가려주세요)\n"
-                f"2. 사용하시는 **마인크래프트 닉네임**과 디스코드 및 서버에서 사용할 **한글 닉네임**을 채팅창에 적어주세요.\n"
-                f"-# 예시: 칸쵸 / glaempa \n\n"
+                f"아래 순서대로 진행됩니다.\n"
+                f"1. 초록색 **[닉네임 설정하기]** 버튼을 눌러 정보를 입력해주세요.\n"
+                f"2. 안내에 따라 **주민등록증 사진**을 올려주세요. (생년 부분 외 민감한 정보는 모두 가려주세요)\n"
+                f"3. 승인 후 제공되는 가이드 링크를 통해 서버 시스템과 규칙을 숙지해주세요.\n\n"
                 f"**[닉네임 정책]**\n"
-                f"- !!한글!! 1~3글자 제한\n"
-                f"스태프가 확인 후 승인할 때까지 잠시만 기다려주세요."
+                f"- 한글 닉네임: 한글 1~3글자 제한\n"
+                f"스태프가 확인 후 승인할 때까지 잠시만 기다려주세요.",
+                view=NicknameTriggerView()
             )
             
             # 스태프 관제 채널에 버튼 전송
@@ -441,6 +452,7 @@ class OnboardingCmd(BaseCog):
 
 async def setup(bot: commands.Bot):
     # Persistent Views 등록 (봇 재시작 시에도 버튼 작동을 위해)
+    bot.add_view(NicknameTriggerView())
     bot.add_view(VerificationRequestView())
     bot.add_view(TicketStaffView())
     bot.add_view(GuideLinkView())

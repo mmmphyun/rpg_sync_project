@@ -20,3 +20,6 @@ REDIS_HEALTHCHECK_INTERVAL = int(os.getenv("REDIS_HEALTHCHECK_INTERVAL", "30"))
 
 # Discord Configuration
 DISCORD_INVITE_URL = os.getenv("DISCORD_INVITE_URL", "https://discord.gg/3prVGQud2c")
+
+# Minecraft Server Configuration
+MINECRAFT_SERVER_ADDRESS = os.getenv("MINECRAFT_SERVER_ADDRESS", "fossilmaple.playit.plus:25565")
