@@ -175,3 +175,32 @@ def get_user_minecraft_info(discord_id: str) -> dict:
     finally:
         cursor.close()
         release_connection(conn)
+
+def update_user_minecraft_info(discord_id: str, mc_uuid: str, mc_username: str) -> bool:
+    """기존 별명, 권한을 일절 덮어쓰지 않고 오직 마인크래프트 UUID와 닉네임만 업데이트합니다."""
+    sql = """
+        UPDATE public.users 
+        SET minecraft_uuid = %s, minecraft_username = %s 
+        WHERE discord_id = %s
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (mc_uuid, mc_username, discord_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"[DB Error] update_user_minecraft_info 오류: {e}")
+        # UNIQUE_VIOLATION (23505) 예외 세밀 매핑 처리
+        if e.pgcode == '23505':
+            err_msg = str(e)
+            if "minecraft_uuid" in err_msg:
+                return "UUID_DUPLICATE"
+            elif "minecraft_username" in err_msg:
+                return "MC_NAME_DUPLICATE"
+            return "DUPLICATE"
+        return False
+    finally:
+        cursor.close()
+        release_connection(conn)
