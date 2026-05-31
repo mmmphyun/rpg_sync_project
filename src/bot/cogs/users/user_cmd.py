@@ -165,18 +165,25 @@ class UserCmd(BaseCog):
 
     @app_commands.command(name="연동", description="기존 디코 별명을 바꾸지 않고, 오직 마인크래프트 UUID와 닉네임만 업데이트합니다. (스태프 전용)")
     @app_commands.describe(
-        target="연동할 대상 유저 (멘션)",
+        target_id="연동할 대상 유저의 디스코드 고유 ID (숫자 또는 멘션)",
         mc_name="정확한 마인크래프트 정품 닉네임"
     )
     @has_staff_privilege()
     async def link_user_uuid(
         self,
         interaction: discord.Interaction,
-        target: discord.User,
+        target_id: str,
         mc_name: str
     ):
         await interaction.response.defer(ephemeral=True)
-        user_id = str(target.id)
+
+        # 입력받은 값에서 숫자 ID만 추출 (순수 ID 입력 및 멘션 형식 동시 완벽 대응)
+        match = re.search(r"\d+", target_id)
+        if not match:
+            await interaction.followup.send("❌ 올바른 디스코드 고유 ID(숫자)를 입력해주세요.", ephemeral=True)
+            return
+
+        user_id = match.group()
 
         # 1. Mojang API를 이용해 정품 계정 및 UUID 비동기 검증
         uuid_36 = None
@@ -257,7 +264,7 @@ class UserCmd(BaseCog):
 
             await interaction.followup.send(
                 f"✅ **마크 UUID 연동 성공**\n"
-                f"대상: {target.mention}\n"
+                f"대상: <@{user_id}>\n"
                 f"마크 닉네임: `{real_mc_name}`\n"
                 f"연동 UUID: `{uuid_36}` (표준 규격 변환 완료)\n\n"
                 f"- 디코 별명(닉네임)은 일절 변경되지 않았으며, 오직 DB/Redis 마크 연동 데이터만 갱신 완료되었습니다.",
