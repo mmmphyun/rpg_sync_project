@@ -136,17 +136,37 @@ class RPGSyncBot(commands.Bot):
 
                 pubsub = cache.redis_client.pubsub()
                 async with pubsub as ps:
-                    await ps.subscribe("onboarding:complete")
-                    print("[REDIS] Successfully subscribed to 'onboarding:complete'", flush=True)
+                    await ps.subscribe("onboarding:complete", "rpgsync:reason_submitted")
+                    print("[REDIS] Successfully subscribed to 'onboarding:complete' and 'rpgsync:reason_submitted'", flush=True)
 
                     while True:
                         # get_message(timeout=None)은 메시지가 올 때까지 무한 대기함
                         message = await ps.get_message(ignore_subscribe_messages=True, timeout=10.0)
                         if message:
-                            print(f"[REDIS] Received: {message['data']}", flush=True)
+                            channel = message.get("channel")
+                            data_str = message.get("data")
+                            if isinstance(data_str, bytes):
+                                data_str = data_str.decode("utf-8")
+                            if isinstance(channel, bytes):
+                                channel = channel.decode("utf-8")
+
+                            print(f"[REDIS] Received from {channel}: {data_str}", flush=True)
                             try:
-                                data = json.loads(message["data"])
-                                asyncio.create_task(self.handle_onboarding_complete(data))
+                                if channel == "onboarding:complete":
+                                    data = json.loads(data_str)
+                                    asyncio.create_task(self.handle_onboarding_complete(data))
+                                elif channel == "rpgsync:reason_submitted":
+                                    # data_str: "uuid:username:reason"
+                                    parts = data_str.split(":", 2)
+                                    mc_uuid = parts[0] if len(parts) > 0 else ""
+                                    username = parts[1] if len(parts) > 1 else ""
+                                    reason = parts[2] if len(parts) > 2 else ""
+                                    
+                                    cog = self.get_cog("ReasonBypassCog")
+                                    if cog:
+                                        asyncio.create_task(cog.handle_reason_submitted(mc_uuid, username, reason))
+                                    else:
+                                        print("[REDIS] ReasonBypassCog not found to handle reason_submitted", flush=True)
                             except Exception as e:
                                 print(f"[REDIS] Data parsing error: {e}", flush=True)
                         await asyncio.sleep(0.01) # CPU 과점 방지
@@ -261,6 +281,7 @@ class RPGSyncBot(commands.Bot):
             "src.bot.cogs.board.tip_event",
             "src.bot.cogs.users.user_event",
             "src.bot.cogs.users.user_cmd",
+            "src.bot.cogs.users.reason_bypass",
             "src.bot.cogs.system.bulk_sync_cmd",
             "src.bot.cogs.system.banner_cmd"
         ]
@@ -271,6 +292,14 @@ class RPGSyncBot(commands.Bot):
                 print(f"Loaded extension: {ext}", flush=True)
             except Exception as e:
                 print(f"Failed to load extension {ext}: {e}", flush=True)
+
+        # Persistent View 등록
+        try:
+            from src.bot.cogs.users.reason_bypass import ReasonBypassView
+            self.add_view(ReasonBypassView())
+            print("Successfully added persistent ReasonBypassView", flush=True)
+        except Exception as e:
+            print(f"Failed to add ReasonBypassView: {e}", flush=True)
 
         # 슬래시 명령어 동기화
         try:
@@ -291,6 +320,76 @@ class RPGSyncBot(commands.Bot):
                 print(f"[Sync Success] Synced {len(synced)} command(s) to Guild: {guild.name} ({guild.id})", flush=True)
             except Exception as e:
                 print(f"[Sync Error] Failed to sync to Guild {guild.name}: {e}", flush=True)
+
+        # 봇 재부팅 시 기존 음성 접속 유저 동적 동기화 예열 (Bulk 최적화 버전)
+        print("[Warm-up] Starting bulk voice status sync for existing members...", flush=True)
+        
+        discord_ids = []
+        for guild in self.guilds:
+            for voice_channel in guild.voice_channels:
+                for member in voice_channel.members:
+                    if not member.bot:
+                        discord_ids.append(str(member.id))
+
+        if not discord_ids:
+            print("[Warm-up Info] No active voice users found at startup.", flush=True)
+            return
+
+        active_uuids = []
+        missed_ids = []
+
+        # 1. Redis user_mc JSON 캐시 1차 대조 (최속의 처리)
+        for d_id in discord_ids:
+            try:
+                cached_data = await cache.redis_client.get(f"rpgsync:user_mc:{d_id}")
+                if cached_data:
+                    import json
+                    data = json.loads(cached_data)
+                    active_uuids.append(data.get("uuid"))
+                else:
+                    missed_ids.append(d_id)
+            except Exception as e:
+                missed_ids.append(d_id)
+
+        # 2. 캐시 유실된 유저들만 딱 1번의 Bulk Query로 DB 일괄 복구
+        if missed_ids:
+            try:
+                from src.database.auth import get_users_minecraft_info_bulk
+                db_results = await asyncio.to_thread(get_users_minecraft_info_bulk, missed_ids)
+                
+                for res in db_results:
+                    d_id = res["discord_id"]
+                    mc_uuid = res["uuid"]
+                    mc_name = res["username"]
+                    active_uuids.append(mc_uuid)
+                    
+                    # Redis 캐시 복구 저장
+                    import json
+                    cache_data = {"uuid": mc_uuid, "username": mc_name}
+                    await cache.redis_client.set(f"rpgsync:user_mc:{d_id}", json.dumps(cache_data, ensure_ascii=False))
+            except Exception as db_err:
+                print(f"[Warm-up Error] Bulk DB Query failed: {db_err}", flush=True)
+
+        # 3. Redis active_minecraft_users Set 일괄 주입
+        if active_uuids:
+            try:
+                await cache.redis_client.sadd("active_minecraft_users", *active_uuids)
+                print(f"[Warm-up Success] Synced {len(active_uuids)} active user(s) to Redis cache via Bulk Pipeline.", flush=True)
+            except Exception as redis_err:
+                print(f"[Warm-up Error] Failed to SADD bulk users: {redis_err}", flush=True)
+
+        # 4. 복구 파이프라인 트리거 (ReasonBypassCog.on_ready_recovery_check 실행)
+        print("[Recovery] Triggering on_ready_recovery_check for ReasonBypassCog...", flush=True)
+        try:
+            cog = self.get_cog("ReasonBypassCog")
+            if cog:
+                for guild in self.guilds:
+                    asyncio.create_task(cog.on_ready_recovery_check(guild))
+                print("[Recovery] Recovery tasks scheduled successfully.", flush=True)
+            else:
+                print("[Recovery Error] ReasonBypassCog not loaded yet.", flush=True)
+        except Exception as recovery_err:
+            print(f"[Recovery Error] Failed to trigger recovery check: {recovery_err}", flush=True)
 
 
 

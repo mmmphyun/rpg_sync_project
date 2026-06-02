@@ -204,3 +204,72 @@ def update_user_minecraft_info(discord_id: str, mc_uuid: str, mc_username: str) 
     finally:
         cursor.close()
         release_connection(conn)
+
+def get_users_minecraft_info_bulk(discord_ids: list[str]) -> list[dict]:
+    """여러 디스코드 ID 목록을 단 1번의 쿼리로 대량 조회하여 UUID와 username 맵핑 리스트를 반환합니다."""
+    if not discord_ids:
+        return []
+    
+    # IN (%s, %s, ...) 동적 플레이스홀더 생성
+    placeholders = ", ".join(["%s"] * len(discord_ids))
+    sql = f"""
+        SELECT discord_id, minecraft_uuid, minecraft_username 
+        FROM public.users 
+        WHERE discord_id IN ({placeholders}) 
+          AND minecraft_uuid IS NOT NULL
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, tuple(discord_ids))
+        rows = cursor.fetchall()
+        return [{"discord_id": r[0], "uuid": r[1], "username": r[2] or ""} for r in rows]
+    except psycopg2.Error as e:
+        print(f"[DB Error] get_users_minecraft_info_bulk 조회 오류: {e}")
+        return []
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+def get_user_by_uuid(mc_uuid: str) -> dict:
+    """UUID로 디코 ID, 한글 닉네임, 마크 닉네임, bypass_voice_check를 조회해 딕셔너리로 반환합니다."""
+    sql = """
+        SELECT discord_id, nickname, minecraft_username, bypass_voice_check
+        FROM public.users
+        WHERE minecraft_uuid = %s
+    """
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute(sql, (mc_uuid,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+    except psycopg2.Error as e:
+        print(f"[DB Error] get_user_by_uuid 조회 오류: {e}")
+        return None
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+def update_user_bypass_status(discord_id: str, bypass: bool) -> bool:
+    """디코 ID 기반으로 bypass_voice_check를 bypass 값(True/False)으로 원자적 업데이트하고 성공 여부를 반환합니다."""
+    sql = """
+        UPDATE public.users
+        SET bypass_voice_check = %s
+        WHERE discord_id = %s
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, (bypass, discord_id))
+        conn.commit()
+        return cursor.rowcount > 0
+    except psycopg2.Error as e:
+        conn.rollback()
+        print(f"[DB Error] update_user_bypass_status 오류: {e}")
+        return False
+    finally:
+        cursor.close()
+        release_connection(conn)
