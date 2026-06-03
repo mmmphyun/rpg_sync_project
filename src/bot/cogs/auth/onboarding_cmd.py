@@ -228,15 +228,13 @@ class GuideLinkView(discord.ui.View):
         try:
             user_exists = await asyncio.to_thread(check_user_exists, discord_id)
             if not user_exists:
-                has_role = hasattr(interaction.user, 'top_role') and interaction.user.top_role
-                role_name = interaction.user.top_role.name if has_role else "유저"
                 display_name = interaction.user.display_name
                 parsed = parse_user_nickname(display_name)
 
                 user_data = [{
                     "discord_id": discord_id,
                     "nickname": parsed["nickname"],
-                    "server_role": role_name,
+                    "server_role": parsed["server_role"],
                     "job_name": parsed["job_name"]
                 }]
                 await asyncio.to_thread(sync_users_to_db, user_data)

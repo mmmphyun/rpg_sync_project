@@ -170,9 +170,9 @@ def parse_user_nickname(display_name: str) -> dict:
             "job_name": None
         }
 
-    # 1. 스태프 식별 (대소문자 무관 STF 또는 이모지 🌈)
+    # 1. 스태프 식별 (대소문자 무관 STF/OWN 또는 이모지 🌈)
     lower_name = display_name.lower()
-    is_staff = "stf" in lower_name or "🌈" in display_name
+    is_staff = "stf" in lower_name or "own" in lower_name or "🌈" in display_name
     server_role = "STAFF" if is_staff else "유저"
 
     # 2. 스태프 관련 키워드 및 대괄호/괄호 노이즈 제거

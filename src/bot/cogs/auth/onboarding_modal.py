@@ -6,6 +6,7 @@ import os
 import asyncio
 from src.database.auth import register_verified_user
 from src.database.cache import redis_client
+from src.bot.utils.text_parser import parse_user_nickname
 
 def format_uuid(raw_uuid: str) -> str:
     """하이픈 없는 32자리 UUID를 표준 36자리(8-4-4-4-12) 소문자 포맷으로 정규화 변환"""
@@ -159,7 +160,7 @@ class UserNicknameVerificationModal(discord.ui.Modal, title="성인 인증 정�
         # 5. 검증 성공 시 DB 업서트 및 Redis 영구 캐싱
         try:
             # 5.1. DB 저장 (기본적으로 음성 바이패스는 False)
-            server_role = interaction.user.top_role.name if interaction.user.top_role else "유저"
+            server_role = parse_user_nickname(interaction.user.display_name)["server_role"]
             db_success = await asyncio.to_thread(
                 register_verified_user,
                 user_id,

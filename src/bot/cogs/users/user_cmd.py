@@ -11,6 +11,7 @@ from src.database.auth import register_verified_user, update_user_minecraft_info
 from src.database.cache import redis_client
 from src.bot.cogs.auth.onboarding_modal import format_uuid
 from src.bot.utils.checks import has_staff_privilege, StaffPermissionRequired
+from src.bot.utils.text_parser import parse_user_nickname
 
 class UserCmd(BaseCog):
     """스태프용 인증 복구 및 예외 처리 명령어 Cog"""
@@ -101,7 +102,9 @@ class UserCmd(BaseCog):
         try:
             # 3. DB 강제 업서트 (바이패스는 기본 False)
             guild_member = interaction.guild.get_member(target.id) if interaction.guild else None
-            server_role = guild_member.top_role.name if guild_member and guild_member.top_role else "유저"
+            server_role = "유저"
+            if guild_member:
+                server_role = parse_user_nickname(guild_member.display_name)["server_role"]
             
             db_success = await asyncio.to_thread(
                 register_verified_user,
