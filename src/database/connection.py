@@ -46,7 +46,7 @@ def get_connection():
 
             return conn
 
-        except OperationalError:
+        except (OperationalError, psycopg2.DatabaseError):
             # DB 측 타임아웃 등으로 연결이 끊어진 경우: 풀에서 완전 제거
             if conn:
                 _db_pool.putconn(conn, close=True)
