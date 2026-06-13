@@ -8,6 +8,7 @@ from src.bot.cogs.core.base_cog import BaseCog
 from src.database.auth import create_magic_token, check_user_exists, is_guide_completed
 from src.database.connection import sync_users_to_db
 from src.bot.utils.text_parser import parse_user_nickname
+from src.bot.cogs.auth.onboarding_modal import UserNicknameVerificationModal
 
 class NicknameTriggerView(discord.ui.View):
     """티켓 내부 채널에 전송할 [닉네임 설정하기] 버튼 뷰"""
@@ -16,7 +17,6 @@ class NicknameTriggerView(discord.ui.View):
 
     @discord.ui.button(label="닉네임 설정하기", style=discord.ButtonStyle.success, custom_id="trigger_nickname_modal")
     async def trigger_modal(self, interaction: discord.Interaction, button: discord.ui.Button):
-        from src.bot.cogs.auth.onboarding_modal import UserNicknameVerificationModal
         await interaction.response.send_modal(UserNicknameVerificationModal())
 
 class VerificationRequestView(discord.ui.View):

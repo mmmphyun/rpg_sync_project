@@ -259,6 +259,13 @@ class RPGSyncBot(commands.Bot):
             print(f"[HTTP] Failed to initialize global session: {http_err}", flush=True)
 
         try:
+            from src.database.connection import initialize_pool
+            initialize_pool()
+            print("Database connection pool initialized and warmed up for Bot.", flush=True)
+        except Exception as db_err:
+            print(f"Failed to initialize database pool for Bot: {db_err}", flush=True)
+
+        try:
             await cache.init_redis_pool()
             print("Redis connection pool initialized for Bot.", flush=True)
             # 리스너 즉시 시작
