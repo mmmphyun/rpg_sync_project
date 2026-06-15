@@ -2,12 +2,13 @@ import discord
 import os
 import asyncio
 import mimetypes
+from discord import app_commands
 from discord.ext import commands
-from src.bot.cogs.core.base_cog import BaseCog
 from src.database.jobs import update_job_single_column, update_job_illustrations
-from src.bot.utils.s3_client import upload_to_r2
-from src.database.cache import delete_cache
 from src.database.skills import upsert_weapon_and_skill
+from src.bot.utils.checks import has_staff_privilege
+from src.database.cache import delete_cache
+from src.bot.utils.s3_client import upload_to_r2
 
 VALID_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 
@@ -15,195 +16,270 @@ def is_valid_image(filename: str) -> bool:
     ext = os.path.splitext(filename)[1].lower()
     return ext in VALID_IMAGE_EXTENSIONS
 
-class JobCmd(BaseCog):
+class JobGroupCog(commands.GroupCog, name="직업"):
+    def __init__(self, bot: commands.Bot):
+        super().__init__()
+        self.bot = bot
 
-    @commands.command(name="직업수정")
-    @commands.has_permissions(administrator=True)
-    async def update_job_command(self, ctx: commands.Context, job_name: str, column: str, *, value: str | None = None):
-        """
-        Usage: !직업수정 <직업명> <항목> [<값/메시지ID>]
-        """
-        MAX_FILE_SIZE = 15 * 1024 * 1024
-
+    @app_commands.command(name="메타", description="직업의 메타 정보(사거리, 포지션)를 변경합니다.")
+    @app_commands.guild_only()
+    @has_staff_privilege()
+    @app_commands.describe(
+        job_name="변경할 직업명 (예: 다크메이지)",
+        range_type="사거리 정보 (예: '근거리', '원거리', '근거리, 원거리')",
+        position="포지션 정보 (예: '탱', '물리', '물리, 유틸')"
+    )
+    async def meta(self, interaction: discord.Interaction, job_name: str, range_type: str, position: str):
+        await interaction.response.defer(thinking=True)
         try:
-            if column == "img":
-                if not ctx.message.attachments:
-                    await ctx.send("[Error] img 속성 수정 시 프로필 이미지를 첨부해야 합니다.")
-                    return
+            affected_range = await asyncio.to_thread(update_job_single_column, job_name, "range", range_type)
+            affected_position = await asyncio.to_thread(update_job_single_column, job_name, "position", position)
 
-                attachment = ctx.message.attachments[0]
+            if affected_range > 0 or affected_position > 0:
+                await delete_cache("cache:jobs:all")
+                await interaction.followup.send(f"[Success] `{job_name}`의 메타 정보(사거리: `{range_type}`, 포지션: `{position}`) 설정 완료")
+            else:
+                await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
+        except Exception as e:
+            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
 
-                if attachment.size > MAX_FILE_SIZE:
-                    await ctx.send(f"[Error] 이미지는 최대 15MB까지만 업로드 가능합니다. (현재: {attachment.size / (1024 * 1024):.2f}MB)")
-                    return
+    @app_commands.command(name="제한", description="직업의 제한 정보(제한 여부, 제한 조건)를 변경합니다.")
+    @app_commands.guild_only()
+    @has_staff_privilege()
+    @app_commands.describe(
+        job_name="변경할 직업명 (예: 다크메이지)",
+        is_limit="제한 여부 (예: 'Y', 'N')",
+        req_condition="제한 조건 (예: '2차 전직 완료')"
+    )
+    async def limit(self, interaction: discord.Interaction, job_name: str, is_limit: str, req_condition: str):
+        await interaction.response.defer(thinking=True)
+        try:
+            affected_limit = await asyncio.to_thread(update_job_single_column, job_name, "is_limit", is_limit)
+            affected_cond = await asyncio.to_thread(update_job_single_column, job_name, "req_condition", req_condition)
 
-                if not is_valid_image(attachment.filename):
-                    await ctx.send(f"[Error] 지원하지 않는 파일 포맷입니다. (허용: {', '.join(VALID_IMAGE_EXTENSIONS)})")
-                    return
+            if affected_limit > 0 or affected_cond > 0:
+                await delete_cache("cache:jobs:all")
+                await interaction.followup.send(f"[Success] `{job_name}`의 제한 정보(제한여부: `{is_limit}`, 제한조건: `{req_condition}`) 설정 완료")
+            else:
+                await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
+        except Exception as e:
+            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
 
-                file_bytes = await attachment.read()
-                content_type, _ = mimetypes.guess_type(attachment.filename)
-
-                r2_url = await asyncio.to_thread(
-                    upload_to_r2,
-                    file_bytes,
-                    attachment.filename,
-                    content_type or "image/png",
-                    "jobs_profile"
-                )
-
-                if not r2_url:
-                    await ctx.send("[Error] R2 스토리지 업로드에 실패했습니다.")
-                    return
-
-                affected = update_job_single_column(job_name, column, r2_url)
-                if affected > 0:
-                    await delete_cache("cache:jobs:all")
-                    await ctx.send(f"[Success] `{job_name}` 프로필 이미지 적용 완료\nURL: {r2_url}")
-                else:
-                    await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
-                return
-
-
-            elif column == "illustration":
-                if not value or "discord.com/channels/" not in value:
-                    await ctx.send("[Error] illustration 수정 시 유효한 디스코드 메시지 링크를 입력해야 합니다.")
-                    return
-
-                try:
-                    parts = value.split("/")
-                    channel_id = int(parts[-2])
-                    message_id = int(parts[-1])
-
-                    target_channel = ctx.guild.get_channel(channel_id) or ctx.guild.get_thread(channel_id)
-                    if not target_channel:
-                        await ctx.send("[Error] 대상 채널 또는 쓰레드에 봇이 접근할 수 없습니다.")
-                        return
-
-                    target_message = await target_channel.fetch_message(message_id)
-                except (ValueError, IndexError, discord.NotFound, discord.Forbidden):
-                    await ctx.send("[Error] 메시지 링크 검증 실패 또는 대상 메시지를 읽을 수 없습니다.")
-                    return
-
-                valid_attachments = [att for att in target_message.attachments if
-                                     is_valid_image(att.filename) and att.size <= MAX_FILE_SIZE]
-                if not valid_attachments:
-                    await ctx.send("[Error] 대상 메시지에 유효하거나 용량 제한(15MB)을 통과한 이미지 첨부파일이 존재하지 않습니다.")
-                    return
-
-                target_attachments = valid_attachments[:4]
-                uploaded_urls = []
-
-                for att in target_attachments:
-                    file_bytes = await att.read()
-                    content_type, _ = mimetypes.guess_type(att.filename)
-                    url = await asyncio.to_thread(
-                        upload_to_r2,
-                        file_bytes,
-                        att.filename,
-                        content_type or "image/png",
-                        "jobs_illustration"
-                    )
-                    if url:
-                        uploaded_urls.append(url)
-
-                if not uploaded_urls:
-                    await ctx.send("[Error] 이미지 업로드 처리에 실패했습니다.")
-                    return
-
-                affected = update_job_illustrations(job_name, uploaded_urls)
-                if affected > 0:
-                    await delete_cache("cache:jobs:all")
-                    await ctx.send(f"[Success] `{job_name}` 일러스트({len(uploaded_urls)}장) 적용 완료")
-                else:
-                    await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
-                return
-
-            if value is None:
-                await ctx.send("[Error] 텍스트 항목 수정 시 value 값을 입력해야 합니다.")
-                return
-
-            affected = update_job_single_column(job_name, column, value)
+    @app_commands.command(name="텍스트", description="직업의 일반 텍스트 속성을 변경합니다.")
+    @app_commands.guild_only()
+    @has_staff_privilege()
+    @app_commands.describe(
+        job_name="변경할 직업명 (예: 다크메이지)",
+        column="변경할 속성 컬럼",
+        value="새로 설정할 값"
+    )
+    @app_commands.choices(
+        column=[
+            app_commands.Choice(name="게이트", value="gate"),
+            app_commands.Choice(name="계열", value="job_group"),
+            app_commands.Choice(name="설명", value="description"),
+            app_commands.Choice(name="자원타입", value="resource"),
+            app_commands.Choice(name="타입", value="type")
+        ]
+    )
+    async def text(self, interaction: discord.Interaction, job_name: str, column: app_commands.Choice[str], value: str):
+        await interaction.response.defer(thinking=True)
+        try:
+            affected = await asyncio.to_thread(update_job_single_column, job_name, column.value, value)
             if affected > 0:
                 await delete_cache("cache:jobs:all")
-                await ctx.send(f"[Success] `{job_name}`의 `{column}` 항목 업데이트 완료")
+                await interaction.followup.send(f"[Success] `{job_name}`의 `{column.name}`({column.value}) 항목 업데이트 완료")
             else:
-                await ctx.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
-
-        except ValueError:
-            await ctx.send("[Error] 지원하지 않는 항목입니다. (지원: range, position, resource, img, illustration 등)")
+                await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
         except Exception as e:
-            await ctx.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
 
-    @update_job_command.error
-    async def update_job_error(self, ctx: commands.Context, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            error_msg = (
-                "[Error] 필수 입력값이 누락되었습니다.\n"
-                "사용법: `!직업수정 <직업명> <항목> [<값/메시지ID>]`\n"
-                "* 텍스트 항목 예시: `!직업수정 다크메이지 range 원거리`\n"
-                "* 이미지 항목 예시: `!직업수정 다크메이지 img` (이미지 파일 첨부 필수)"
-            )
-            await ctx.send(error_msg)
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("[Error] 명령어 실행 권한이 없습니다.")
-
-    @commands.command(name="스킬등록")
-    @commands.has_permissions(administrator=True)
-    async def register_skill_command(self, ctx: commands.Context, job_name: str, weapon_type: str, weapon_name: str,
-                                     command_key: str, skill_name: str, *, details: str):
-        """
-        직업 무기 및 스킬 정보 등록/수정 (UPSERT)
-        """
+    @app_commands.command(name="프로필", description="직업의 프로필 이미지를 변경합니다.")
+    @app_commands.guild_only()
+    @has_staff_privilege()
+    @app_commands.describe(
+        job_name="변경할 직업명 (예: 다크메이지)",
+        image="업로드할 이미지 첨부파일 (최대 15MB)"
+    )
+    async def profile(self, interaction: discord.Interaction, job_name: str, image: discord.Attachment):
+        await interaction.response.defer(thinking=True)
+        MAX_FILE_SIZE = 15 * 1024 * 1024
         try:
-            parts = [p.strip() for p in details.split('|')]
-            if len(parts) < 6:
-                await ctx.send("[Error] 상세 정보 포맷 오류. (형식: 설명|쿨타임|코스트|계수|피해타입|이동기|[폼이름])")
+            if image.size > MAX_FILE_SIZE:
+                await interaction.followup.send(f"[Error] 이미지는 최대 15MB까지만 업로드 가능합니다. (현재: {image.size / (1024 * 1024):.2f}MB)")
                 return
 
-            description = parts[0]
-            cooldown = parts[1]
-            cost_value = parts[2]
-            coefficient_combined = f"{parts[3]} ({parts[4]})"
-            is_mobility = parts[5].upper()
+            if not is_valid_image(image.filename):
+                await interaction.followup.send(f"[Error] 지원하지 않는 파일 포맷입니다. (허용: {', '.join(VALID_IMAGE_EXTENSIONS)})")
+                return
 
-            form_name = parts[6] if len(parts) > 6 and parts[6] else "기본"
+            file_bytes = await image.read()
+            content_type, _ = mimetypes.guess_type(image.filename)
 
+            r2_url = await asyncio.to_thread(
+                upload_to_r2,
+                file_bytes,
+                image.filename,
+                content_type or "image/png",
+                "jobs_profile"
+            )
+
+            if not r2_url:
+                await interaction.followup.send("[Error] R2 스토리지 업로드에 실패했습니다.")
+                return
+
+            affected = await asyncio.to_thread(update_job_single_column, job_name, "img", r2_url)
+            if affected > 0:
+                await delete_cache("cache:jobs:all")
+                await interaction.followup.send(f"[Success] `{job_name}` 프로필 이미지 적용 완료\nURL: {r2_url}")
+            else:
+                await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
+        except Exception as e:
+            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+
+    @app_commands.command(name="일러스트", description="디스코드 메시지 링크에서 이미지를 가져와 직업의 일러스트로 등록합니다.")
+    @app_commands.guild_only()
+    @has_staff_privilege()
+    @app_commands.describe(
+        job_name="변경할 직업명 (예: 다크메이지)",
+        message_url="일러스트 이미지들이 포함된 디스코드 메시지 링크"
+    )
+    async def illustration(self, interaction: discord.Interaction, job_name: str, message_url: str):
+        await interaction.response.defer(thinking=True)
+        MAX_FILE_SIZE = 15 * 1024 * 1024
+        try:
+            if "discord.com/channels/" not in message_url:
+                await interaction.followup.send("[Error] 일러스트 수정 시 유효한 디스코드 메시지 링크를 입력해야 합니다.")
+                return
+
+            parts = message_url.split("/")
+            channel_id = int(parts[-2])
+            message_id = int(parts[-1])
+
+            target_channel = self.bot.get_channel(channel_id) or self.bot.get_thread(channel_id)
+            if not target_channel:
+                try:
+                    target_channel = await self.bot.fetch_channel(channel_id)
+                except Exception:
+                    await interaction.followup.send("[Error] 대상 채널 또는 쓰레드에 봇이 접근할 수 없습니다.")
+                    return
+
+            try:
+                target_message = await target_channel.fetch_message(message_id)
+            except discord.NotFound:
+                await interaction.followup.send("[Error] 대상 메시지를 찾을 수 없습니다.")
+                return
+            except discord.Forbidden:
+                await interaction.followup.send("[Error] 메시지를 읽을 권한이 없습니다.")
+                return
+
+            valid_attachments = [att for att in target_message.attachments if
+                                 is_valid_image(att.filename) and att.size <= MAX_FILE_SIZE]
+            if not valid_attachments:
+                await interaction.followup.send("[Error] 대상 메시지에 유효하거나 용량 제한(15MB)을 통과한 이미지 첨부파일이 존재하지 않습니다.")
+                return
+
+            target_attachments = valid_attachments[:4]
+            uploaded_urls = []
+
+            for att in target_attachments:
+                file_bytes = await att.read()
+                content_type, _ = mimetypes.guess_type(att.filename)
+                url = await asyncio.to_thread(
+                    upload_to_r2,
+                    file_bytes,
+                    att.filename,
+                    content_type or "image/png",
+                    "jobs_illustration"
+                )
+                if url:
+                    uploaded_urls.append(url)
+
+            if not uploaded_urls:
+                await interaction.followup.send("[Error] 이미지 업로드 처리에 실패했습니다.")
+                return
+
+            affected = await asyncio.to_thread(update_job_illustrations, job_name, uploaded_urls)
+            if affected > 0:
+                await delete_cache("cache:jobs:all")
+                await interaction.followup.send(f"[Success] `{job_name}` 일러스트({len(uploaded_urls)}장) 적용 완료")
+            else:
+                await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
+        except Exception as e:
+            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+
+class SkillGroupCog(commands.GroupCog, name="스킬"):
+    def __init__(self, bot: commands.Bot):
+        super().__init__()
+        self.bot = bot
+
+    @app_commands.command(name="등록", description="직업의 무기 및 스킬 정보 등록/수정 (UPSERT)")
+    @app_commands.guild_only()
+    @has_staff_privilege()
+    @app_commands.describe(
+        job_name="대상 직업명 (예: 다크메이지)",
+        weapon_type="무기 종류 (예: 지팡이)",
+        weapon_name="무기명 (예: 초보자스태프)",
+        command_key="커맨드 (예: 우클릭)",
+        skill_name="스킬명 (예: 다크볼)",
+        description="설명",
+        cooldown="쿨타임 (예: 3초)",
+        cost="코스트 (예: 10)",
+        coefficient="계수 (예: 지력 * 1.5)",
+        damage_type="피해 타입 (예: 마법)",
+        is_mobility="이동기 여부",
+        form_name="폼 이름 (기본값: '기본')"
+    )
+    @app_commands.choices(
+        is_mobility=[
+            app_commands.Choice(name="Y", value="Y"),
+            app_commands.Choice(name="N", value="N")
+        ]
+    )
+    async def register(
+        self,
+        interaction: discord.Interaction,
+        job_name: str,
+        weapon_type: str,
+        weapon_name: str,
+        command_key: str,
+        skill_name: str,
+        description: str,
+        cooldown: str,
+        cost: str,
+        coefficient: str,
+        damage_type: str,
+        is_mobility: app_commands.Choice[str],
+        form_name: str = "기본"
+    ):
+        await interaction.response.defer(thinking=True)
+        try:
             if len(weapon_name) > 100:
-                raise ValueError("무기명은 100자를 초과할 수 없습니다.")
+                await interaction.followup.send("[Error] 무기명은 100자를 초과할 수 없습니다.")
+                return
             if len(command_key) > 50:
-                raise ValueError("커맨드는 50자를 초과할 수 없습니다.")
+                await interaction.followup.send("[Error] 커맨드는 50자를 초과할 수 없습니다.")
+                return
             if len(skill_name) > 100:
-                raise ValueError("스킬명은 100자를 초과할 수 없습니다.")
-            if is_mobility not in ('Y', 'N'):
-                raise ValueError("이동기 여부는 'Y' 또는 'N'으로만 입력해야 합니다.")
+                await interaction.followup.send("[Error] 스킬명은 100자를 초과할 수 없습니다.")
+                return
+
+            coefficient_combined = f"{coefficient} ({damage_type})"
 
             success = await asyncio.to_thread(
                 upsert_weapon_and_skill,
                 job_name, weapon_type, weapon_name, command_key, skill_name,
-                description, cooldown, cost_value, coefficient_combined, is_mobility, form_name
+                description, cooldown, cost, coefficient_combined, is_mobility.value, form_name
             )
 
             if success:
                 await delete_cache("cache:jobs:all")
-                await ctx.send(f"[Success] `{job_name}` - `{weapon_name}({weapon_type})`의 `{skill_name}` 스킬 정보 갱신 완료")
-
-        except ValueError as ve:
-            await ctx.send(f"[Error] {str(ve)}")
+                await interaction.followup.send(f"[Success] `{job_name}` - `{weapon_name}({weapon_type})`의 `{skill_name}` 스킬 정보 갱신 완료")
+            else:
+                await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없거나 스킬 등록에 실패했습니다.")
         except Exception as e:
-            await ctx.send(f"[Error] 처리 중 예외 발생: {str(e)}")
-
-    @register_skill_command.error
-    async def register_skill_error(self, ctx: commands.Context, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            error_msg = (
-                "[Error] 필수 입력값이 누락되었습니다.\n"
-                "사용법: `!스킬등록 <직업명> <무기종류> <무기명> <커맨드> <스킬명> <설명|쿨타임|코스트|계수|피해타입|이동기Y/N|[폼이름]>`\n"
-                "예시: `!스킬등록 다크메이지 지팡이 초보자스태프 우클릭 다크볼 적에게 암흑구를 발사|3초|10|지력 * 1.5|마법|N|각성폼`"
-            )
-            await ctx.send(error_msg)
-        elif isinstance(error, commands.MissingPermissions):
-            await ctx.send("[Error] 명령어 실행 권한이 없습니다.")
+            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(JobCmd(bot))
+    await bot.add_cog(JobGroupCog(bot))
+    await bot.add_cog(SkillGroupCog(bot))

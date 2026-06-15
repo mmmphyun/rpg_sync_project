@@ -81,11 +81,13 @@ def batch_update_profile_images(image_data: dict) -> int:
         cursor.close()
         release_connection(conn)
 
-def update_job_single_column(job_name: str, column_name: str, value: str) -> int:
+def update_job_single_column(job_name: str, column_name: str, value: str | None) -> int:
     allowed_columns = {
         "range": "RANGE_TYPE", "position": "POSITION", "resource": "RESOURCE_TYPE",
         "img": "IMG", "photo1": "PHOTO_1", "photo2": "PHOTO_2",
-        "photo3": "PHOTO_3", "photo4": "PHOTO_4"
+        "photo3": "PHOTO_3", "photo4": "PHOTO_4",
+        "gate": "GATE", "job_group": "JOB_GROUP", "description": "DESCRIPTION",
+        "type": "TYPE", "is_limit": "IS_LIMIT", "req_condition": "REQ_CONDITION"
     }
 
     target_col = allowed_columns.get(column_name.lower())
