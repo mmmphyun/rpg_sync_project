@@ -6,39 +6,65 @@ CREATE TABLE IF NOT EXISTS public.jobs (
     gate VARCHAR,
     job_group VARCHAR,
     description TEXT,
-    range_type VARCHAR DEFAULT '정보 없음',
-    position VARCHAR DEFAULT '정보 없음',
-    resource_type VARCHAR DEFAULT '정보 없음',
-    is_limit CHAR DEFAULT 'N',
+    range_type VARCHAR DEFAULT '정보 없음'::character varying,
+    position VARCHAR DEFAULT '정보 없음'::character varying,
+    resource_type VARCHAR DEFAULT '정보 없음'::character varying,
+    is_limit CHAR DEFAULT 'N'::bpchar,
     req_condition VARCHAR,
     img VARCHAR,
     photo_1 VARCHAR,
     photo_2 VARCHAR,
     photo_3 VARCHAR,
     photo_4 VARCHAR,
-    type VARCHAR DEFAULT '정보 없음'
+    type VARCHAR DEFAULT '정보 없음'::character varying
 );
 
 CREATE TABLE IF NOT EXISTS public.notices (
     notice_id SERIAL PRIMARY KEY,
-    type VARCHAR NOT NULL DEFAULT 'notice',
-    tag VARCHAR NOT NULL DEFAULT '일반 공지',
+    type VARCHAR NOT NULL DEFAULT 'notice'::character varying,
+    tag VARCHAR NOT NULL DEFAULT '일반 공지'::character varying,
     content TEXT NOT NULL,
     image_urls JSONB DEFAULT '[]'::jsonb,
     discord_message_id VARCHAR NOT NULL UNIQUE,
     author_id VARCHAR NOT NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    title VARCHAR DEFAULT NULL::character varying
+);
+
+CREATE TABLE IF NOT EXISTS public.banners (
+    id SERIAL PRIMARY KEY,
+    image_url TEXT NOT NULL,
+    link_url TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. 1차 종속 테이블 (jobs를 참조)
+CREATE TABLE IF NOT EXISTS public.tips (
+    tip_id SERIAL PRIMARY KEY,
+    category VARCHAR NOT NULL,
+    title VARCHAR NOT NULL,
+    content TEXT NOT NULL,
+    image_urls JSONB DEFAULT '[]'::jsonb,
+    youtube_urls JSONB DEFAULT '[]'::jsonb,
+    discord_thread_id VARCHAR UNIQUE DEFAULT NULL::character varying,
+    author_id VARCHAR NOT NULL,
+    is_deleted BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. 1차 종속 테이블 (jobs 및 tips 테이블을 참조)
 CREATE TABLE IF NOT EXISTS public.users (
     discord_id VARCHAR NOT NULL PRIMARY KEY,
     nickname VARCHAR NOT NULL,
     server_role VARCHAR,
     current_job_id INTEGER REFERENCES public.jobs(job_id),
-    last_voice_exit TIMESTAMP WITHOUT TIME ZONE,
-    is_guide_completed BOOLEAN DEFAULT false
+    is_guide_completed BOOLEAN DEFAULT false,
+    minecraft_uuid VARCHAR UNIQUE,
+    minecraft_username VARCHAR UNIQUE,
+    bypass_voice_check BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS public.job_patches (
@@ -52,7 +78,19 @@ CREATE TABLE IF NOT EXISTS public.job_patches (
 CREATE TABLE IF NOT EXISTS public.weapons (
     weapon_id SERIAL PRIMARY KEY,
     job_id INTEGER REFERENCES public.jobs(job_id),
-    weapon_name VARCHAR NOT NULL
+    weapon_name VARCHAR NOT NULL,
+    weapon_type VARCHAR DEFAULT '기타'::character varying
+);
+
+CREATE TABLE IF NOT EXISTS public.tip_comments (
+    comment_id SERIAL PRIMARY KEY,
+    tip_id INTEGER NOT NULL REFERENCES public.tips(tip_id) ON DELETE CASCADE,
+    parent_comment_id INTEGER REFERENCES public.tip_comments(comment_id) ON DELETE CASCADE,
+    author_id VARCHAR NOT NULL,
+    content TEXT NOT NULL,
+    is_deleted BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 3. 2차 종속 테이블 (users, jobs, weapons 등을 참조)
@@ -82,5 +120,6 @@ CREATE TABLE IF NOT EXISTS public.skills (
     cooldown VARCHAR,
     cost_value VARCHAR,
     coefficient VARCHAR,
-    is_mobility CHAR DEFAULT 'N'
-    );
+    is_mobility CHAR DEFAULT 'N'::bpchar,
+    form_name VARCHAR
+);
