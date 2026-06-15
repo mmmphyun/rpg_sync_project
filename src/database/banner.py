@@ -57,3 +57,51 @@ def get_active_banners() -> list[dict]:
     except psycopg2.Error as e:
         print(f"[DB Error] Failed to fetch banners: {e}")
         return []
+
+
+def get_all_banner_urls() -> list[str]:
+    """
+    모든 배너의 image_url 목록 조회
+    """
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        raise ValueError("DATABASE_URL is not set.")
+
+    query = """
+        SELECT image_url
+        FROM banners;
+    """
+
+    try:
+        with psycopg2.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                rows = cur.fetchall()
+                return [row[0] for row in rows]
+    except psycopg2.Error as e:
+        print(f"[DB Error] Failed to fetch all banner urls: {e}")
+        return []
+
+
+def delete_all_banners() -> int:
+    """
+    모든 배너 삭제 및 삭제된 행의 개수 반환
+    """
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        raise ValueError("DATABASE_URL is not set.")
+
+    query = """
+        DELETE FROM banners;
+    """
+
+    try:
+        with psycopg2.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                deleted_rows = cur.rowcount
+                conn.commit()
+                return deleted_rows
+    except psycopg2.Error as e:
+        print(f"[DB Error] Failed to delete all banners: {e}")
+        raise e

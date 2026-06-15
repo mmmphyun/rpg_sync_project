@@ -19,9 +19,9 @@ def update_job_illustrations(job_name: str, image_urls: list[str]) -> int:
             SELECT JOB_ID 
             FROM JOBS 
             WHERE NULLIF(%s, '') IS NOT NULL 
-              AND REPLACE(NAME, ' ', '') LIKE CONCAT('%%', %s, '%%')
+              AND (REPLACE(NAME, ' ', '') LIKE CONCAT('%%', %s, '%%') OR REPLACE(DISPLAY_NAME, ' ', '') LIKE CONCAT('%%', %s, '%%'))
             ORDER BY 
-                CASE WHEN REPLACE(NAME, ' ', '') = %s THEN 1 ELSE 2 END ASC,
+                CASE WHEN REPLACE(NAME, ' ', '') = %s OR REPLACE(DISPLAY_NAME, ' ', '') = %s THEN 1 ELSE 2 END ASC,
                 LENGTH(NAME) ASC
             LIMIT 1
         )
@@ -32,7 +32,7 @@ def update_job_illustrations(job_name: str, image_urls: list[str]) -> int:
 
     try:
         # Tuple binding for PostgreSQL
-        cursor.execute(sql, (urls[0], urls[1], urls[2], urls[3], clean_job_name, clean_job_name, clean_job_name))
+        cursor.execute(sql, (urls[0], urls[1], urls[2], urls[3], clean_job_name, clean_job_name, clean_job_name, clean_job_name, clean_job_name))
         affected_rows = cursor.rowcount
         conn.commit()
         return affected_rows
@@ -94,13 +94,13 @@ def update_job_single_column(job_name: str, column_name: str, value: str) -> int
 
     clean_job_name = job_name.replace(" ", "")
 
-    sql = f"UPDATE JOBS SET {target_col} = %s WHERE NAME = %s"
+    sql = f"UPDATE JOBS SET {target_col} = %s WHERE REPLACE(NAME, ' ', '') = %s OR REPLACE(DISPLAY_NAME, ' ', '') = %s"
 
     conn = get_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute(sql, (value, clean_job_name))
+        cursor.execute(sql, (value, clean_job_name, clean_job_name))
         affected_rows = cursor.rowcount
         conn.commit()
         return affected_rows
