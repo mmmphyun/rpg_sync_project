@@ -8,7 +8,7 @@ from src.database.jobs import update_job_single_column, update_job_illustrations
 from src.database.skills import upsert_weapon_and_skill
 from src.bot.utils.checks import has_staff_privilege
 from src.database.cache import delete_cache
-from src.bot.utils.s3_client import upload_to_r2
+from src.bot.utils.s3_client import upload_to_r2, delete_from_r2
 
 VALID_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
 
@@ -116,6 +116,7 @@ class JobGroupCog(commands.GroupCog, name="직업"):
     async def profile(self, interaction: discord.Interaction, job_name: str, image: discord.Attachment):
         await interaction.response.defer(thinking=True)
         MAX_FILE_SIZE = 15 * 1024 * 1024
+        r2_url = None
         try:
             if image.size > MAX_FILE_SIZE:
                 await interaction.followup.send(f"[Error] 이미지는 최대 15MB까지만 업로드 가능합니다. (현재: {image.size / (1024 * 1024):.2f}MB)")
@@ -145,8 +146,13 @@ class JobGroupCog(commands.GroupCog, name="직업"):
                 await delete_cache("cache:jobs:all")
                 await interaction.followup.send(f"[Success] `{job_name}` 프로필 이미지 적용 완료\nURL: {r2_url}")
             else:
-                await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
+                raise ValueError(f"직업 '{job_name}'을 찾을 수 없습니다. R2 물리 이미지를 삭제하고 롤백합니다.")
         except Exception as e:
+            if r2_url:
+                try:
+                    await asyncio.to_thread(delete_from_r2, r2_url)
+                except Exception as del_err:
+                    print(f"[Error] Failed to rollback R2 image {r2_url}: {del_err}")
             import traceback
             tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
             if hasattr(interaction.client, "send_error_log"):
@@ -163,6 +169,7 @@ class JobGroupCog(commands.GroupCog, name="직업"):
     async def illustration(self, interaction: discord.Interaction, job_name: str, message_url: str):
         await interaction.response.defer(thinking=True)
         MAX_FILE_SIZE = 15 * 1024 * 1024
+        uploaded_urls = []
         try:
             if "discord.com/channels/" not in message_url:
                 await interaction.followup.send("[Error] 일러스트 수정 시 유효한 디스코드 메시지 링크를 입력해야 합니다.")
@@ -196,7 +203,6 @@ class JobGroupCog(commands.GroupCog, name="직업"):
                 return
 
             target_attachments = valid_attachments[:4]
-            uploaded_urls = []
 
             for att in target_attachments:
                 file_bytes = await att.read()
@@ -220,8 +226,14 @@ class JobGroupCog(commands.GroupCog, name="직업"):
                 await delete_cache("cache:jobs:all")
                 await interaction.followup.send(f"[Success] `{job_name}` 일러스트({len(uploaded_urls)}장) 적용 완료")
             else:
-                await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
+                raise ValueError(f"직업 '{job_name}'을 찾을 수 없습니다. 업로드한 R2 이미지들을 일괄 롤백 삭제합니다.")
         except Exception as e:
+            if uploaded_urls:
+                try:
+                    delete_tasks = [asyncio.to_thread(delete_from_r2, url) for url in uploaded_urls]
+                    await asyncio.gather(*delete_tasks, return_exceptions=True)
+                except Exception as del_err:
+                    print(f"[Error] Failed to rollback R2 illustrations {uploaded_urls}: {del_err}")
             import traceback
             tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
             if hasattr(interaction.client, "send_error_log"):

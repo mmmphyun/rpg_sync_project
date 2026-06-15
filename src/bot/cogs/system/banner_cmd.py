@@ -49,6 +49,7 @@ class BannerCog(commands.GroupCog, name="배너"):
         # defer 호출
         await interaction.response.defer(thinking=True)
 
+        r2_url = None
         try:
             # 2. 이미지 바이트 읽기
             file_bytes = await image.read()
@@ -96,6 +97,11 @@ class BannerCog(commands.GroupCog, name="배너"):
             await interaction.followup.send(embed=embed)
 
         except Exception as e:
+            if r2_url:
+                try:
+                    await asyncio.to_thread(delete_from_r2, r2_url)
+                except Exception as del_err:
+                    print(f"[Error] Failed to rollback R2 banner image {r2_url}: {del_err}")
             import traceback
             tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
             if hasattr(interaction.client, "send_error_log"):
