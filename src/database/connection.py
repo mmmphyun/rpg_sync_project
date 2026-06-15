@@ -1,4 +1,5 @@
 import os
+import functools
 import psycopg2
 from psycopg2 import pool, OperationalError
 from dotenv import load_dotenv
@@ -6,6 +7,25 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _db_pool = None
+
+def db_retry(max_retries=2):
+    """
+    OperationalError 또는 psycopg2.DatabaseError 발생 시 최대 max_retries 만큼 재시도하는 데코레이터
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exc = None
+            for attempt in range(max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except (OperationalError, psycopg2.DatabaseError) as e:
+                    last_exc = e
+                    print(f"[Database Retry] '{func.__name__}' attempt {attempt + 1}/{max_retries + 1} failed: {e}. Retrying...")
+                    if attempt == max_retries:
+                        raise last_exc
+        return wrapper
+    return decorator
 
 def initialize_pool():
     global _db_pool
@@ -59,13 +79,14 @@ def get_connection():
 
     raise Exception("[Critical] Failed to acquire a valid DB connection after retries.")
 
-def release_connection(conn):
-    """커넥션을 종료하지 않고 풀로 반환"""
+def release_connection(conn, close=False):
+    """커넥션을 풀로 반환하거나 종료"""
     global _db_pool
     if _db_pool and conn:
-        _db_pool.putconn(conn)
+        _db_pool.putconn(conn, close=close)
 
 
+@db_retry(max_retries=2)
 def sync_jobs_to_db(jobs_data: list[dict]):
     """
     파싱된 직업 데이터를 DB에 병합(UPSERT)합니다.
@@ -85,11 +106,14 @@ def sync_jobs_to_db(jobs_data: list[dict]):
             REQ_CONDITION = EXCLUDED.REQ_CONDITION
         """
 
-    conn = get_connection()
-    cursor = conn.cursor()
-    success_count = 0
+    conn = None
+    cursor = None
+    close_conn = False
 
     try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        success_count = 0
         for job in jobs_data:
             cursor.execute(upsert_sql, job)
             success_count += 1
@@ -97,14 +121,24 @@ def sync_jobs_to_db(jobs_data: list[dict]):
         conn.commit()
         print(f"[{success_count}/{len(jobs_data)}] 직업 데이터 동기화 성공")
 
+    except (OperationalError, psycopg2.DatabaseError) as e:
+        if conn:
+            conn.rollback()
+        close_conn = True
+        raise
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         print(f"데이터 동기화 중 오류 발생: {e}")
+        raise
     finally:
-        cursor.close()
-        release_connection(conn)
+        if cursor:
+            cursor.close()
+        if conn:
+            release_connection(conn, close=close_conn)
 
 
+@db_retry(max_retries=2)
 def sync_job_patch_to_db(patch_data: dict):
     """
     파싱된 패치노트를 DB에 삽입.
@@ -127,29 +161,46 @@ def sync_job_patch_to_db(patch_data: dict):
             PATCH_DATE = EXCLUDED.PATCH_DATE
     """
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
+    close_conn = False
 
     try:
+        conn = get_connection()
+        cursor = conn.cursor()
         cursor.execute(sql, patch_data)
         conn.commit()
+    except (OperationalError, psycopg2.DatabaseError) as e:
+        if conn:
+            conn.rollback()
+        close_conn = True
+        raise
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         print(f"패치노트 동기화 중 오류 발생: {e}")
+        raise
     finally:
-        cursor.close()
-        release_connection(conn)
+        if cursor:
+            cursor.close()
+        if conn:
+            release_connection(conn, close=close_conn)
 
 
+@db_retry(max_retries=2)
 def sync_users_to_db(users_data: list[dict]) -> int:
     """
     디스코드 서버 유저 목록을 DB에 병합(UPSERT).
     진행 중인 직업이나 마지막 음성채널 퇴장 시간은 덮어쓰지 않음.
     """
-    conn = get_connection()
-    cursor = conn.cursor()
+    conn = None
+    cursor = None
+    close_conn = False
 
     try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
         # 메모리 캐싱용 직업 리스트 생성 (DB I/O 병목 방지)
         cursor.execute("SELECT job_id, LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(display_name, ' ', '')) FROM jobs")
         cached_jobs = [{"id": row[0], "name": row[1] or "", "display": row[2] or ""} for row in cursor.fetchall()]
@@ -193,10 +244,18 @@ def sync_users_to_db(users_data: list[dict]) -> int:
         success_count = len(users_data)
         conn.commit()
         return success_count
+    except (OperationalError, psycopg2.DatabaseError) as e:
+        if conn:
+            conn.rollback()
+        close_conn = True
+        raise
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         print(f"유저 동기화 중 오류 발생: {e}")
-        return 0
+        raise
     finally:
-        cursor.close()
-        release_connection(conn)
+        if cursor:
+            cursor.close()
+        if conn:
+            release_connection(conn, close=close_conn)
