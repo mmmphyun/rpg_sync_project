@@ -39,10 +39,9 @@ def get_connection():
         try:
             conn = _db_pool.getconn()
 
-            # 세션 생존 여부 확인
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            cursor.close()
+            # 세션 생존 여부 확인 (conn.closed 속성 사용)
+            if conn.closed != 0:
+                raise OperationalError("Connection is closed.")
 
             return conn
 
