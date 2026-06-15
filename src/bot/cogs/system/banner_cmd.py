@@ -96,8 +96,11 @@ class BannerCog(commands.GroupCog, name="배너"):
             await interaction.followup.send(embed=embed)
 
         except Exception as e:
-            print(f"[Error] 배너 등록 커맨드 예외 발생: {e}")
-            await interaction.followup.send("❌ 배너 등록 중 서버 내부 오류가 발생했습니다.")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '배너 {interaction.command.name if interaction.command else 'Unknown'}':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
     @app_commands.command(name="초기화", description="등록된 모든 배너를 DB 및 R2 저장소에서 완전 삭제하고 캐시를 초기화합니다.")
     @app_commands.guild_only()
@@ -142,8 +145,11 @@ class BannerCog(commands.GroupCog, name="배너"):
             await interaction.followup.send(embed=embed)
 
         except Exception as e:
-            print(f"[Error] 배너 초기화 커맨드 예외 발생: {e}")
-            await interaction.followup.send("❌ 배너 초기화 중 서버 내부 오류가 발생했습니다.")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '배너 {interaction.command.name if interaction.command else 'Unknown'}':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
 
 async def setup(bot):

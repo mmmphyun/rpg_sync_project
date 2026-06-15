@@ -41,7 +41,11 @@ class JobGroupCog(commands.GroupCog, name="직업"):
             else:
                 await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
         except Exception as e:
-            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '직업 {interaction.command.name if interaction.command else 'Unknown'}':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
     @app_commands.command(name="제한", description="직업의 제한 정보(제한 여부, 제한 조건)를 변경합니다.")
     @app_commands.guild_only()
@@ -63,7 +67,11 @@ class JobGroupCog(commands.GroupCog, name="직업"):
             else:
                 await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
         except Exception as e:
-            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '직업 {interaction.command.name if interaction.command else 'Unknown'}':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
     @app_commands.command(name="텍스트", description="직업의 일반 텍스트 속성을 변경합니다.")
     @app_commands.guild_only()
@@ -92,7 +100,11 @@ class JobGroupCog(commands.GroupCog, name="직업"):
             else:
                 await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
         except Exception as e:
-            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '직업 {interaction.command.name if interaction.command else 'Unknown'}':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
     @app_commands.command(name="프로필", description="직업의 프로필 이미지를 변경합니다.")
     @app_commands.guild_only()
@@ -135,7 +147,11 @@ class JobGroupCog(commands.GroupCog, name="직업"):
             else:
                 await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
         except Exception as e:
-            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '직업 {interaction.command.name if interaction.command else 'Unknown'}':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
     @app_commands.command(name="일러스트", description="디스코드 메시지 링크에서 이미지를 가져와 직업의 일러스트로 등록합니다.")
     @app_commands.guild_only()
@@ -206,7 +222,11 @@ class JobGroupCog(commands.GroupCog, name="직업"):
             else:
                 await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없습니다.")
         except Exception as e:
-            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '직업 {interaction.command.name if interaction.command else 'Unknown'}':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
 class SkillGroupCog(commands.GroupCog, name="스킬"):
     def __init__(self, bot: commands.Bot):
@@ -278,7 +298,11 @@ class SkillGroupCog(commands.GroupCog, name="스킬"):
             else:
                 await interaction.followup.send(f"[Error] `{job_name}` 직업을 찾을 수 없거나 스킬 등록에 실패했습니다.")
         except Exception as e:
-            await interaction.followup.send(f"[Error] 처리 중 예외 발생: {str(e)}")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '스킬 {interaction.command.name if interaction.command else 'Unknown'}':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(JobGroupCog(bot))

@@ -29,19 +29,26 @@ class BoardCmd(commands.GroupCog, name="공지"):
     async def set_notice_title(self, interaction: discord.Interaction, message_id: str, title: str):
         await interaction.response.defer(thinking=True)
 
-        if len(title) > 200:
-            await interaction.followup.send("제목이 너무 깁니다. (최대 200자)")
-            return
+        try:
+            if len(title) > 200:
+                await interaction.followup.send("제목이 너무 깁니다. (최대 200자)")
+                return
 
-        success = await asyncio.to_thread(update_notice_title, message_id, title)
-        if success:
-            # 캐시 무효화 추가
-            await delete_cache("cache:main_page:all")
-            await delete_cache("cache:boards:notice:page:1:tag:None")
-            await delete_cache("cache:boards:event:page:1:tag:None")
-            await interaction.followup.send(f"성공적으로 제목이 업데이트되었습니다: **{title}**")
-        else:
-            await interaction.followup.send("해당 메시지 ID를 가진 공지를 찾을 수 없습니다.")
+            success = await asyncio.to_thread(update_notice_title, message_id, title)
+            if success:
+                # 캐시 무효화 추가
+                await delete_cache("cache:main_page:all")
+                await delete_cache("cache:boards:notice:page:1:tag:None")
+                await delete_cache("cache:boards:event:page:1:tag:None")
+                await interaction.followup.send(f"성공적으로 제목이 업데이트되었습니다: **{title}**")
+            else:
+                await interaction.followup.send("해당 메시지 ID를 가진 공지를 찾을 수 없습니다.")
+        except Exception as e:
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            if hasattr(interaction.client, "send_error_log"):
+                await interaction.client.send_error_log(f"Exception in slash command '공지 제목':\n{tb_str}")
+            await interaction.followup.send(f"❌ [Error] 처리 중 예외 발생: {str(e)}")
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(BoardCmd(bot))
