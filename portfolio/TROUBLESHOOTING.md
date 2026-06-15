@@ -7,6 +7,9 @@
 - **현상**: 봇이 간헐적으로 `DatabaseError: server closed the connection`을 뱉으며 중단됨.
 - **분석**: Supabase의 유휴 연결 정책과 `psycopg2`의 예외 계층 구조(`DatabaseError` vs `OperationalError`) 불일치로 인한 재시도 로직 우회. 커넥션 획득 시마다 `SELECT 1`을 실행하여 검증할 경우 데이터베이스 네트워크 지연이 누적되는 안티패턴 존재.
 - **해결**: 예외 처리 범위를 확장하여 자가 치유 연결 풀을 구현하되, 매 획득 시 `SELECT 1`을 질의하는 대신 소켓 상태 직접 검사(Socket State Checks) 및 Fail-fast 재시도 메커니즘을 도입하여 데이터베이스 커넥션 지연 시간을 단축함.
+- **2단계 고도화 (2nd Stage Enhancement)**:
+  - **한계점**: 메모리 플래그 기반 `conn.closed` 체크는 서버 측의 비정상적인 원격 소켓 종료(Remote Socket Drops)를 감지할 수 없음. 클라이언트는 소켓이 끊어졌음에도 연결된 상태로 잘못 인식하여 쿼리 실패 발생.
+  - **해결책**: `db_retry` 데코레이터 패턴 도입. 쿼리 실행 중 `OperationalError` 또는 `psycopg2.DatabaseError` 발생 시, 자동으로 커넥션을 재연결(Auto-Reconnect)하고 1회 재시도(1-time retry)를 수행하여 쿼리 실행의 신뢰성을 강화함.
 
 ## ⚡ [Issue 02] 동기 I/O로 인한 Event Loop Starvation
 - **커밋**: `14c9b6b`, `db1b536`, `c2e1aa8`
