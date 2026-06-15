@@ -31,8 +31,8 @@ class ReasonBypassView(discord.ui.View):
     async def handle_click(self, interaction: discord.Interaction, action: str, mc_uuid: str):
         lock_key = f"rpgsync:processing_reason:{mc_uuid}"
         
-        # 1. Redis 분산 락 시도 (5초 만료)
-        acquired = await redis_client.set(lock_key, "1", ex=5, nx=True)
+        # 1. Redis 분산 락 시도 (15초 만료)
+        acquired = await redis_client.set(lock_key, "1", ex=15, nx=True)
         if not acquired:
             await interaction.response.send_message("이미 처리 중이거나 완료된 사유입니다.", ephemeral=True)
             return
@@ -107,8 +107,8 @@ class RecoveryBypassView(discord.ui.View):
     async def handle_bulk_recovery(self, interaction: discord.Interaction):
         lock_key = "rpgsync:bulk_bypass_recovery"
         
-        # 1. 락 획득 시도 (5초 만료)
-        acquired = await redis_client.set(lock_key, "1", ex=5, nx=True)
+        # 1. 락 획득 시도 (15초 만료)
+        acquired = await redis_client.set(lock_key, "1", ex=15, nx=True)
         if not acquired:
             await interaction.response.send_message("이미 일괄 복구가 진행 중입니다.", ephemeral=True)
             return
