@@ -13,7 +13,7 @@
 ## 🟡 Phase 2: 인프라 제약 극복 및 성능 최적화 (Commit 78cd4d8 ~ 35b7c9b)
 - **GCP 미국 리전 - 한국 DB 간 지연 시간(Latency) 해결 (`cd47bee`, `d2733b7`)**
     - **현상**: 200ms 이상의 네트워크 RTT로 인해 첫 로딩 및 DB 조회 시 사용자 경험 저하.
-    - **해결**: `git show cd47bee`를 통해 **TCP Keepalive(idle=30, interval=10)** 파라미터를 커널 수준에서 주입하고, `minconn`을 10으로 상향하여 연결 오버헤드를 물리적으로 제거함.
+    - **해결**: 물리적 거리(RTT 200ms) 극복을 위해 TCP Keepalive 및 커넥션 풀을 미리 예열(Pre-warming)하고 핵심 도메인 정보를 메모리 캐싱(Fast Path)하여 네트워크 핸드셰이크 지연을 최소화함.
 - **AsyncIO 이벤트 루프 병목 제거 (`db1b536`, `14c9b6b`)**
     - **분석**: 동기식 DB 드라이버(`psycopg2`)가 봇의 메인 스레드를 점유하여 Discord Gateway 연결이 끊기는 현상 포착.
     - **해결**: `git show 14c9b6b`에서 전용 **ThreadPoolExecutor(max_workers=20)**를 수동 설정하고, FastAPI 라우터를 `async def`에서 `def`로 전환하여 블로킹 작업을 워커 스레드로 완전 격리.
@@ -25,10 +25,10 @@
 - **실제 IP 추적 및 Rate Limiting (`66fe5c3`, `54b2cf8`)**
     - **증거**: Cloudflare 리버스 프록시 환경에서 `cf-connecting-ip` 헤더를 우선적으로 신뢰하도록 `limiter.py`를 커스터마이징하여 정밀한 DoS 방어 체계 구축.
 
-## 🔵 Phase 4: 분산 시스템 고도화 및 자가 치유 (Commit fce7492 ~ e7c8c78)
+## 🔵 Phase 4: 이벤트 기반 무상태(Stateless) 연동 아키텍처 및 자가 치유 (Commit fce7492 ~ e7c8c78)
 - **Redis Pub/Sub 및 분산 락 구현 (`c6cc131`)**
     - **현상**: 마이크로서비스(Bot/Web) 분리로 인한 실시간 상태 공유의 어려움.
-    - **해결**: `git show c6cc131`에서 Redis를 메시지 브로커로 활용하여 Minecraft-Discord 간 양방향 통신 구현. `SET NX EX` 방식의 **분산 락**으로 다중 스태프 간 Race Condition 해결.
+    - **해결**: `git show c6cc131`에서 Redis를 메시지 브로커로 활용하여 Minecraft-Discord 간 양방향 통신 구현. 자원이 제한된 VM(1GB RAM) 환경에서 watchdog 오버헤드를 피하기 위해 Safe TTL (15s) + 명시적 해제(Explicit Unlock) 방식의 **분산 락**을 설계하여 Race Condition 해결.
 - **연결 풀 자가 치유(Self-healing) 로직 (`e7c8c78`)**
     - **증거**: `DatabaseError` 예외 계층을 분석하여 상위 에러 발생 시에도 연결을 강제 폐기하고 재시도하도록 `get_connection` 로직 최후 보강.
 

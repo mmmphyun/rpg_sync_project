@@ -2,11 +2,11 @@
 
 프로젝트 운영 및 개발 과정에서 발생한 핵심 기술적 이슈들을 `git show` 분석 결과에 기반하여 기록합니다.
 
-## 🔍 [Issue 01] Supabase 유휴 연결 종료에 따른 봇 충돌
+## 🔍 [Issue 01] Supabase 유휴 연결 종료에 따른 봇 충돌 및 연결 최적화
 - **커밋**: `e7c8c78`, `7156289`
 - **현상**: 봇이 간헐적으로 `DatabaseError: server closed the connection`을 뱉으며 중단됨.
-- **분석**: Supabase의 유휴 연결 정책과 `psycopg2`의 예외 계층 구조(`DatabaseError` vs `OperationalError`) 불일치로 인한 재시도 로직 우회.
-- **해결**: 예외 처리 범위를 확장하고, 커넥션 획득 시 `SELECT 1` 검증을 강제하는 **자가 치유 연결 풀** 구현.
+- **분석**: Supabase의 유휴 연결 정책과 `psycopg2`의 예외 계층 구조(`DatabaseError` vs `OperationalError`) 불일치로 인한 재시도 로직 우회. 커넥션 획득 시마다 `SELECT 1`을 실행하여 검증할 경우 데이터베이스 네트워크 지연이 누적되는 안티패턴 존재.
+- **해결**: 예외 처리 범위를 확장하여 자가 치유 연결 풀을 구현하되, 매 획득 시 `SELECT 1`을 질의하는 대신 소켓 상태 직접 검사(Socket State Checks) 및 Fail-fast 재시도 메커니즘을 도입하여 데이터베이스 커넥션 지연 시간을 단축함.
 
 ## ⚡ [Issue 02] 동기 I/O로 인한 Event Loop Starvation
 - **커밋**: `14c9b6b`, `db1b536`, `c2e1aa8`
@@ -24,4 +24,4 @@
 - **커밋**: `c6cc131`, `645f512`
 - **현상**: 여러 서비스에서 동시에 유저 상태를 갱신하려 할 때 데이터 유실 및 중복 처리 발생.
 - **분석**: 분산 서비스 구조에서 메모리 공유가 불가능하여 발생하는 전형적인 Race Condition.
-- **해결**: Redis 기반의 분산 락(`SET NX EX`)을 도입하여 작업의 원자성을 보장하고, Pub/Sub을 통한 실시간 전파 체계 구축.
+- **해결**: Redis 기반의 분산 락(`SET NX EX`)을 도입하되, 자원이 매우 제한된 VM (1GB RAM) 환경에서 watchdog 프로세스로 인한 메모리 및 CPU 오버헤드를 막기 위해 복잡한 watchdog 대신 Safe TTL(15초)과 명시적 락 해제(Explicit Unlock)를 활용한 동시성 제어를 설계하여 레이스 컨디션을 안전하게 해결하고, Pub/Sub을 통해 실시간 상태를 전파함.

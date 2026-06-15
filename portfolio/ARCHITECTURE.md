@@ -1,6 +1,6 @@
 # Architecture & Engineering Strategy
 
-RPG Sync Project의 시스템 설계와 기술적 결정의 근거를 정리한 문서입니다. 본 프로젝트는 **"제한된 리소스(Free Tier) 환경에서의 고성능 분산 아키텍처 구축"**을 목표로 설계되었습니다.
+RPG Sync Project의 시스템 설계와 기술적 결정의 근거를 정리한 문서입니다. 본 프로젝트는 **"제한된 리소스(Free Tier) 환경에서의 단일 노드 내 다중 프로세스 격리 아키텍처 구축"**을 목표로 설계되었습니다.
 
 ## 🏗️ 전체 시스템 구성 (System Topology)
 시스템은 독립적인 3개의 핵심 서비스와 데이터 레이어로 구성됩니다.
@@ -14,7 +14,7 @@ RPG Sync Project의 시스템 설계와 기술적 결정의 근거를 정리한 
 ### 1. 지연 시간 극복을 위한 네트워크 엔지니어링
 - **GCP VM(US) - Supabase(Korea)** 간의 물리적 거리를 극복하기 위해 다음을 적용했습니다.
 - **TCP Keepalive**: 유휴 연결의 강제 종료를 막기 위해 소켓 레벨의 세션을 유지합니다.
-- **Connection Pre-warming**: 서비스 기동 시 커넥션 풀을 미리 생성하고 필수 데이터를 캐시에 적재하여 사용자 체감 속도를 0ms대로 유지합니다.
+- **Connection Pre-warming & Fast Path**: 물리적 거리(RTT 200ms) 극복을 위해 TCP Keepalive 및 커넥션 풀을 미리 예열(Pre-warming)하고 핵심 도메인 정보를 메모리 캐싱(Fast Path)하여 네트워크 핸드셰이크 지연을 최소화합니다.
 
 ### 2. 하이브리드 동시성 제어 (Async-Sync Hybrid)
 - `discord.py`의 단일 스레드 비동기 루프를 보호하기 위해, 동기식 DB 작업은 전용 **ThreadPoolExecutor**로 격리했습니다.
