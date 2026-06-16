@@ -299,5 +299,27 @@ class BulkSyncCmd(BaseCog):
 
                 await ctx.send(f"팁 게시판 동기화 완료: 총 {sync_count}건의 쓰레드가 적재/갱신되었습니다.")
 
+    @commands.command(name="동기화")
+    @commands.has_permissions(administrator=True)
+    async def sync_commands(self, ctx: commands.Context, spec: str = None):
+        """슬래시 명령어를 동기화하거나 청소합니다."""
+        if spec == "guild":
+            self.bot.tree.copy_global_to(guild=ctx.guild)
+            synced = await self.bot.tree.sync(guild=ctx.guild)
+            await ctx.send(f"✅ 이 서버(Guild)에 슬래시 명령어 {len(synced)}개 동기화 완료 (즉시 반영).")
+        elif spec == "clear_guild":
+            self.bot.tree.clear_commands(guild=ctx.guild)
+            await self.bot.tree.sync(guild=ctx.guild)
+            await ctx.send("✅ 이 서버(Guild)의 슬래시 명령어를 모두 청소했습니다.")
+        elif spec == "global":
+            synced = await self.bot.tree.sync()
+            await ctx.send(f"✅ 전역(Global) 슬래시 명령어 {len(synced)}개 동기화 완료 (반영에 다소 시간 소요).")
+        elif spec == "clear_global":
+            self.bot.tree.clear_commands(guild=None)
+            await self.bot.tree.sync()
+            await ctx.send("✅ 전역(Global) 슬래시 명령어를 모두 삭제했습니다.")
+        else:
+            await ctx.send("⚠️ 사용법: `!동기화 [guild / clear_guild / global / clear_global]`")
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(BulkSyncCmd(bot))
