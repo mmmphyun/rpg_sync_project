@@ -191,7 +191,6 @@ function renderFeed(notices) {
                         <div class="board-content markdown-body">
                             ${parsedContent}
                         </div>
-                        <div class="read-more-overlay"></div>
                     </div>
                     <div class="read-more-action" style="display: none;">
                         <button class="read-more-btn" onclick="toggleReadMore(this)">더보기</button>
@@ -471,7 +470,7 @@ function openLightbox(src) {
 }
 
 document.addEventListener("click", e => {
-    if (e.target.closest(".lightbox")) {
+    if (e.target.closest("#lightbox")) {
         document.getElementById("lightbox").classList.remove("open");
     }
 });
