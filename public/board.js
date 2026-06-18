@@ -515,3 +515,11 @@ window.toggleReadMore = function(btn) {
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 };
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        if (window.initReadMore) window.initReadMore();
+    }, 200);
+});
