@@ -1,7 +1,8 @@
 import os
 import jwt
 import asyncio
-from fastapi import APIRouter, Request, Form, Response, Cookie, status, HTTPException
+from fastapi import APIRouter, Request, Form, Response, Cookie, status, HTTPException, Depends
+from src.web.dependencies import cookie_scheme
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timedelta
@@ -91,7 +92,7 @@ def verify_magic_link(request: Request, token: str = Form(...), redirect_to: str
     return redirect
 
 @router.get("/me")
-def get_current_user(forum_session: str = Cookie(None)):
+def get_current_user(forum_session: str = Depends(cookie_scheme)):
     if not forum_session:
         return {"is_logged_in": False}
 

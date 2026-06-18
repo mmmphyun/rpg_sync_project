@@ -6,7 +6,7 @@ from typing import Optional
 from src.database.tip import get_tips_for_web, upsert_tip, get_tip_comments, create_tip_comment
 from src.database.tip import get_tip_by_id, update_tip_by_id, delete_tip_by_id, get_comment_by_id, delete_comment_by_id
 from src.web.limiter import limiter
-from src.web.routers.auth import get_current_user
+from src.web.dependencies import get_required_user
 from src.database.cache import get_cache, set_cache
 
 router = APIRouter()
@@ -44,12 +44,8 @@ async def create_qna_tip(
         request: Request,
         title: str = Body(...),
         content: str = Body(...),
-        user: dict = Depends(get_current_user)
+        user: dict = Depends(get_required_user)
 ):
-    # 권한 및 세션 검증
-    if not user or not user.get("is_logged_in"):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
     safe_title = title.strip()
     safe_content = content.strip()
 
@@ -64,7 +60,7 @@ async def create_qna_tip(
         'image_urls': json.dumps([]),  # Phase 4 초기버전: 텍스트 기반 작성 우선
         'youtube_urls': json.dumps([]),
         'discord_thread_id': None,
-        'author_id': str(user.get("discord_id"))
+        'author_id': str(user.get("sub"))
     }
 
     affected = upsert_tip(tip_data)
@@ -108,18 +104,15 @@ async def add_comment(
         request: Request,
         tip_id: int,
         payload: CommentCreate,
-        user: dict = Depends(get_current_user)
+        user: dict = Depends(get_required_user)
 ):
-    if not user or not user.get("is_logged_in"):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
     safe_content = payload.content.strip()
     if not safe_content:
         raise HTTPException(status_code=400, detail="Content is required.")
 
     comment_id = create_tip_comment(
         tip_id=tip_id,
-        author_id=str(user.get("discord_id")),
+        author_id=str(user.get("sub")),
         content=safe_content,
         parent_id=payload.parent_comment_id
     )
@@ -135,17 +128,14 @@ async def edit_tip(
         tip_id: int,
         title: str = Body(..., embed=True),
         content: str = Body(..., embed=True),
-        user: dict = Depends(get_current_user)
+        user: dict = Depends(get_required_user)
 ):
-    if not user or not user.get("is_logged_in"):
-        raise HTTPException(status_code=401, detail="인증이 필요합니다.")
-
     tip = get_tip_by_id(tip_id)
     if not tip:
         raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
 
     # 권한 검증
-    if tip['author_id'] != str(user.get("discord_id")) and user.get("server_role") != 'admin':
+    if tip['author_id'] != str(user.get("sub")) and user.get("server_role") not in ('admin', 'STAFF', '주인장'):
         raise HTTPException(status_code=403, detail="수정 권한이 없습니다.")
 
     affected = update_tip_by_id(tip_id, title.strip(), content.strip())
@@ -153,15 +143,12 @@ async def edit_tip(
 
 
 @router.delete("/{tip_id}")
-async def remove_tip(tip_id: int, user: dict = Depends(get_current_user)):
-    if not user or not user.get("is_logged_in"):
-        raise HTTPException(status_code=401, detail="인증이 필요합니다.")
-
+async def remove_tip(tip_id: int, user: dict = Depends(get_required_user)):
     tip = get_tip_by_id(tip_id)
     if not tip:
         raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다.")
 
-    if tip['author_id'] != str(user.get("discord_id")) and user.get("server_role") != 'admin':
+    if tip['author_id'] != str(user.get("sub")) and user.get("server_role") not in ('admin', 'STAFF', '주인장'):
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
 
     delete_tip_by_id(tip_id)
@@ -169,15 +156,12 @@ async def remove_tip(tip_id: int, user: dict = Depends(get_current_user)):
 
 
 @router.delete("/{tip_id}/comments/{comment_id}")
-async def remove_comment(tip_id: int, comment_id: int, user: dict = Depends(get_current_user)):
-    if not user or not user.get("is_logged_in"):
-        raise HTTPException(status_code=401, detail="인증이 필요합니다.")
-
+async def remove_comment(tip_id: int, comment_id: int, user: dict = Depends(get_required_user)):
     comment = get_comment_by_id(comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="댓글을 찾을 수 없습니다.")
 
-    if comment['author_id'] != str(user.get("discord_id")) and user.get("server_role") != 'admin':
+    if comment['author_id'] != str(user.get("sub")) and user.get("server_role") not in ('admin', 'STAFF', '주인장'):
         raise HTTPException(status_code=403, detail="삭제 권한이 없습니다.")
 
     delete_comment_by_id(comment_id)

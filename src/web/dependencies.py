@@ -5,11 +5,14 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from fastapi import Cookie, HTTPException, status, Depends
+from fastapi.security import APIKeyCookie
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from src.config import JWT_SECRET, JWT_ALGORITHM
 from src.database.connection import get_connection, release_connection
 
-def get_required_user(forum_session: str = Cookie(None)):
+cookie_scheme = APIKeyCookie(name="forum_session", auto_error=False)
+
+def get_required_user(forum_session: str = Depends(cookie_scheme)):
     if not forum_session:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="로그인이 필요합니다.")
     try:

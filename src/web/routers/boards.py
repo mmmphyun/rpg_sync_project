@@ -5,7 +5,6 @@ from src.database.board import get_notices_for_web, update_notice_type, update_n
 from src.database.board import set_popup_event
 from src.bot.utils.s3_client import delete_from_r2
 from src.web.limiter import limiter
-from src.web.routers.auth import get_current_user
 from src.database.cache import get_cache, set_cache, delete_cache
 
 router = APIRouter()
@@ -40,11 +39,8 @@ async def get_board_list(request: Request, board_type: str, page: int = Query(1,
 
 @router.patch("/{notice_id}/popup")
 @limiter.limit("5/minute")
-async def update_popup_status(request: Request, notice_id: int, user: dict = Depends(get_current_user)):
+async def update_popup_status(request: Request, notice_id: int, admin: dict = Depends(get_admin_user)):
     """관리자 전용: 특정 이벤트를 팝업으로 지정"""
-    if user.get("server_role") not in ("주인장", "STAFF"):
-        raise HTTPException(status_code=403, detail="권한이 없습니다.")
-
     success = await asyncio.to_thread(set_popup_event, notice_id)
     if not success:
         raise HTTPException(status_code=500, detail="팝업 지정에 실패했습니다.")

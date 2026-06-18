@@ -82,6 +82,8 @@ class SecurityMiddleware:
                 headers["X-Frame-Options"] = "DENY"
                 headers["Content-Security-Policy"] = "frame-ancestors 'none'"
                 headers["X-Content-Type-Options"] = "nosniff"
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+                headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
                 
                 # 4. HSTS Lockout 방지: localhost/127.0.0.1일 경우 HSTS 제외
                 host = url.hostname or ""
@@ -98,7 +100,15 @@ class SecurityMiddleware:
 # ---------------------------------------------------------------------
 # FastAPI App Initialization
 # ---------------------------------------------------------------------
-app = FastAPI(title="Fossile Server Web Dashboard")
+web_domain = os.getenv("WEB_DOMAIN", "http://localhost:8000")
+is_prod = "fossile-wiki.cloud" in web_domain
+
+app = FastAPI(
+    title="Fossile Server Web Dashboard",
+    docs_url=None if is_prod else "/docs",
+    redoc_url=None if is_prod else "/redoc",
+    openapi_url=None if is_prod else "/openapi.json"
+)
 
 # Apply custom ASGI middleware first
 app.add_middleware(SecurityMiddleware)
