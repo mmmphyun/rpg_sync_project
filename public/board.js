@@ -135,17 +135,20 @@ function renderFeed(notices) {
         }
 
         const cleanContent = removeDiscordMentions(notice.content);
-        const safeContent = cleanContent.replace(/```/g, "");
-        const parsedContent = DOMPurify.sanitize(marked.parse(cleanContent, { breaks: true }));
+        const escapedContent = cleanContent.replace(/^\s*>>/gm, match => match.replace(/>/g, '\\>'));
+        const parsedContent = DOMPurify.sanitize(marked.parse(escapedContent, { breaks: true }));
 
         const safeTitle = notice.title ? escapeHTML(notice.title) : "";
         const titleHtml = `<h3 id="notice-title-${notice.notice_id}" class="board-card-title" style="${safeTitle ? '' : 'display: none;'}">${safeTitle}</h3>`;
 
         let imagesHtml = "";
         if (notice.image_urls && notice.image_urls.length > 0) {
-            imagesHtml = `<div class="board-card-images">
-                ${notice.image_urls.map(url => `<img src="${escapeHTML(url)}" onclick="openLightbox('${escapeHTML(url)}')">`).join('')}
-            </div>`;
+            const url = notice.image_urls[0];
+            imagesHtml = `
+                <div class="board-card-image-container loading">
+                    <img src="${escapeHTML(url)}" onload="this.parentElement.classList.remove('loading'); if(window.initReadMore) window.initReadMore();" onerror="this.parentElement.style.display='none'" onclick="openLightbox(this.src)">
+                </div>
+            `;
         }
 
         const tagTheme = getTagTheme(notice.tag);
@@ -184,8 +187,14 @@ function renderFeed(notices) {
                         <span class="board-date">${cardTime}</span>
                     </div>
                     ${titleHtml}
-                    <div class="board-content markdown-body">
-                        ${parsedContent}
+                    <div class="board-content-wrapper">
+                        <div class="board-content markdown-body">
+                            ${parsedContent}
+                        </div>
+                        <div class="read-more-overlay"></div>
+                    </div>
+                    <div class="read-more-action" style="display: none;">
+                        <button class="read-more-btn" onclick="toggleReadMore(this)">더보기</button>
                     </div>
                     ${imagesHtml}
                     ${adminPanel}
@@ -195,6 +204,7 @@ function renderFeed(notices) {
     }).join("");
 
     feedArea.innerHTML = html;
+    setTimeout(window.initReadMore, 50);
 
     let glowLine = document.getElementById("timeline-glow");
     if (!glowLine) {
@@ -467,3 +477,41 @@ document.addEventListener("click", e => {
 });
 
 document.addEventListener("DOMContentLoaded", checkAuthAndLoad);
+
+window.initReadMore = function() {
+    const wrappers = document.querySelectorAll('.board-content-wrapper');
+    wrappers.forEach(wrapper => {
+        const content = wrapper.querySelector('.board-content');
+        const card = wrapper.closest('.board-card');
+        const actionArea = card ? card.querySelector('.read-more-action') : null;
+        const btn = actionArea ? actionArea.querySelector('.read-more-btn') : null;
+        
+        if (!actionArea || !btn) return;
+        
+        if (btn.textContent === '접기') return;
+
+        if (content.scrollHeight > 500) {
+            wrapper.classList.add('collapsed');
+            actionArea.style.display = 'flex';
+            btn.textContent = '더보기';
+        } else {
+            wrapper.classList.remove('collapsed');
+            actionArea.style.display = 'none';
+        }
+    });
+};
+
+window.toggleReadMore = function(btn) {
+    const card = btn.closest('.board-card');
+    const wrapper = card ? card.querySelector('.board-content-wrapper') : null;
+    if (!wrapper) return;
+    
+    if (wrapper.classList.contains('collapsed')) {
+        wrapper.classList.remove('collapsed');
+        btn.textContent = '접기';
+    } else {
+        wrapper.classList.add('collapsed');
+        btn.textContent = '더보기';
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+};
