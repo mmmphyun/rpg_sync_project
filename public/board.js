@@ -193,7 +193,10 @@ function renderFeed(notices) {
                         </div>
                     </div>
                     <div class="read-more-action" style="display: none;">
-                        <button class="read-more-btn" onclick="toggleReadMore(this)">더보기</button>
+                        <button class="read-more-btn" onclick="toggleReadMore(this)">
+                            <span class="btn-text">더보기</span>
+                            <i class="fa-solid fa-angles-down btn-icon"></i>
+                        </button>
                     </div>
                     ${imagesHtml}
                     ${adminPanel}
@@ -487,12 +490,19 @@ window.initReadMore = function() {
         
         if (!actionArea || !btn) return;
         
-        if (btn.textContent === '접기') return;
+        const textSpan = btn.querySelector('.btn-text');
+        const icon = btn.querySelector('.btn-icon');
+        
+        if (textSpan && textSpan.textContent === '접기') return;
 
         if (content.scrollHeight > 500) {
             wrapper.classList.add('collapsed');
             actionArea.style.display = 'flex';
-            btn.textContent = '더보기';
+            if (textSpan) textSpan.textContent = '더보기';
+            if (icon) {
+                icon.classList.remove('fa-angles-up');
+                icon.classList.add('fa-angles-down');
+            }
         } else {
             wrapper.classList.remove('collapsed');
             actionArea.style.display = 'none';
@@ -505,12 +515,23 @@ window.toggleReadMore = function(btn) {
     const wrapper = card ? card.querySelector('.board-content-wrapper') : null;
     if (!wrapper) return;
     
+    const textSpan = btn.querySelector('.btn-text');
+    const icon = btn.querySelector('.btn-icon');
+    
     if (wrapper.classList.contains('collapsed')) {
         wrapper.classList.remove('collapsed');
-        btn.textContent = '접기';
+        if (textSpan) textSpan.textContent = '접기';
+        if (icon) {
+            icon.classList.remove('fa-angles-down');
+            icon.classList.add('fa-angles-up');
+        }
     } else {
         wrapper.classList.add('collapsed');
-        btn.textContent = '더보기';
+        if (textSpan) textSpan.textContent = '더보기';
+        if (icon) {
+            icon.classList.remove('fa-angles-up');
+            icon.classList.add('fa-angles-down');
+        }
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 };
