@@ -984,10 +984,16 @@ body {
         padding: 14px 16px;
     }
 
+    .timeline-container {
+        height: auto !important;
+        padding: 0 !important;
+    }
+
     .timeline-steps {
         grid-template-columns: 1fr !important;
         grid-template-rows: auto !important;
         gap: 16px !important;
+        height: auto !important;
     }
 
     .timeline-step.step-1,
