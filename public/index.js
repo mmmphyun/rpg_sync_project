@@ -225,6 +225,18 @@ async function loadServerStatus() {
         const container = document.getElementById('mini-server-status');
         if (!container) return;
 
+        // 세션 정보 확인하여 STAFF 권한 획득
+        let isStaff = false;
+        try {
+            const authRes = await fetch('/api/v1/auth/me');
+            const authData = await authRes.json();
+            if (authData.is_logged_in && authData.server_role === "STAFF") {
+                isStaff = true;
+            }
+        } catch (authErr) {
+            console.error("인증 상태 조회 실패:", authErr);
+        }
+
         let statusHtml = '';
         if (data.online) {
             statusHtml = `
@@ -241,11 +253,35 @@ async function loadServerStatus() {
                 <div class="mini-status-wrapper offline">
                     <span class="status-indicator"></span>
                     <span class="status-text space-mono">SERVER OFFLINE</span>
+                    ${isStaff ? `<button id="btn-server-refresh" class="btn-server-refresh" style="margin-left: 10px; padding: 2px 8px; font-size: 0.75rem; cursor: pointer; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-sync-alt"></i> 새로고침</button>` : ''}
                 </div>
             `;
         }
 
         container.innerHTML = statusHtml;
+
+        // 새로고침 버튼 이벤트 바인딩
+        const refreshBtn = document.getElementById('btn-server-refresh');
+        if (refreshBtn) {
+            refreshBtn.onclick = async () => {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ...';
+                try {
+                    const res = await fetch('/api/v1/server/refresh', { method: 'POST' });
+                    if (res.status === 200) {
+                        await loadServerStatus();
+                    } else {
+                        const errData = await res.json();
+                        alert(errData.detail || "새로고침 실패");
+                        await loadServerStatus();
+                    }
+                } catch (err) {
+                    console.error("새로고침 API 호출 에러:", err);
+                    alert("서버 통신 실패");
+                    await loadServerStatus();
+                }
+            };
+        }
     } catch (e) {
         console.error("서버 상태 로드 실패:", e);
         const container = document.getElementById('mini-server-status');
