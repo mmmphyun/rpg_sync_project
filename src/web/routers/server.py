@@ -35,9 +35,9 @@ async def get_server_status():
         return cache["data"]
 
     try:
-        # 캐시가 만료되었거나 없을 때만 MC 서버로 실제 비동기 핑 전송 (타임아웃 2초 추가)
-        mc_server = await JavaServer.async_lookup(SERVER_ADDRESS)
-        status = await mc_server.async_status(timeout=2.0)
+        # 캐시가 만료되었거나 없을 때만 MC 서버로 실제 비동기 핑 전송 (타임아웃은 async_lookup에 2초 지정)
+        mc_server = await JavaServer.async_lookup(SERVER_ADDRESS, timeout=2.0)
+        status = await mc_server.async_status()
 
         result = {
             "online": True,
@@ -120,8 +120,8 @@ async def refresh_server_status(forum_session: str = Cookie(None)):
 
     # 3. 강제 갱신 실행
     try:
-        mc_server = await JavaServer.async_lookup(SERVER_ADDRESS)
-        status = await mc_server.async_status(timeout=2.0)
+        mc_server = await JavaServer.async_lookup(SERVER_ADDRESS, timeout=2.0)
+        status = await mc_server.async_status()
         result = {
             "online": True,
             "players": {
