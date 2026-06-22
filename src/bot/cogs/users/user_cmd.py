@@ -229,7 +229,11 @@ class UserCmd(BaseCog):
             return
 
         try:
-            # 2. DB 업데이트 진행 (기존 닉네임/별명 절대 미터치)
+            # 2. 기존 연동 정보 조회 (이전 UUID 확보하여 Redis Set 찌꺼기 제거)
+            old_info = await asyncio.to_thread(get_user_minecraft_info, user_id)
+            old_uuid = old_info.get("uuid") if old_info else None
+
+            # 3. DB 업데이트 진행 (기존 닉네임/별명 절대 미터치)
             db_success = await asyncio.to_thread(
                 update_user_minecraft_info,
                 user_id,
@@ -258,7 +262,15 @@ class UserCmd(BaseCog):
                 )
                 return
 
-            # 3. Redis 디코 ID - 마크 UUID/닉네임 맵핑 영구 캐싱 (JSON 구조)
+            # 4. 이전 UUID가 존재하고 새로 연동하려는 UUID와 다른 경우, Redis active_minecraft_users Set에서 제거
+            if old_uuid and old_uuid != uuid_36:
+                try:
+                    await redis_client.srem("active_minecraft_users", old_uuid)
+                    print(f"[Staff Command] 구 UUID 찌꺼기 제거 완료: {old_uuid}", flush=True)
+                except Exception as cache_err:
+                    print(f"[Staff Command Warn] active_minecraft_users 구 UUID 제거 실패: {cache_err}", flush=True)
+
+            # 5. Redis 디코 ID - 마크 UUID/닉네임 맵핑 영구 캐싱 (JSON 구조)
             cache_data = {
                 "uuid": uuid_36,
                 "username": real_mc_name
