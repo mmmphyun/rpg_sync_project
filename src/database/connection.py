@@ -229,14 +229,13 @@ def sync_users_to_db(users_data: list[dict]) -> int:
 
             user['current_job_id'] = matched_job_id
 
-        # 서브쿼리가 제거된 단순 UPSERT 쿼리
         upsert_sql = """
             INSERT INTO USERS (DISCORD_ID, NICKNAME, SERVER_ROLE, CURRENT_JOB_ID)
             VALUES (%(discord_id)s, %(nickname)s, %(server_role)s, %(current_job_id)s)
             ON CONFLICT (DISCORD_ID) DO UPDATE SET
                 NICKNAME = EXCLUDED.NICKNAME,
                 SERVER_ROLE = EXCLUDED.SERVER_ROLE,
-                CURRENT_JOB_ID = EXCLUDED.CURRENT_JOB_ID
+                CURRENT_JOB_ID = COALESCE(EXCLUDED.CURRENT_JOB_ID, USERS.CURRENT_JOB_ID)
         """
 
         cursor.executemany(upsert_sql, users_data)

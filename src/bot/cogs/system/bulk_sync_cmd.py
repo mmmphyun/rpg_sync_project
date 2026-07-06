@@ -27,20 +27,45 @@ class BulkSyncCmd(BaseCog):
         await ctx.send("유저 동기화를 시작합니다.")
 
         users_data = []
+        formats = getattr(self.bot, "nickname_formats", None)
+
         for member in ctx.guild.members:
             if not member.bot:
-                # 공통 파서 유틸리티를 사용하여 닉네임 파싱 및 정제
-                parsed = parse_user_nickname(member.display_name)
-                actual_nickname = parsed["nickname"]
-                server_role = parsed["server_role"]
-                job_name = parsed["job_name"]
+                try:
+                    # 공통 파서 유틸리티를 사용하여 닉네임 파싱 및 정제
+                    parsed = parse_user_nickname(member.display_name, formats)
+                    actual_nickname = parsed["nickname"]
+                    server_role = parsed["server_role"]
+                    job_name = parsed["job_name"]
 
-                users_data.append({
-                    "discord_id": str(member.id),
-                    "nickname": actual_nickname,
-                    "server_role": server_role,
-                    "job_name": job_name
-                })
+                    # 양식 불일치 유저 스킵 검증 (설정된 양식 중 일치하는 파트 개수를 가진 양식이 있어야 함)
+                    if formats:
+                        has_valid_format = False
+                        cleaned_name = re.sub(r'[\(\[\{]?(?:STF|stf)[\)\]\}]?|🌈', '', member.display_name)
+                        for fmt in formats:
+                            delim = fmt.get("delimiter", "ㅣ")
+                            temp_parts = [p.strip() for p in re.split(re.escape(delim), cleaned_name) if p.strip()]
+                            if len(temp_parts) == fmt.get("part_count"):
+                                has_valid_format = True
+                                break
+                        
+                        if not has_valid_format:
+                            # 매칭되는 양식이 전혀 없으면 스킵하여 DB 오염 방지
+                            continue
+
+                    users_data.append({
+                        "discord_id": str(member.id),
+                        "nickname": actual_nickname,
+                        "server_role": server_role,
+                        "job_name": job_name
+                    })
+                except Exception as parse_err:
+                    print(f"[Sync Skip] {member.display_name} 파싱 에러 (스킵): {parse_err}")
+                    continue
+
+        if not users_data:
+            await ctx.send("동기화할 대상 유저가 없습니다. (양식 일치 유저 없음)")
+            return
 
         success_count = await asyncio.to_thread(sync_users_to_db, users_data)
         await ctx.send(f"유저 동기화 완료: 총 {success_count}명의 데이터가 최신화되었습니다.")
