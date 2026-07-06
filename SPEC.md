@@ -31,6 +31,7 @@ T4|x|impl /닉네임양식설정 slash command & reload cache|I,V1,V4
 T5|x|refactor bulk_sync_cmd.py for skip mismatch & protect data|I,V2,V3
 T6|x|mount /닉네임양식설정 cog & load cache on bot startup|V1
 T7|x|impl job collision detection & list candidates in sync|V5
+T8|x|alert staff channel on nickname sync errors in user_event.py|V1,V5
 
 §B
 id|date|cause|fix

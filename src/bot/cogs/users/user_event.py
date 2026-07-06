@@ -13,6 +13,33 @@ from src.bot.utils.text_parser import parse_user_nickname
 
 class UserEvent(BaseCog):
 
+    async def send_staff_error_log(self, guild: discord.Guild, member: discord.Member, error_type: str, detail: str):
+        """스태프 전용 채널로 실시간 닉네임 동기화 에러 로그를 전송합니다."""
+        staff_channel_id = int(os.getenv("ADULT_VERIFY_LOG_CHANNEL_ID", 0))
+        if not staff_channel_id:
+            return
+        
+        channel = guild.get_channel(staff_channel_id)
+        if not channel:
+            try:
+                channel = await guild.fetch_channel(staff_channel_id)
+            except Exception:
+                return
+
+        if channel:
+            embed = discord.Embed(
+                title="⚠️ 유저 닉네임 동기화 실패 감지",
+                color=discord.Color.red(),
+                description=f"유저가 변경한 닉네임이 시스템 설정에 부합하지 않거나 직업 충돌이 발생했습니다."
+            )
+            embed.add_field(name="대상 유저", value=f"{member.mention} ({member.name})", inline=True)
+            embed.add_field(name="디스코드 ID", value=str(member.id), inline=True)
+            embed.add_field(name="시도한 별명", value=f"`{member.display_name}`", inline=False)
+            embed.add_field(name="오류 유형", value=f"**{error_type}**", inline=True)
+            embed.add_field(name="상세 내용", value=detail, inline=False)
+            
+            await channel.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
         """유저 닉네임 변경 감지 및 단건 동기화"""
@@ -22,26 +49,71 @@ class UserEvent(BaseCog):
         if before.display_name == after.display_name:
             return
 
-        # 공통 파서 유틸리티를 사용하여 닉네임 파싱 및 정제
-        parsed = parse_user_nickname(after.display_name)
-        actual_nickname = parsed["nickname"]
-        server_role = parsed["server_role"]
-        job_name = parsed["job_name"]
+        formats = getattr(self.bot, "nickname_formats", None)
+        
+        # 1. 양식 불일치 유저 감지 및 예외 로그 전송
+        if formats:
+            has_valid_format = False
+            cleaned_name = re.sub(r'[\(\[\{]?(?:STF|stf)[\)\]\}]?|🌈', '', after.display_name)
+            for fmt in formats:
+                delim = fmt.get("delimiter", "ㅣ")
+                temp_parts = [p.strip() for p in re.split(re.escape(delim), cleaned_name) if p.strip()]
+                if len(temp_parts) == fmt.get("part_count"):
+                    has_valid_format = True
+                    break
+            
+            if not has_valid_format:
+                print(f"[Sync Alert] {after.display_name} - No matching layout part count. Skiped.")
+                detail = (
+                    f"현재 별명 구조가 설정된 어떤 닉네임 양식과도 일치하지 않습니다.\n"
+                    f"등록된 구분자 양식을 충족하도록 별명을 수정해주세요."
+                )
+                await self.send_staff_error_log(after.guild, after, "양식 불일치 (Format Mismatch)", detail)
+                return
 
-        user_data = {
-            "discord_id": str(after.id),
-            "nickname": actual_nickname,
-            "server_role": server_role,
-            "job_name": job_name
-        }
+        try:
+            # 공통 파서 유틸리티를 사용하여 닉네임 파싱 및 정제
+            parsed = parse_user_nickname(after.display_name, formats)
+            actual_nickname = parsed["nickname"]
+            server_role = parsed["server_role"]
+            job_name = parsed["job_name"]
 
-        success_count = await asyncio.to_thread(sync_users_to_db, [user_data])
+            user_data = {
+                "discord_id": str(after.id),
+                "nickname": actual_nickname,
+                "server_role": server_role,
+                "job_name": job_name
+            }
 
-        if success_count > 0:
-            await delete_cache("cache:jobs:all")
-            print(f"[Info] 유저 정보 변경 동기화 완료: {before.display_name} -> {after.display_name} ({after.id})")
-        else:
-            print(f"[Warn] 유저 정보 변경 동기화 실패: {after.display_name} ({after.id})")
+            # 2. DB 동기화 실행 (복수 직업 충돌 가능성 대응)
+            result = await asyncio.to_thread(sync_users_to_db, [user_data])
+            
+            # 단건 전송이었으므로 실패한 유저 리스트에 포함되어 있는지 확인
+            if result.get("failed_users"):
+                fu = result["failed_users"][0]
+                print(f"[Sync Alert] Job collision for {after.display_name}: {fu['reason']}")
+                await self.send_staff_error_log(
+                    after.guild, 
+                    after, 
+                    "직업명 중복 충돌 (Job Collision)", 
+                    f"입력값 중 직업명이 여러 전역 직업과 중복 검색됩니다.\n**사유**: {fu['reason']}"
+                )
+                return
+
+            if result.get("success_count", 0) > 0:
+                await delete_cache("cache:jobs:all")
+                print(f"[Info] 유저 정보 변경 동기화 완료: {before.display_name} -> {after.display_name} ({after.id})")
+            else:
+                print(f"[Warn] 유저 정보 변경 동기화 실패 (성공 0건): {after.display_name} ({after.id})")
+
+        except Exception as e:
+            print(f"[Error] 유저 정보 변경 이벤트 처리 중 예외 발생: {e}")
+            await self.send_staff_error_log(
+                after.guild, 
+                after, 
+                "시스템 예외 (System Exception)", 
+                f"내부 동기화 프로세스 실행 중 예외가 발생했습니다.\n**에러**: {e}"
+            )
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
