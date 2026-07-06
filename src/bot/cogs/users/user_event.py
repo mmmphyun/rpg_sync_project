@@ -32,7 +32,7 @@ class UserEvent(BaseCog):
                 color=discord.Color.red(),
                 description=f"유저가 변경한 닉네임이 시스템 설정에 부합하지 않거나 직업 충돌이 발생했습니다."
             )
-            embed.add_field(name="대상 유저", value=f"{member.mention} ({member.name})", inline=True)
+            embed.add_field(name="대상 유저", value=f"{member.display_name} ({member.name})", inline=True)
             embed.add_field(name="디스코드 ID", value=str(member.id), inline=True)
             embed.add_field(name="시도한 별명", value=f"`{member.display_name}`", inline=False)
             embed.add_field(name="오류 유형", value=f"**{error_type}**", inline=True)
