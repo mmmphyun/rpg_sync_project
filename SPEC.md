@@ -24,7 +24,7 @@
 §T
 id|status|task|cites
 T1|x|create system_configs table & init default config|C
-T2|.|impl nickname_format db query in nickname_format.py|C
+T2|x|impl nickname_format db query in nickname_format.py|C
 T3|.|refactor text_parser.py parse_user_nickname using dynamic config|C,V2
 T4|.|impl /닉네임양식설정 slash command & reload cache|I,V1,V4
 T5|.|refactor bulk_sync_cmd.py for skip mismatch & protect data|I,V2,V3
