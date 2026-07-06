@@ -160,7 +160,7 @@ class UserNicknameVerificationModal(discord.ui.Modal, title="성인 인증 정�
         # 5. 검증 성공 시 DB 업서트 및 Redis 영구 캐싱
         try:
             # 5.1. DB 저장 (기본적으로 음성 바이패스는 False)
-            server_role = parse_user_nickname(interaction.user.display_name)["server_role"]
+            server_role = parse_user_nickname(interaction.user.display_name, getattr(interaction.client, "nickname_formats", None))["server_role"]
             db_success = await asyncio.to_thread(
                 register_verified_user,
                 user_id,

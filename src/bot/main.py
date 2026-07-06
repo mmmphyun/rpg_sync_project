@@ -262,8 +262,12 @@ class RPGSyncBot(commands.Bot):
             from src.database.connection import initialize_pool
             initialize_pool()
             print("Database connection pool initialized and warmed up for Bot.", flush=True)
+            
+            from src.database.nickname_format import get_nickname_formats
+            self.nickname_formats = await asyncio.to_thread(get_nickname_formats)
+            print(f"Nickname formats cache initialized: {self.nickname_formats}", flush=True)
         except Exception as db_err:
-            print(f"Failed to initialize database pool for Bot: {db_err}", flush=True)
+            print(f"Failed to initialize database pool or load formats for Bot: {db_err}", flush=True)
 
         try:
             await cache.init_redis_pool()
@@ -290,7 +294,8 @@ class RPGSyncBot(commands.Bot):
             "src.bot.cogs.users.user_cmd",
             "src.bot.cogs.users.reason_bypass",
             "src.bot.cogs.system.bulk_sync_cmd",
-            "src.bot.cogs.system.banner_cmd"
+            "src.bot.cogs.system.banner_cmd",
+            "src.bot.cogs.system.nickname_format_cmd"
         ]
 
         for ext in extensions:
