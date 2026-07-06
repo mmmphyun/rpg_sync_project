@@ -522,11 +522,15 @@ function openSidebar(idx) {
 
     setTimeout(() => {
         sidebar.classList.add("open");
+        if (window.innerWidth <= 1024) {
+            document.body.style.overflow = 'hidden';
+        }
     }, 10);
 }
 
 function closeSidebar() {
     sidebar.classList.remove("open");
+    document.body.style.overflow = '';
     selectedIdx = -1;
     renderGrid();
 }
@@ -759,5 +763,13 @@ function initApp() {
         app.innerHTML = `<div style="text-align:center; padding:50px; color:#e74c3c;">데이터베이스 연결에 실패했습니다.</div>`;
     }
 }
+
+// 모달 활성화 후 이탈 시 스크롤 잠금 완전 해제 보장 (V8)
+window.addEventListener('beforeunload', () => {
+    document.body.style.overflow = '';
+});
+window.addEventListener('popstate', () => {
+    document.body.style.overflow = '';
+});
 
 initApp();
