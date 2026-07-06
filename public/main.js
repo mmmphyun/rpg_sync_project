@@ -480,20 +480,24 @@ function openSidebar(idx) {
       <div class="slideover-layout">
           <!-- 좌측 패널: 정보 및 미디어 (35%) -->
           <div class="slideover-left inner-scroll">
-              ${portraitHtml}
-              <div class="sidebar-name">${job.name}</div>
-              <div class="sidebar-gate">${job.gate}${job.group && job.group !== "정보 없음" ? ` · ${job.group}` : ""}</div>
+              <div class="sidebar-profile-header">
+                  ${portraitHtml}
+                  <div class="sidebar-info-summary">
+                      <div class="sidebar-name">${job.name}</div>
+                      <div class="sidebar-gate">${job.gate}${job.group && job.group !== "정보 없음" ? ` · ${job.group}` : ""}</div>
 
-              <div class="sidebar-review-summary">
-                <span id="sideAvgRating" class="rating-text">평점 로딩 중...</span>
-                <button onclick="openReviewModal(${job.job_id}, '${job.name}')" class="review-btn">평가</button>
-              </div>
+                      <div class="sidebar-review-summary">
+                        <span id="sideAvgRating" class="rating-text">평점 로딩 중...</span>
+                        <button onclick="openReviewModal(${job.job_id}, '${job.name}')" class="review-btn">평가</button>
+                      </div>
 
-              <div class="sidebar-tags">
-                <span class="sidebar-tag ${RANGE_CLS[job.range] || "t-unknown"}">${formatRangeDisplay(job.range)}</span>
-                ${posTagFull(job.position)}
-                <span class="sidebar-tag ${RES_CLS[job.resource] || "t-unknown"}">${job.resource}</span>
-                ${job.limit ? `<span class="sidebar-tag t-limit">1인 제한</span>` : ""}
+                      <div class="sidebar-tags">
+                        <span class="sidebar-tag ${RANGE_CLS[job.range] || "t-unknown"}">${formatRangeDisplay(job.range)}</span>
+                        ${posTagFull(job.position)}
+                        <span class="sidebar-tag ${RES_CLS[job.resource] || "t-unknown"}">${job.resource}</span>
+                        ${job.limit ? `<span class="sidebar-tag t-limit">1인 제한</span>` : ""}
+                      </div>
+                  </div>
               </div>
 
               <div class="sidebar-desc">${formattedDesc}${reqCondition}</div>
