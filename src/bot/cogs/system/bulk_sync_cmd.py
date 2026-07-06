@@ -67,8 +67,19 @@ class BulkSyncCmd(BaseCog):
             await ctx.send("동기화할 대상 유저가 없습니다. (양식 일치 유저 없음)")
             return
 
-        success_count = await asyncio.to_thread(sync_users_to_db, users_data)
-        await ctx.send(f"유저 동기화 완료: 총 {success_count}명의 데이터가 최신화되었습니다.")
+        result = await asyncio.to_thread(sync_users_to_db, users_data)
+        success_count = result["success_count"]
+        failed_users = result["failed_users"]
+
+        msg = f"유저 동기화 완료: 총 {success_count}명의 데이터가 최신화되었습니다."
+        if failed_users:
+            msg += "\n\n⚠️ **일부 유저 직업 매칭 충돌 (동기화 스킵):**"
+            for fu in failed_users[:15]:
+                msg += f"\n- {fu['nickname']} (ID: {fu['discord_id']}): {fu['reason']}"
+            if len(failed_users) > 15:
+                msg += f"\n- 외 {len(failed_users) - 15}명..."
+
+        await ctx.send(msg)
 
     @commands.command(name="데이터동기화")
     @commands.has_permissions(administrator=True)

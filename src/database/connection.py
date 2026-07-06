@@ -188,14 +188,18 @@ def sync_job_patch_to_db(patch_data: dict):
 
 
 @db_retry(max_retries=2)
-def sync_users_to_db(users_data: list[dict]) -> int:
+def sync_users_to_db(users_data: list[dict]) -> dict:
     """
     디스코드 서버 유저 목록을 DB에 병합(UPSERT).
     진행 중인 직업이나 마지막 음성채널 퇴장 시간은 덮어쓰지 않음.
+    직업 충돌 발생 시 해당 유저는 스킵하고 사유와 함께 실패 유저 목록으로 반환.
     """
     conn = None
     cursor = None
     close_conn = False
+
+    failed_users = []
+    valid_users = []
 
     try:
         conn = get_connection()
@@ -205,10 +209,11 @@ def sync_users_to_db(users_data: list[dict]) -> int:
         cursor.execute("SELECT job_id, LOWER(REPLACE(name, ' ', '')), LOWER(REPLACE(display_name, ' ', '')) FROM jobs")
         cached_jobs = [{"id": row[0], "name": row[1] or "", "display": row[2] or ""} for row in cursor.fetchall()]
 
-        # 애플리케이션 계층 매핑 로직 (우선순위: 완전 일치 -> 부분 일치)
+        # 애플리케이션 계층 매핑 로직 (우선순위: 완전 일치 -> 부분 일치 복수 검증)
         for user in users_data:
             job_name = user.pop('job_name', None)
             matched_job_id = None
+            is_collision = False
 
             if job_name:
                 # 1순위: 완전 일치 검증
@@ -218,31 +223,45 @@ def sync_users_to_db(users_data: list[dict]) -> int:
                 if exact_match:
                     matched_job_id = exact_match
                 else:
-                    # 2순위: 부분 일치 검증 (검색어가 포함된 직업 중 길이가 가장 짧은 것을 우선 적용하여 오탐율 최소화)
+                    # 2순위: 부분 일치 검증
                     partial_matches = [
                         job for job in cached_jobs
                         if job_name in job["name"] or job_name in job["display"]
                     ]
-                    if partial_matches:
-                        partial_matches.sort(key=lambda x: min(len(x["name"]), len(x["display"])))
+                    
+                    if len(partial_matches) >= 2:
+                        # 복수 매칭 발생 시 스킵 처리 및 에러 기록
+                        candidate_names = ", ".join(job["display"] for job in partial_matches)
+                        failed_users.append({
+                            "discord_id": user["discord_id"],
+                            "nickname": user["nickname"],
+                            "reason": f"직업 중복 매칭 (후보군: {candidate_names})"
+                        })
+                        is_collision = True
+                    elif len(partial_matches) == 1:
                         matched_job_id = partial_matches[0]["id"]
 
-            user['current_job_id'] = matched_job_id
+            if not is_collision:
+                user['current_job_id'] = matched_job_id
+                valid_users.append(user)
 
-        upsert_sql = """
-            INSERT INTO USERS (DISCORD_ID, NICKNAME, SERVER_ROLE, CURRENT_JOB_ID)
-            VALUES (%(discord_id)s, %(nickname)s, %(server_role)s, %(current_job_id)s)
-            ON CONFLICT (DISCORD_ID) DO UPDATE SET
-                NICKNAME = EXCLUDED.NICKNAME,
-                SERVER_ROLE = EXCLUDED.SERVER_ROLE,
-                CURRENT_JOB_ID = COALESCE(EXCLUDED.CURRENT_JOB_ID, USERS.CURRENT_JOB_ID)
-        """
+        if valid_users:
+            upsert_sql = """
+                INSERT INTO USERS (DISCORD_ID, NICKNAME, SERVER_ROLE, CURRENT_JOB_ID)
+                VALUES (%(discord_id)s, %(nickname)s, %(server_role)s, %(current_job_id)s)
+                ON CONFLICT (DISCORD_ID) DO UPDATE SET
+                    NICKNAME = EXCLUDED.NICKNAME,
+                    SERVER_ROLE = EXCLUDED.SERVER_ROLE,
+                    CURRENT_JOB_ID = COALESCE(EXCLUDED.CURRENT_JOB_ID, USERS.CURRENT_JOB_ID)
+            """
+            cursor.executemany(upsert_sql, valid_users)
 
-        cursor.executemany(upsert_sql, users_data)
-
-        success_count = len(users_data)
+        success_count = len(valid_users)
         conn.commit()
-        return success_count
+        return {
+            "success_count": success_count,
+            "failed_users": failed_users
+        }
     except (OperationalError, psycopg2.DatabaseError) as e:
         if conn:
             conn.rollback()

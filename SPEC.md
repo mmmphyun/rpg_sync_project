@@ -20,6 +20,7 @@
 - V2: parsed job None → keep existing current_job_id in db
 - V3: part_count mismatch → skip member sync, prevent crash
 - V4: STAFF verify → check Discord role STAFF_ROLE_ID
+- V5: partial match count >= 2 → reject mapping, list all matching job names
 
 §T
 id|status|task|cites
@@ -29,6 +30,7 @@ T3|x|refactor text_parser.py parse_user_nickname using dynamic config|C,V2
 T4|x|impl /닉네임양식설정 slash command & reload cache|I,V1,V4
 T5|x|refactor bulk_sync_cmd.py for skip mismatch & protect data|I,V2,V3
 T6|x|mount /닉네임양식설정 cog & load cache on bot startup|V1
+T7|x|impl job collision detection & list candidates in sync|V5
 
 §B
 id|date|cause|fix
