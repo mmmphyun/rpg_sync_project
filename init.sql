@@ -123,3 +123,9 @@ CREATE TABLE IF NOT EXISTS public.skills (
     is_mobility CHAR DEFAULT 'N'::bpchar,
     form_name VARCHAR
 );
+
+CREATE TABLE IF NOT EXISTS public.system_configs (
+    config_key VARCHAR NOT NULL PRIMARY KEY,
+    config_value JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
