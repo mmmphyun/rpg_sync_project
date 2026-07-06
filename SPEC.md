@@ -33,6 +33,7 @@ T6|x|mount /닉네임양식설정 cog & load cache on bot startup|V1
 T7|x|impl job collision detection & list candidates in sync|V5
 T8|x|alert staff channel on nickname sync errors in user_event.py|V1,V5
 T9|x|support discordapp.com legacy message urls in job_cmd.py|V1
+T10|x|add print debug log to job_event.py on_raw_message_edit|V1
 
 §B
 id|date|cause|fix
