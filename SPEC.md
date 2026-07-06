@@ -17,7 +17,7 @@
 
 §V
 - V1: config change → update memory cache immediately
-- V2: parsed job None → keep existing current_job_id in db
+- V2: parsed job None → current_job_id NULL (allows job nullification)
 - V3: part_count mismatch → skip member sync, prevent crash
 - V4: STAFF verify → check Discord role STAFF_ROLE_ID
 - V5: partial match count >= 2 → reject mapping, list all matching job names

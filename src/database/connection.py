@@ -252,7 +252,7 @@ def sync_users_to_db(users_data: list[dict]) -> dict:
                 ON CONFLICT (DISCORD_ID) DO UPDATE SET
                     NICKNAME = EXCLUDED.NICKNAME,
                     SERVER_ROLE = EXCLUDED.SERVER_ROLE,
-                    CURRENT_JOB_ID = COALESCE(EXCLUDED.CURRENT_JOB_ID, USERS.CURRENT_JOB_ID)
+                    CURRENT_JOB_ID = EXCLUDED.CURRENT_JOB_ID
             """
             cursor.executemany(upsert_sql, valid_users)
 
