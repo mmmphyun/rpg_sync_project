@@ -32,9 +32,6 @@ class JobEvent(BaseCog):
         """캐시되지 않은 기존 메시지(포스트 본문)가 수정될 때 트리거"""
         channel_id = payload.channel_id
 
-        # 디버그용 출력 로그 추가 (수신된 채널 ID 및 인프라 매핑 상태 대조)
-        print(f"[Debug Edit Event] 수신된 ID: {channel_id} | 설정된 ID 목록: (패치: {self.patch_channel_id}, 설명: {self.desc_thread_id}, 일러: {self.illust_thread_id})", flush=True)
-
         # 대상 채널(쓰레드)이 아니면 조기 반환
         if channel_id not in (
                 self.patch_channel_id, self.desc_thread_id, self.illust_thread_id
