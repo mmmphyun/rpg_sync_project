@@ -159,7 +159,7 @@ def parse_job_illustration(raw_text: str) -> Optional[str]:
     return None
 
 
-def parse_user_nickname(display_name: str) -> dict:
+def parse_user_nickname(display_name: str, formats: list = None) -> dict:
     """
     유저 닉네임 문자열을 파싱하여 실제 닉네임, 서버 역할, 직업명을 추출합니다.
     """
@@ -178,23 +178,65 @@ def parse_user_nickname(display_name: str) -> dict:
     # 2. 스태프 관련 키워드 및 대괄호/괄호 노이즈 제거
     cleaned = re.sub(r'[\(\[\{]?(?:STF|stf)[\)\]\}]?|🌈', '', display_name)
 
-    # 3. 구분자 'ㅣ' 또는 '|' 기준으로 분할하되, 공백 제거 및 빈 요소 제외
-    parts = [p.strip() for p in re.split(r'[ㅣ\|]', cleaned) if p.strip()]
+    # 기본 포맷 설정 (전달되지 않았을 때의 폴백)
+    if not formats:
+        formats = [
+            {
+                "part_count": 2,
+                "delimiter": "ㅣ",
+                "nickname_index": 1,
+                "job_index": 2,
+                "staff_index": -1
+            }
+        ]
 
-    actual_nickname = display_name.strip()
-    job_name = None
+    # 각 포맷에 대해 닉네임을 split하여 매칭 시도
+    matched_fmt = None
+    parts = []
+    
+    for fmt in formats:
+        delim = fmt.get("delimiter", "ㅣ")
+        pattern = re.escape(delim)
+        temp_parts = [p.strip() for p in re.split(pattern, cleaned) if p.strip()]
+        
+        if len(temp_parts) == fmt.get("part_count"):
+            matched_fmt = fmt
+            parts = temp_parts
+            break
 
-    # 4. 요소의 개수에 따른 매핑 규칙 적용
-    if len(parts) == 1:
-        # [닉네임]
-        actual_nickname = parts[0]
-    elif len(parts) == 2:
-        # [닉네임, 생활직업] -> 생활직업은 DB에 저장하지 않으므로 무시
-        actual_nickname = parts[0]
-    elif len(parts) >= 3:
-        # [생활직업, 닉네임, RPG직업] -> RPG직업은 DB jobs와 연동되므로 job_name으로 저장
-        actual_nickname = parts[-2]
-        job_name = parts[-1].replace(" ", "").lower()
+    # 매칭되는 포맷을 찾지 못한 경우 폴백 처리
+    if not matched_fmt:
+        # 기존 하드코딩 룰을 폴백으로 적용
+        parts = [p.strip() for p in re.split(r'[ㅣ\|]', cleaned) if p.strip()]
+        part_count = len(parts)
+        
+        actual_nickname = display_name.strip()
+        job_name = None
+        
+        if part_count == 1:
+            actual_nickname = parts[0]
+        elif part_count == 2:
+            actual_nickname = parts[0]
+        elif part_count >= 3:
+            actual_nickname = parts[-2]
+            job_name = parts[-1].replace(" ", "").lower()
+    else:
+        # 매칭된 포맷 규칙에 따라 파싱 (1-based index 이므로 -1 처리)
+        nickname_idx = matched_fmt["nickname_index"] - 1
+        job_idx = matched_fmt["job_index"] - 1
+        staff_idx = matched_fmt.get("staff_index", -1) - 1
+
+        actual_nickname = display_name.strip()
+        job_name = None
+
+        if 0 <= nickname_idx < len(parts):
+            actual_nickname = parts[nickname_idx]
+        if 0 <= job_idx < len(parts):
+            job_name = parts[job_idx].replace(" ", "").lower()
+        if 0 <= staff_idx < len(parts):
+            val = parts[staff_idx].lower()
+            if "stf" in val or "own" in val or "staff" in val:
+                server_role = "STAFF"
 
     if job_name and not job_name.strip():
         job_name = None
