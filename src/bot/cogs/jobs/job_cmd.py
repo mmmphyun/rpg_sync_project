@@ -171,7 +171,7 @@ class JobGroupCog(commands.GroupCog, name="직업"):
         MAX_FILE_SIZE = 15 * 1024 * 1024
         uploaded_urls = []
         try:
-            if "discord.com/channels/" not in message_url:
+            if "discord.com/channels/" not in message_url and "discordapp.com/channels/" not in message_url:
                 await interaction.followup.send("[Error] 일러스트 수정 시 유효한 디스코드 메시지 링크를 입력해야 합니다.")
                 return
 
