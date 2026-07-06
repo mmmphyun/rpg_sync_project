@@ -503,10 +503,102 @@ kbd.key-kbd {
 
 /* 모바일/태블릿 반응형 */
 @media screen and (max-width: 1024px) {
-    .sidebar.open { width: 100%; max-width: 100%; border-left: none; }
-    .slideover-layout { flex-direction: column; overflow-y: auto; }
-    .slideover-left { flex: none; border-right: none; border-bottom: 1px dashed var(--border-color); padding-bottom: 20px; }
-    .slideover-right { padding-top: 10px; }
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100dvh;
+        z-index: 2000;
+        transform: translateX(100%);
+        border-left: none;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+        border-left: none;
+    }
+    .sidebar-inner {
+        padding: 15px;
+        height: 100%;
+    }
+    .sidebar-close {
+        top: 10px;
+        right: 15px;
+        font-size: 1.3rem;
+    }
+    .slideover-layout {
+        flex-direction: column;
+        overflow-y: auto;
+        height: calc(100% - 30px);
+        margin-top: 25px;
+        gap: 15px;
+    }
+    .slideover-left {
+        flex: none;
+        border-right: none;
+        border-bottom: 1px dashed var(--border-color);
+        padding-bottom: 15px;
+    }
+    .slideover-right {
+        padding-top: 10px;
+    }
+
+    /* A안: 미니 썸네일 + 가로 배치 프로필 */
+    .sidebar-profile-header {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        width: 100%;
+    }
+    .sidebar-portrait-wrapper {
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+        margin-bottom: 0;
+    }
+    .sidebar-info-summary {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .sidebar-name {
+        font-size: 1.15rem;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .sidebar-gate {
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+    .sidebar-review-summary {
+        margin-bottom: 6px;
+        padding: 4px 10px;
+    }
+    .rating-text {
+        font-size: 0.8rem;
+    }
+    .review-btn {
+        padding: 3px 10px;
+        font-size: 0.7rem;
+    }
+    .sidebar-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .sidebar-tag {
+        font-size: 0.65rem;
+        padding: 1px 6px;
+    }
+    .sidebar-desc {
+        margin-top: 12px;
+        padding-top: 12px;
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }
 }
 @media screen and (max-width: 768px) {
     .skill-grid { grid-template-columns: 1fr; }
