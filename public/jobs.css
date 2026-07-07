@@ -571,12 +571,12 @@ kbd.key-kbd {
 
     /* 필터 대시보드 접이식 아코디언 애니메이션 */
     .filter-dashboard.collapsible {
-        max-height: 500px;
+        max-height: 1000px;
         opacity: 1;
         margin-bottom: 20px;
         padding: 12px;
         border: 1px solid var(--border-color);
-        transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, padding 0.35s ease, margin-bottom 0.35s ease, border-color 0.35s ease;
+        transition: max-height 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.45s ease, margin-bottom 0.45s ease, border-color 0.45s ease;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -595,10 +595,10 @@ kbd.key-kbd {
         pointer-events: none;
     }
 
-    /* 필터 내부 요소 정렬 정돈 */
+    /* 필터 내부 요소 정렬 정돈 (4열 그리드 배치) */
     .filter-group {
-        flex-direction: column;
-        align-items: flex-start;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
         gap: 6px;
         width: 100%;
     }
@@ -606,8 +606,16 @@ kbd.key-kbd {
         display: none; /* 모바일에서 깨지는 가로 구분선 숨김 */
     }
     .filter-label {
+        grid-column: 1 / -1; /* 라벨은 가로 전체 단독 행 차지 */
         margin-bottom: 2px;
         font-size: 0.7rem;
+    }
+    .filter-group .filter-btn {
+        padding: 6px 0;
+        font-size: 0.75rem;
+        text-align: center;
+        width: 100%;
+        box-sizing: border-box;
     }
     .search-group {
         width: 100%;
