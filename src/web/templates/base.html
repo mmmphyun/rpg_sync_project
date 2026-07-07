@@ -20,7 +20,7 @@
     <meta name="twitter:image" content="https://assets.fossile-wiki.cloud/banners/07b0001491ba4756912b6e1af7d653b7.png">
 
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-    <link rel="stylesheet" href="/static/global.css?v=1.0.2">
+    <link rel="stylesheet" href="/static/global.css?v={{ get_mtime('global.css') }}">
     <link rel="manifest" href="/images/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/rpg-awesome.min.css">
@@ -65,7 +65,7 @@
         </div>
     </footer>
 
-    <script src="/static/base.js?v=1.0.2"></script>
+    <script src="/static/base.js?v={{ get_mtime('base.js') }}"></script>
     <script src="/static/js/swiper-bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>

@@ -5,7 +5,7 @@
 {% block og_description %}화석 서버의 {{ "공지사항" if board_type == "notice" else "이벤트" }} 게시판입니다. 다양한 소식을 빠르게 만나보세요!{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/board.css?v=1.0.2">
+<link rel="stylesheet" href="/static/board.css?v={{ get_mtime('board.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -90,5 +90,5 @@
 <script>
     window.BOARD_TYPE = "{{ board_type }}";
 </script>
-<script src="/static/board.js?v=1.0.2"></script>
+<script src="/static/board.js?v={{ get_mtime('board.js') }}"></script>
 {% endblock %}
