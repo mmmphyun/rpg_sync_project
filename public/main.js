@@ -772,4 +772,20 @@ window.addEventListener('popstate', () => {
     document.body.style.overflow = '';
 });
 
+// 모바일 필터 아코디언 토글 제어 (V13)
+document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.getElementById('toggleFilterBtn');
+    const dashboard = document.getElementById('filterDashboard');
+    
+    if (toggleBtn && dashboard) {
+        toggleBtn.addEventListener('click', () => {
+            dashboard.classList.toggle('collapsed');
+            const isCollapsed = dashboard.classList.contains('collapsed');
+            toggleBtn.innerHTML = isCollapsed 
+                ? '<i class="fa-solid fa-sliders"></i> 정렬 및 필터' 
+                : '<i class="fa-solid fa-xmark"></i> 필터 닫기';
+        });
+    }
+});
+
 initApp();
