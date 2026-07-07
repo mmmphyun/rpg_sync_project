@@ -456,3 +456,31 @@ body {
     0% { transform: translateY(0); }
     100% { transform: translateY(4px); }
 }
+
+/* =========================================
+   모바일/태블릿 반응형 스타일 (T25, T26)
+   ========================================= */
+@media screen and (max-width: 768px) {
+    .content-container {
+        padding: 20px 12px !important;
+    }
+
+    #feedArea {
+        padding-left: 0 !important;
+    }
+
+    #feedArea::before,
+    .timeline-glow,
+    .timeline-indicator {
+        display: none !important;
+    }
+
+    .board-card-wrapper {
+        margin-bottom: 24px !important;
+    }
+
+    .board-card {
+        width: 100% !important;
+        padding: 16px 20px !important;
+    }
+}
