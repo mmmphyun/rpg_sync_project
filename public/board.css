@@ -147,7 +147,7 @@ body {
     left: 39px;
     width: 1px;
     height: 140px;
-    background: linear-gradient(to bottom, rgba(16,185,129,0) 0%, var(--accent-hero) 50%, rgba(16,185,129,0) 100%);
+    background: linear-gradient(to bottom, transparent 0%, var(--text-main) 50%, transparent 100%);
     z-index: 1;
     pointer-events: none;
     transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -176,7 +176,7 @@ body {
     height: 8px;
     border-radius: 0px;
     background: var(--bg-surface);
-    border: 2px solid var(--accent-hero);
+    border: 2px solid var(--text-main);
     margin-top: 24px;
     z-index: 2;
     filter: brightness(0.4) grayscale(0.8);
@@ -204,7 +204,7 @@ body {
 }
 
 .board-card:hover {
-    border-color: var(--accent-hero);
+    border-color: var(--text-main);
     background: var(--bg-surface);
     opacity: 1;
 }
@@ -212,7 +212,7 @@ body {
 .board-card-wrapper.focused .timeline-dot {
     filter: brightness(1) grayscale(0);
     transform: rotate(45deg) scale(1.2);
-    background: var(--accent-hero);
+    background: var(--text-main);
 }
 
 .board-card-wrapper.focused .board-card {
