@@ -132,6 +132,10 @@ async def startup_event():
     initialize_pool()
     print("[System] Redis 커넥션 풀 초기화 시작...", flush=True)
     await init_redis_pool()
+    try:
+        init_static_mtime_cache()
+    except Exception as e:
+        print(f"[System] 정적 파일 캐시 예열 실패 (무시됨): {e}", flush=True)
     print("[System] MC 서버 초기 상태 캐싱 시작...", flush=True)
     try:
         await server.get_server_status()
@@ -148,10 +152,54 @@ async def shutdown_event():
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# ---------------------------------------------------------------------
+# Static Asset Cache Busting (mtime Caching with Exception & Lazy-Loading Guards)
+# ---------------------------------------------------------------------
+STATIC_MTIME_CACHE = {}
+
+def init_static_mtime_cache():
+    """서버 기동 시 public 디렉토리 내의 모든 정적 파일의 수정 시각을 일괄 메모리 예열 캐싱합니다."""
+    static_dir = "public"
+    if not os.path.exists(static_dir):
+        return
+    print("[System] 정적 파일 mtime 캐시 예열 시작...", flush=True)
+    for root, _, files in os.walk(static_dir):
+        for file in files:
+            filepath = os.path.join(root, file)
+            # URL에 사용되는 형태의 상대 경로로 정규화 (예: public/css/jobs.css -> css/jobs.css)
+            rel_path = os.path.relpath(filepath, static_dir).replace("\\", "/")
+            try:
+                STATIC_MTIME_CACHE[rel_path] = int(os.path.getmtime(filepath))
+            except Exception:
+                pass
+    print(f"[System] 정적 파일 {len(STATIC_MTIME_CACHE)}개 캐시 완료", flush=True)
+
+def get_static_mtime(filename: str) -> str:
+    """
+    템플릿에서 정적 파일의 캐시버스팅 버전을 얻어옵니다.
+    경로 정규화, 지연 로딩(Lazy-loading), 500에러 예외 가드를 탑재했습니다.
+    """
+    # 1. 경로 정규화 (선두/후미 슬래시 제거 및 구분자 슬래시 통일)
+    clean_path = filename.strip().replace("\\", "/").lstrip("/")
+    
+    # 2. 지연 로딩 (Lazy-Loading)
+    if clean_path not in STATIC_MTIME_CACHE:
+        try:
+            target_path = os.path.join("public", clean_path)
+            if os.path.exists(target_path):
+                STATIC_MTIME_CACHE[clean_path] = int(os.path.getmtime(target_path))
+        except Exception:
+            # 3. 예외 가드 (Exception Guard)
+            pass
+
+    # 캐시에서 조회 후 없으면 기본 예비값 반환
+    return str(STATIC_MTIME_CACHE.get(clean_path, 1783350000))
+
 os.makedirs("public/images", exist_ok=True)
 app.mount("/images", StaticFiles(directory="public/images"), name="images")
 app.mount("/static", StaticFiles(directory="public"), name="static")
 templates = Jinja2Templates(directory="src/web/templates")
+templates.env.globals["get_mtime"] = get_static_mtime
 
 # Include Routers
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["Dashboard"])
