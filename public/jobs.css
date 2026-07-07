@@ -503,6 +503,69 @@ kbd.key-kbd {
 
 /* 모바일/태블릿 반응형 */
 @media screen and (max-width: 1024px) {
+    /* 높이 제한 해제 & 전체 스크롤 레이아웃 */
+    .jobs-container {
+        height: auto;
+        margin-top: 20px;
+        padding: 15px;
+    }
+    .main-workspace {
+        height: auto;
+        overflow: visible;
+        border-top: none;
+        padding-top: 10px;
+    }
+    .grid-area {
+        overflow-y: visible;
+        padding-right: 0;
+    }
+
+    /* 헤더 축소 */
+    .editorial-header {
+        margin-top: 60px; /* 상단 고정 헤더바 침범 방지 최소한의 마진 */
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+    }
+    .main-title {
+        font-size: 1.8rem;
+    }
+    .sub-title-mono {
+        font-size: 0.65rem;
+    }
+    .editorial-meta-line {
+        margin-top: 10px;
+        padding-top: 6px;
+    }
+
+    /* 필터 대시보드 정렬 정돈 */
+    .filter-dashboard {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px;
+    }
+    .filter-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        width: 100%;
+    }
+    .filter-sep {
+        display: none; /* 모바일에서 깨지는 가로 구분선 숨김 */
+    }
+    .filter-label {
+        margin-bottom: 2px;
+        font-size: 0.7rem;
+    }
+    .search-group {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: flex-start;
+    }
+    .search-input {
+        width: 100%;
+    }
+
     .sidebar {
         position: fixed;
         top: 0;
