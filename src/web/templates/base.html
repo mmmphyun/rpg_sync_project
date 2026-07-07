@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Fossile Wiki{% endblock %}</title>
+    {% block robots %}{% endblock %}
 
     <!-- 오픈 그래프 (Open Graph / 링크 미리보기) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://fossile-wiki.cloud">
     <meta property="og:title" content="Fossile Wiki - 화석 서버 공식 위키">
-    <meta property="og:description" content="{% block og_description %}화석 서버의 다양한 가이드, 직업 설명, 실시간 서버 상태와 이벤트 소식을 확인해보세요!{% endblock %}">
+    <meta name="description" content="{% block og_description %}화석 서버의 다양한 가이드, 직업 설명, 실시간 서버 상태와 이벤트 소식을 확인해보세요!{% endblock %}">
+    <meta property="og:description" content="{{ self.og_description() }}">
     <meta property="og:image" content="https://assets.fossile-wiki.cloud/banners/07b0001491ba4756912b6e1af7d653b7.png">
 
     <!-- 트위터 카드 (X / 트위터 공유용) -->
@@ -19,7 +21,10 @@
     <meta name="twitter:description" content="{{ self.og_description() }}">
     <meta name="twitter:image" content="https://assets.fossile-wiki.cloud/banners/07b0001491ba4756912b6e1af7d653b7.png">
 
-    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link rel="shortcut icon" href="/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
     <link rel="stylesheet" href="/static/global.css?v={{ get_mtime('global.css') }}">
     <link rel="manifest" href="/images/manifest.json">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

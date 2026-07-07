@@ -7,7 +7,7 @@ import aiohttp
 import jwt  # 누락된 JWT 디코더 임포트
 
 from fastapi import FastAPI, Request, Cookie
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -391,3 +391,17 @@ def serve_login(request: Request):
             "discord_invite_url": getattr(request.state, "discord_invite_url", DISCORD_INVITE_URL)
         }
     )
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("public/images/favicon.ico")
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots():
+    content = (
+        "User-agent: *\n"
+        "Disallow: /api/v1/auth/\n"
+        "Disallow: /login\n"
+        "Allow: /\n"
+    )
+    return PlainTextResponse(content=content)
