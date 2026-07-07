@@ -580,6 +580,7 @@ kbd.key-kbd {
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        flex-wrap: nowrap !important; /* flex-wrap wrap 상속을 명시적으로 차단하여 가로 팽창 방지 */
         align-items: stretch;
         gap: 12px;
     }
