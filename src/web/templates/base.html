@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Fossile Wiki{% endblock %}</title>
+    <title>{% block title %}RPG Sync Wiki{% endblock %}</title>
     {% block robots %}{% endblock %}
 
     <!-- 오픈 그래프 (Open Graph / 링크 미리보기) -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://fossile-wiki.cloud">
-    <meta property="og:title" content="Fossile Wiki - 화석 서버 공식 위키">
-    <meta name="description" content="{% block og_description %}화석 서버의 다양한 가이드, 직업 설명, 실시간 서버 상태와 이벤트 소식을 확인해보세요!{% endblock %}">
+    <meta property="og:url" content="https://rpg-sync-wiki.example.com">
+    <meta property="og:title" content="RPG Sync Wiki - RPG 서버 공식 위키">
+    <meta name="description" content="{% block og_description %}RPG 서버의 다양한 가이드, 직업 설명, 실시간 서버 상태와 이벤트 소식을 확인해보세요!{% endblock %}">
     <meta property="og:description" content="{{ self.og_description() }}">
-    <meta property="og:image" content="https://assets.fossile-wiki.cloud/banners/07b0001491ba4756912b6e1af7d653b7.png">
+    <meta property="og:image" content="https://assets.rpg-sync-wiki.example.com/banners/07b0001491ba4756912b6e1af7d653b7.png">
 
     <!-- 트위터 카드 (X / 트위터 공유용) -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://fossile-wiki.cloud">
-    <meta name="twitter:title" content="Fossile Wiki - 화석 서버 공식 위키">
+    <meta name="twitter:url" content="https://rpg-sync-wiki.example.com">
+    <meta name="twitter:title" content="RPG Sync Wiki - RPG 서버 공식 위키">
     <meta name="twitter:description" content="{{ self.og_description() }}">
-    <meta name="twitter:image" content="https://assets.fossile-wiki.cloud/banners/07b0001491ba4756912b6e1af7d653b7.png">
+    <meta name="twitter:image" content="https://assets.rpg-sync-wiki.example.com/banners/07b0001491ba4756912b6e1af7d653b7.png">
 
     <link rel="shortcut icon" href="/images/favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
@@ -46,7 +46,7 @@
     <!-- 투명 GNB 헤더 -->
     <header class="global-header transparent" id="global-header">
         <div class="header-inner">
-            <a href="/" class="logo" style="text-decoration: none; color: inherit;">Fossile Wiki</a>
+            <a href="/" class="logo" style="text-decoration: none; color: inherit;">RPG Sync Wiki</a>
             <nav class="gnb-nav">
                 <a href="/notice">공지사항</a>
                 <a href="/event">이벤트</a>
@@ -65,8 +65,8 @@
 
     <footer class="dash-footer">
         <div class="footer-container">
-            <p>&copy; 2026 Fossile Gate. All rights reserved.</p>
-            <p class="attribution">아이디어 및 초기 소스 제공: 나나</p>
+            <p>&copy; 2026 RPG Sync Gate. All rights reserved.</p>
+            <p class="attribution">RPG Sync Project</p>
         </div>
     </footer>
 

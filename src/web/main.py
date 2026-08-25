@@ -33,7 +33,7 @@ class SecurityMiddleware:
         self.app = app
         # 화이트리스트 도메인 정리 (공백 제거)
         self.allowed_origins = [
-            origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "https://fossile-wiki.cloud").split(",")
+            origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "https://rpg-sync-wiki.example.com").split(",")
         ]
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
@@ -101,20 +101,24 @@ class SecurityMiddleware:
 # FastAPI App Initialization
 # ---------------------------------------------------------------------
 web_domain = os.getenv("WEB_DOMAIN", "http://localhost:8000")
-is_prod = "fossile-wiki.cloud" in web_domain
+is_prod = "rpg-sync-wiki.example.com" in web_domain
 
 app = FastAPI(
-    title="Fossile Server Web Dashboard",
-    docs_url=None if is_prod else "/docs",
-    redoc_url=None if is_prod else "/redoc",
-    openapi_url=None if is_prod else "/openapi.json"
+    title="RPG Sync Server Web Dashboard",
+    description="마인크래프트 RPG 서버 연동 전용 웹 대시보드 API 서비스",
+    version="2.0.0",
+    docs_url="/docs" if not is_prod else None,
+    redoc_url="/redoc" if not is_prod else None,
+    openapi_url="/openapi.json" if not is_prod else None
 )
 
 # Apply custom ASGI middleware first
 app.add_middleware(SecurityMiddleware)
 
-# Apply CORS middleware
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://fossile-wiki.cloud").split(",")
+# ---------------------------------------------------------------------
+# CORS Middleware Configuration
+# ---------------------------------------------------------------------
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://rpg-sync-wiki.example.com").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,

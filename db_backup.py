@@ -78,7 +78,7 @@ def extract_and_download_images(data_list, fields):
 
                     # 다운로드 진행 (타임아웃 5초 제한)
                     print(f" -> Downloading R2 image: {url} ...")
-                    req = urllib.request.Request(url, headers={'User-Agent': 'FossileBackupAgent/1.0'})
+                    req = urllib.request.Request(url, headers={'User-Agent': 'RPGSyncBackupAgent/1.0'})
                     with urllib.request.urlopen(req, timeout=5.0) as response:
                         with open(local_filepath, 'wb') as f:
                             f.write(response.read())
@@ -181,7 +181,7 @@ def main():
 
     initialize_directories()
 
-    print("\n========== [Fossile Gate 백업 & 아카이브 마이그레이션 기동] ==========")
+    print("\n========== [RPG Sync Gate 백업 & 아카이브 마이그레이션 기동] ==========")
     try:
         # DB 연결 수립
         conn = psycopg2.connect(DATABASE_URL)

@@ -18,14 +18,14 @@
     - **분석**: 동기식 DB 드라이버(`psycopg2`)가 봇의 메인 스레드를 점유하여 Discord Gateway 연결이 끊기는 현상 포착.
     - **해결**: `git show 14c9b6b`에서 전용 **ThreadPoolExecutor(max_workers=20)**를 수동 설정하고, FastAPI 라우터를 `async def`에서 `def`로 전환하여 블로킹 작업을 워커 스레드로 완전 격리.
 
-## 🔴 Phase 3: 보안 하드닝 및 AI 코드 감사 (Commit af56d9f ~ 6e3f8ee)
+## Phase 3: 보안 하드닝 및 AI 코드 감사 (Commit af56d9f ~ 6e3f8ee)
 - **SQL Injection 및 XSS 원천 차단 (`c05a260`, `6afe4bc`)**
     - **철학**: "AI가 제안한 f-string 기반 쿼리를 거부하고 파라미터 바인딩으로 전수 교체."
     - **해결**: `git show 6afe4bc`에서 CSR 방식의 `fetch`를 제거하고 **Jinja2 SSR**로 전환. `INITIAL_JOBS_DATA`를 서버에서 안전하게 주입하여 DOM 기반 XSS 공격 표면을 제거함.
 - **실제 IP 추적 및 Rate Limiting (`66fe5c3`, `54b2cf8`)**
     - **증거**: Cloudflare 리버스 프록시 환경에서 `cf-connecting-ip` 헤더를 우선적으로 신뢰하도록 `limiter.py`를 커스터마이징하여 정밀한 DoS 방어 체계 구축.
 
-## 🔵 Phase 4: 이벤트 기반 무상태(Stateless) 연동 아키텍처 및 자가 치유 (Commit fce7492 ~ e7c8c78)
+## Phase 4: 이벤트 기반 무상태(Stateless) 연동 아키텍처 및 자가 치유 (Commit fce7492 ~ e7c8c78)
 - **Redis Pub/Sub 및 분산 락 구현 (`c6cc131`)**
     - **현상**: 마이크로서비스(Bot/Web) 분리로 인한 실시간 상태 공유의 어려움.
     - **해결**: `git show c6cc131`에서 Redis를 메시지 브로커로 활용하여 Minecraft-Discord 간 양방향 통신 구현. 자원이 제한된 VM(1GB RAM) 환경에서 watchdog 오버헤드를 피하기 위해 Safe TTL (15s) + 명시적 해제(Explicit Unlock) 방식의 **분산 락**을 설계하여 Race Condition 해결.
@@ -34,5 +34,5 @@
 
 ---
 
-## 🚀 성장의 기록: 엔지니어로서의 정체성
+## 성장의 기록: 엔지니어로서의 정체성
 이 프로젝트의 178개 커밋은 저에게 **"도구를 지휘하는 능력"**을 가르쳐주었습니다. AI 에이전트의 생산성을 활용하되, 그 결과물을 **커널 레벨의 TCP 튜닝, 분산 락, 보안 취약점 감사** 등 엔지니어링 지식을 동원해 검증하고 다듬었습니다. 한정된 리소스(Free Tier) 환경은 제약을 넘어 아키텍처를 극한으로 효율화하는 최고의 스승이 되었습니다.

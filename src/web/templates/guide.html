@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}서버 가이드 - Fossil Wiki{% endblock %}
+{% block title %}서버 가이드 - RPG Sync Wiki{% endblock %}
 
-{% block og_description %}화석 서버 마인크래프트 멀티플레이 접속을 위한 정식 안내 가이드입니다.{% endblock %}
+{% block og_description %}RPG 서버 마인크래프트 멀티플레이 접속을 위한 정식 안내 가이드입니다.{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/guide.css?v=1.0.2">
@@ -170,7 +170,7 @@
                 </section>
             </div>
 
-            <!-- Tab 3: 화석 경제 & 부동산 -->
+            <!-- Tab 3: RPG 경제 & 부동산 -->
             <div id="tab-economy" class="tab-content">
                 <!-- 3-1. 3대 핵심 재화 -->
                 <section class="guide-section">
@@ -182,7 +182,7 @@
                         <ul>
                             <li><strong>💵 현금:</strong> 서버의 근본 인게임 화폐입니다. 생활 자원 판매, 일일 퀘스트, 출석 보상, RPG 몬스터 사냥으로 수급하며 소모품 구매 및 플레이어간 장비 거래 등에 범용적으로 사용됩니다.</li>
                             <li><strong>🎟️ 출석 코인:</strong> 매일 출석 체크와 추첨권으로 획득할 수 있습니다! <strong>가방 확장권</strong> 등 특수 아이템으로 교환 하거나 <strong>이벤트 아이템</strong> 교환에 사용되므로 초반 낭비는 금물입니다.</li>
-                            <li><strong>📈 화석 코인:</strong> 가상 코인 시뮬레이션 시스템입니다. 약 5분 주기로 변동되는 정기 시세와 랜덤 호재/악재 이벤트로 드라마틱한 등락을 제공합니다. 판매 시 소량의 수수료 차감 후 현금으로 지급됩니다.</li>
+                            <li><strong>📈 RPG 코인:</strong> 가상 코인 시뮬레이션 시스템입니다. 약 5분 주기로 변동되는 정기 시세와 랜덤 호재/악재 이벤트로 드라마틱한 등락을 제공합니다. 판매 시 소량의 수수료 차감 후 현금으로 지급됩니다.</li>
                         </ul>
                     </div>
                 </section>
@@ -390,7 +390,7 @@
                         <!-- 클래식 마인크래프트 감성 격자 시뮬레이터 -->
                         <div class="inventory-container">
                             <div class="inventory-title-box">
-                                <h4 class="inventory-title">// FOSSIL SYSTEM MENU</h4>
+                                <h4 class="inventory-title">// RPG SYSTEM MENU</h4>
                                 <span class="inventory-subtitle">9 x 6 Slots Inventory View</span>
                             </div>
                             
@@ -445,7 +445,7 @@
                                     <div class="inventory-slot" data-name="특수제작대" data-badge="제작" data-desc="보스 기믹 등에 사용되는 아이템 조합을 위해 사용합니다." style="background-position: 12.5% 80%;"></div>
                                     <div class="inventory-slot" data-name="일반제작서" data-badge="정보" data-desc="도구 및 특수 제작 레시피와 필요 자원 일람을 책 형태로 확인합니다." style="background-position: 25% 80%;"></div>
                                     <div class="inventory-slot slot-empty"></div>
-                                    <div class="inventory-slot" data-name="코인" data-badge="경제" data-desc="실시간으로 변동하는 화석 코인의 시세를 확인하고 거래를 진행합니다." style="background-position: 50% 80%"></div>
+                                    <div class="inventory-slot" data-name="코인" data-badge="경제" data-desc="실시간으로 변동하는 RPG 코인의 시세를 확인하고 거래를 진행합니다." style="background-position: 50% 80%"></div>
                                     <div class="inventory-slot slot-empty"></div>
                                     <div class="inventory-slot" data-name="추출" data-badge="성장" data-desc="자신의 바닐라 레벨 경험치를 소모하여, 특수 아이템으로 교환합니다. 전직, 룬, 장비 제작 등 여러 핵심 시스템에 사용됩니다." style="background-position: 75% 80%;"></div>
                                     <div class="inventory-slot" data-name="유저상점" data-badge="경제" data-desc="유저가 등록한 아이템의 판매가를 확인하고 구매할 수 있습니다." style="background-position: 87.5% 80%"></div>
@@ -535,7 +535,7 @@
                 {% elif user_status == 'member' %}
                 <div class="status-info-box member-box">
                     <i class="fas fa-check-double"></i>
-                    <p>당신은 이미 화석 서버의 정식 멤버입니다.<br>가이드 내용을 다시 한 번 숙지해 주셔서 감사합니다.</p>
+                    <p>당신은 이미 RPG 서버의 정식 멤버입니다.<br>가이드 내용을 다시 한 번 숙지해 주셔서 감사합니다.</p>
                     <a href="/" class="return-link">메인 페이지로 돌아가기</a>
                 </div>
                 {% else %}

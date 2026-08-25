@@ -1,5 +1,5 @@
 /**
- * Fossil Server Guide Page Premium Interactivity Handler
+ * RPG Server Guide Page Premium Interactivity Handler
  * Est. 2026
  */
 document.addEventListener('DOMContentLoaded', function() {

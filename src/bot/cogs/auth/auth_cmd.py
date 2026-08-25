@@ -37,13 +37,13 @@ class AuthCmd(BaseCog):
 
             # 3. 토큰 발급 및 메시지 전송
             token = await asyncio.to_thread(create_magic_token, discord_id)
-            domain = os.getenv("WEB_DOMAIN", "https://fossile-wiki.cloud")
+            domain = os.getenv("WEB_DOMAIN", "https://rpg-sync-wiki.example.com")
             login_url = f"{domain}/api/v1/auth/login?token={token}"
 
             await interaction.followup.send(
                 f"**인증 링크가 발급되었습니다.**\n"
                 f"5분 안에 아래 링크를 클릭하여 접속하세요. 이 링크는 본인만 볼 수 있으며 1회만 사용 가능합니다.\n\n"
-                f"[Fossile Wiki 로그인]({login_url})",
+                f"[RPG Sync Wiki 로그인]({login_url})",
                 ephemeral=True
             )
         except Exception as e:

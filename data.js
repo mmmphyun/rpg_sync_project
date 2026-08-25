@@ -11,7 +11,7 @@
 //    // 게이트 X, Z [그림자 단]
 //    { name: "카게노 엔디", gate: "게이트 X, Z", group: "그림자 단", desc: "거대한 낫을 주로 사용하는 근접 딜러입니다. 상황에 따라 무기를 변형하여 사용 가능한 근(원)거리 딜러.", range: "근거리", position: "딜", resource: "모름", img: "카게노엔디.png", photos: ["카게노엔디1.jpg","카게노엔디2.jpg"] },
 //    { name: "켄", gate: "게이트 X, Z", group: "그림자 단", desc: "단검을 사용하며, 높은 기동성과 딜의 한계가 높은 근거리 딜러입니다.", range: "근거리", position: "딜", resource: "모름", img: "", photos: [] },
-//    { name: "스모커", gate: "게이트 X, Z", group: "그림자 단", desc: "검을 주로 사용하는 근접 딜러입니다. (비밀이 숨겨진 직업입니다)", range: "근거리", position: "딜", resource: "기력", img: "스모커.png", photos: ["스모커1.jpg","스모커2.jpg","스모커3.jpg"], patches: [{date:"2026-04-06",notes:"고정데미지가 마법데미지로 변경\n지로화 사용시 끌어당기는 힘이 사라짐\n기력을 사용"}], players: ["곰돼지"] },
+//    { name: "스모커", gate: "게이트 X, Z", group: "그림자 단", desc: "검을 주로 사용하는 근접 딜러입니다. (비밀이 숨겨진 직업입니다)", range: "근거리", position: "딜", resource: "기력", img: "스모커.png", photos: ["스모커1.jpg","스모커2.jpg","스모커3.jpg"], patches: [{date:"2026-04-06",notes:"고정데미지가 마법데미지로 변경\n지로화 사용시 끌어당기는 힘이 사라짐\n기력을 사용"}], players: ["Player_1"] },
 //    { name: "카게노 스이치", gate: "게이트 X, Z", group: "그림자 단", desc: "검과 단검을 주로 사용하는 근접 딜러입니다. 그림자단 중에 고점이 가장 높습니다.", range: "근거리", position: "딜", resource: "모름", img: "카게노스이치.png", photos: ["카게노스이치1.jpg","카게노스이치2.jpg"] },
 //    { name: "카시우스", gate: "게이트 X, Z", group: "그림자 단", desc: "코드의 힘으로 되살아난 존재입니다. 거대한 둔기를 사용하는 근접 (탱)딜러.", range: "근거리", position: "딜", resource: "모름", img: "카시우스.png", photos: ["카시우스1.jpg","카시우스2.jpg","카시우스3.jpg","카시우스4.jpg"] },
 //    { name: "카게노 진", gate: "게이트 X, Z", group: "그림자 단", desc: "하데스의 사용자이자 전대 그림자단 수장. (1차 각성 계정 보유시 전직/직변 가능) 1차 각성부터 시작합니다.", range: "근거리", position: "딜", resource: "모름", img: "카게노진.png", photos: ["카게노진1.jpg","카게노진2.jpg","카게노진3.jpg"] },
@@ -19,7 +19,7 @@
 //    { name: "카게노 카시아", gate: "게이트 X, Z", group: "그림자 단", desc: "활 종류의 무기를 사용하고, 일반적인 원거리 딜러들보다 단단하며 기동성과 고점이 높은 원거리 딜러입니다.", range: "원거리", position: "딜", resource: "모름", img: "카시아.png", photos: ["카시아1.jpg","카시아2.jpg"], mobility: "있음" },
 //
 //    // 게이트 X [??]
-//    { name: "엔도 세이지", gate: "게이트 X", group: "??", desc: "기력과 단검을 사용하는 근접(탱)딜러.", range: "근거리", position: "딜", resource: "기력", img: "엔도세이지.png", photos: ["엔도세이지1.jpg","엔도세이지2.jpg","엔도세이지3.jpg","엔도세이지4.jpg","엔도세이지5.jpg"], patches: [{date:"2026-04-06",notes:"체력보다 마나를 먼저 사용\n하이브리드 기능 추가\n세이지의 스킬이 아군에게 맞지 않음"}], players: ["지수","샤샤"] },
+//    { name: "엔도 세이지", gate: "게이트 X", group: "??", desc: "기력과 단검을 사용하는 근접(탱)딜러.", range: "근거리", position: "딜", resource: "기력", img: "엔도세이지.png", photos: ["엔도세이지1.jpg","엔도세이지2.jpg","엔도세이지3.jpg","엔도세이지4.jpg","엔도세이지5.jpg"], patches: [{date:"2026-04-06",notes:"체력보다 마나를 먼저 사용\n하이브리드 기능 추가\n세이지의 스킬이 아군에게 맞지 않음"}], players: ["Player_2","Player_3"] },
 //
 //    // 게이트 A [십이지(十二支)]
 //    { name: "자(子)", gate: "게이트 A", group: "십이지(十二支)", desc: "부채를 사용하는 지지신.", range: "모름", position: "모름", resource: "모름", img: "", photos: [] },
@@ -46,10 +46,10 @@
 //    { name: "아오이 진", gate: "게이트 S", desc: "마나를 사용하는 검사입니다. 근접 딜러. (서버내 1인 제한)", range: "근거리", position: "딜", resource: "마나", img: "아오이진.png", photos: ["아오이진1.jpg","아오이진2.jpg","아오이진3.jpg"], limit: true },
 //
 //    // 게이트 M
-//    { name: "이가라시 슈헤이", gate: "게이트 M", desc: "기력을 사용하는 근접 딜러.", range: "근거리", position: "딜", resource: "기력", img: "슈헤이.png", photos: ["슈헤이1.jpg","슈헤이2.jpg","슈헤이3.jpg","슈헤이4.jpg"], players: ["나나"] },
+//    { name: "이가라시 슈헤이", gate: "게이트 M", desc: "기력을 사용하는 근접 딜러.", range: "근거리", position: "딜", resource: "기력", img: "슈헤이.png", photos: ["슈헤이1.jpg","슈헤이2.jpg","슈헤이3.jpg","슈헤이4.jpg"], players: ["Player_4"] },
 //    { name: "이가라시 유키", gate: "게이트 M", desc: "기력을 사용하는 암살 딜러.", range: "근거리", position: "딜", resource: "기력", img: "유키.png", photos: ["유키1.jpg","유키2.jpg","유키3.jpg","유키4.jpg"] },
 //    { name: "이가라시 미츠키", gate: "게이트 M", desc: "체력을 사용하는 탱 딜러.", range: "근거리", position: "탱", resource: "체력", img: "미츠키.png", photos: ["미츠키1.jpg","미츠키2.jpg","미츠키3.jpg"] },
-//    { name: "츠키요미 세이렌", gate: "게이트 M", desc: "기력을 사용하며, 인술과 체술을 사용하는 닌자. 근접 딜러.", range: "근거리", position: "딜", resource: "기력", img: "츠미요미세이렌.png", photos: ["츠키요미세이렌1.jpg","츠키요미세이렌2.jpg","츠키요미세이렌3.jpg"], players: ["태태"] },
+//    { name: "츠키요미 세이렌", gate: "게이트 M", desc: "기력을 사용하며, 인술과 체술을 사용하는 닌자. 근접 딜러.", range: "근거리", position: "딜", resource: "기력", img: "츠미요미세이렌.png", photos: ["츠키요미세이렌1.jpg","츠키요미세이렌2.jpg","츠키요미세이렌3.jpg"], players: ["Player_5"] },
 //
 //    // 게이트 Z
 //    { name: "사토 신지", gate: "게이트 Z", desc: "사토 가문의 먼 후예. 기계 장치를 사용하는 근/원거리 딜러.", range: "근거리", position: "딜", resource: "모름", img: "사토신지.png", photos: ["사토신지1.jpg","사토신지2.jpg"], patches: [{date:"2026-01-31",notes:"공격 사거리 감소\n스킬 사용시 에너지 소모량 증가"},{date:"2026-02-11",notes:"기본공격 사거리 증가\n스킬 사용시 체력 사용 삭제\n하이브리드 기능 추가"}] },
@@ -64,18 +64,18 @@
 //
 //    // 게이트 G [자이언]
 //    { name: "바움", gate: "게이트 G", group: "자이언", desc: "단단한 몸과 높은 체력을 자랑하며 유지력이 좋은 탱커.", range: "근거리", position: "탱", resource: "모름", img: "바움.png", photos: ["바움1.jpg","바움2.jpg"], patches: [{date:"2026-01-26",notes:"궁극기 사용시 체력 회복이 삭제\n스킬 사용시 소모되는 체력이 높아짐\n저항 레벨이 낮아짐"}] },
-//    { name: "즈윌링", gate: "게이트 G", group: "자이언", desc: "두 가지 무기를 사용 가능하며, 코드를 사용하며 전투하는 근접 딜러. 전사.", range: "근거리", position: "딜", resource: "모름", img: "즈윌링.png", photos: ["즈윌링1.jpg","즈윌링2.jpg","즈윌링3.jpg","즈윌링4.jpg"], patches: [{date:"2026-02-11",notes:"묵직한 검 유지 시간 증가\n묵직한 검 소모 마나량 감소\n묵직한 검 소모 체력 감소"}], players: ["제라"] },
+//    { name: "즈윌링", gate: "게이트 G", group: "자이언", desc: "두 가지 무기를 사용 가능하며, 코드를 사용하며 전투하는 근접 딜러. 전사.", range: "근거리", position: "딜", resource: "모름", img: "즈윌링.png", photos: ["즈윌링1.jpg","즈윌링2.jpg","즈윌링3.jpg","즈윌링4.jpg"], patches: [{date:"2026-02-11",notes:"묵직한 검 유지 시간 증가\n묵직한 검 소모 마나량 감소\n묵직한 검 소모 체력 감소"}], players: ["Player_6"] },
 //    { name: "소네", gate: "게이트 G", group: "자이언", desc: "사거리가 긴 게 특징인 원거리 마법사. (딜러/힐러 각성 가능)", range: "원거리", position: "딜", resource: "모름", img: "소네.png", photos: ["소네1.jpg","소네2.jpg"], mobility: "없음", patches: [{date:"2026-01-26",notes:"고정 힐 수치 감소\n스킬 사용시 필요 체력/마나 증가\n기본 공격 사거리 감소\n기본 공격 사용시 마나 소모"}] },
 //    { name: "스구라", gate: "게이트 G", group: "자이언", desc: "전설의 7대 검사 중 한 명. 자이언 부족. (요괴 전쟁 참여) 근접 딜러.", range: "근거리", position: "딜", resource: "모름", img: "스구라.png", photos: ["스구라1.jpg","스구라2.jpg","스구라3.jpg"] },
 //    { name: "퓨어", gate: "게이트 G", group: "자이언", desc: "대검을 사용하는 자이언 부족의 서브 딜러.", range: "근거리", position: "딜", resource: "모름", img: "퓨어.png", photos: ["퓨어1.jpg","퓨어2.jpg"] },
 //    { name: "라일라", gate: "게이트 G", group: "자이언", desc: "자이언 부족의 메인 힐러.", range: "모름", position: "힐", resource: "마나", img: "라일라.png", photos: ["라일라1.jpg","라일라2.jpg"] },
 //
 //    // 게이트 N
-//    { name: "지로", gate: "게이트 N", desc: "미케의 자식, 다섯 수호신 중 하나. 마법딜/탱. (서버 내 초월한 계정 필요)", range: "원거리", position: "딜/탱", resource: "모름", img: "지로.png", photos: ["지로1.jpg","지로2.jpg","지로3.jpg"], players: ["포동"] },
+//    { name: "지로", gate: "게이트 N", desc: "미케의 자식, 다섯 수호신 중 하나. 마법딜/탱. (서버 내 초월한 계정 필요)", range: "원거리", position: "딜/탱", resource: "모름", img: "지로.png", photos: ["지로1.jpg","지로2.jpg","지로3.jpg"], players: ["Player_7"] },
 //    { name: "키리", gate: "게이트 N", desc: "사거리가 긴 근/원거리 닌자, 자객. (현재 전직 불가)", range: "근거리", position: "딜", resource: "모름", img: "키리.png", photos: ["키리1.jpg","키리2.jpg","키리3.jpg","키리4.jpg","키리5.jpg"] },
 //    { name: "사키", gate: "게이트 N", desc: "사거리가 긴 근/원거리 닌자, 자객.", range: "근거리", position: "딜", resource: "기력", img: "사키.png", photos: ["사키1.jpg","사키2.jpg"], patches: [{date:"2026-01-31",notes:"그림자의 길 체력 소모량 증가\n그림자의 길 지속시간 1초 감소"},{date:"2026-02-11",notes:"그림자의 길 사용시 체력 재생\n기본 공격 적중시 치명타 확률 증가 (최대 5%)\n기본 공격 표창 수 증가 2→3"},{date:"2026-02-13",notes:"체력 → 기력을 사용\n하이브리드 기능 추가"}] },
 //    { name: "이리아", gate: "게이트 N", desc: "귀족 출신의 활을 사용하는 원거리 자객.", range: "원거리", position: "딜", resource: "모름", img: "이리아.png", photos: ["이리아1.jpg","이리아2.jpg","이리아3.jpg"] },
-//    { name: "사토 카게", gate: "게이트 N", desc: "사토 가문의 7대 검사 중 한 명으로 기력을 사용합니다. (요괴 전쟁 참여)", range: "근거리", position: "딜", resource: "기력", img: "사토카게.png", photos: ["사토카게1.jpg","사토카게2.jpg","사토카게3.jpg"], players: ["칸쵸"] },
+//    { name: "사토 카게", gate: "게이트 N", desc: "사토 가문의 7대 검사 중 한 명으로 기력을 사용합니다. (요괴 전쟁 참여)", range: "근거리", position: "딜", resource: "기력", img: "사토카게.png", photos: ["사토카게1.jpg","사토카게2.jpg","사토카게3.jpg"], players: ["Player_8"] },
 //    { name: "사토 키도", gate: "게이트 N", desc: "사토 가문의 7대 검사 중 한 명으로 기력을 사용합니다. (요괴 전쟁 참여)", range: "근거리", position: "딜", resource: "기력", img: "사토기도.png", photos: ["사토기도1.jpg","사토기도2.jpg","사토기도3.jpg","사토기도4.jpg"] },
 //    { name: "아카토라 시구야", gate: "게이트 N", desc: "아카토라 일족의 야생성을 추구하며 기력을 사용하는 근접 (탱)딜러/전사.", range: "근거리", position: "딜", resource: "기력", img: "아카토라시구야.png", photos: ["아카토라시구야1.jpg","아카토라시구야2.jpg","아카토라시구야3.jpg"] },
 //    { name: "사토 시로아키", gate: "게이트 N", desc: "전설의 7대 검사 중 한 명으로 도끼와 검을 주로 사용하는 근접 전사. 기력을 사용합니다.", range: "근거리", position: "딜", resource: "기력", img: "사토시로야키.png", photos: ["사토시로아키1.jpg","사토시로아키2.jpg","사토시로아키3.jpg","사토시로아키4.jpg"] },
@@ -83,7 +83,7 @@
 //    { name: "쿠로야기 렌", gate: "게이트 N", desc: "쿠로야기 가문의 근접 딜러(검사). 기력을 사용하는 사무라이입니다.", range: "근거리", position: "딜", resource: "기력", img: "쿠로야기렌.png", photos: ["쿠로야기렌1.jpg","쿠로야기렌2.jpg","쿠로야기렌3.jpg","쿠로야기렌4.jpg"] },
 //    { name: "쿠로야기 젠", gate: "게이트 N", desc: "쿠로야기 가문의 근접 딜러(검사). 기력을 사용하는 사무라이입니다.", range: "근거리", position: "딜", resource: "기력", img: "쿠로야기젠.png", photos: ["쿠로야기젠1.jpg","쿠로야기젠2.jpg","쿠로야기젠3.jpg"] },
 //    { name: "쿠로야기 타츠야", gate: "게이트 N", desc: "쿠로야기 가문의 근거리 딜러(암살자). 기력을 사용하는 사무라이.", range: "근거리", position: "딜", resource: "기력", img: "쿠로야기타츠야.png", photos: ["쿠로야기타츠야1.jpg","쿠로야기타츠야2.jpg","쿠로야기타츠야3.jpg"] },
-//    { name: "메구미", gate: "게이트 N", desc: "정체 모를 암살단원. 근접 극딜러. (비밀이 숨겨진 직업입니다)", range: "근거리", position: "딜", resource: "모름", img: "메구미.png", photos: ["메구미1.jpg","메구미2.jpg","메구미3.jpg"], players: ["꼰듀"] },
+//    { name: "메구미", gate: "게이트 N", desc: "정체 모를 암살단원. 근접 극딜러. (비밀이 숨겨진 직업입니다)", range: "근거리", position: "딜", resource: "모름", img: "메구미.png", photos: ["메구미1.jpg","메구미2.jpg","메구미3.jpg"], players: ["Player_9"] },
 //
 //    // 게이트 E
 //    { name: "벨룸", gate: "게이트 E", desc: "벤의 공장에서 코드 실험체로 만들어진 괴수.", range: "모름", position: "모름", resource: "모름", img: "벨룸.png", photos: ["벨룸1.jpg","벨룸2.jpg"] },

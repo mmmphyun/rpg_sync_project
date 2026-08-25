@@ -19,7 +19,7 @@ REDIS_SOCKET_TIMEOUT = float(os.getenv("REDIS_SOCKET_TIMEOUT", "0.5"))
 REDIS_HEALTHCHECK_INTERVAL = int(os.getenv("REDIS_HEALTHCHECK_INTERVAL", "30"))
 
 # Discord Configuration
-DISCORD_INVITE_URL = os.getenv("DISCORD_INVITE_URL", "https://discord.gg/3prVGQud2c")
+DISCORD_INVITE_URL = os.getenv("DISCORD_INVITE_URL", "https://discord.gg/example")
 
 # Minecraft Server Configuration
-MINECRAFT_SERVER_ADDRESS = os.getenv("MINECRAFT_SERVER_ADDRESS", "fossilmaple.playit.plus:25565")
+MINECRAFT_SERVER_ADDRESS = os.getenv("MINECRAFT_SERVER_ADDRESS", "rpg-server.example.com:25565")

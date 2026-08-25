@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}{{ "공지사항" if board_type == "notice" else "이벤트" }} - Fossil Wiki{% endblock %}
+{% block title %}{{ "공지사항" if board_type == "notice" else "이벤트" }} - RPG Sync Wiki{% endblock %}
 
-{% block og_description %}화석 서버의 공지사항과 정기 이벤트를 확인해보세요!{% endblock %}
+{% block og_description %}RPG 서버의 공지사항과 정기 이벤트를 확인해보세요!{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="/static/board.css?v={{ get_mtime('board.css') }}">
@@ -15,7 +15,7 @@
 
     <div class="editorial-header">
         <div class="editorial-title-container">
-            <span class="sub-title-mono">FOSSIL GATE ARCHIVE</span>
+            <span class="sub-title-mono">RPG SYNC ARCHIVE</span>
             <h1 class="main-title">{{ "NOTICE" if board_type == "notice" else "EVENT" }}</h1>
         </div>
         <div class="editorial-meta-line">

@@ -244,7 +244,7 @@ class GuideLinkView(discord.ui.View):
         # 4. 매직링크 생성
         try:
             token = await asyncio.to_thread(create_magic_token, discord_id)
-            domain = os.getenv("WEB_DOMAIN", "https://fossile-wiki.cloud")
+            domain = os.getenv("WEB_DOMAIN", "https://rpg-sync-wiki.example.com")
             guide_url = f"{domain}/api/v1/auth/login?token={token}&redirect=guide"
 
             await interaction.followup.send(
@@ -441,7 +441,7 @@ class OnboardingCmd(BaseCog):
                 "**💡 다시 모험을 시작하고 싶으신가요?**\n"
                 "설명을 읽고 마음이 바뀌셨다면 초록색 **[🔄 다시 인증해볼래요]** 버튼을 누르시면 "
                 "다시 인증과 가이드를 시도하실 수 있습니다!\n\n"
-                "*저희 화석 서버는 유저 한 분 한 분의 안전과 편안한 플레이를 가장 소중히 여깁니다.*"
+                "*저희 RPG 서버는 유저 한 분 한 분의 안전과 편안한 플레이를 가장 소중히 여깁니다.*"
             ),
             color=discord.Color.orange()
         )

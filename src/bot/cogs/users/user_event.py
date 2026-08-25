@@ -125,9 +125,9 @@ class UserEvent(BaseCog):
         try:
             # DM 전송
             embed = discord.Embed(
-                title="🎉 화석 서버 가입 완료!",
+                title="🎉 RPG 서버 가입 완료!",
                 description=(
-                    f"**화석 서버**에 오신 것을 진심으로 환영합니다~\n\n"
+                    f"**RPG 서버**에 오신 것을 진심으로 환영합니다~\n\n"
                     "**가이드** 채널의 안내를 따라가며 정식 모험가가 되어보세요!\n\n"
                 ),
                 color=discord.Color.green()
