@@ -29,10 +29,12 @@ services:
       - redis
     ports:
       - "8000:8000"
-    environment:
-      - PYTHONUNBUFFERED=1
     env_file:
       - .env.dev
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://dev_user:dev_password@db:5432/rpg_dev_db
+      - REDIS_URL=redis://:dev_redis_pw@redis:6379/0
     volumes:
       - ./public:/app/public
       - ./src/web/templates:/app/src/web/templates
@@ -45,10 +47,12 @@ services:
     depends_on:
       - db
       - redis
-    environment:
-      - PYTHONUNBUFFERED=1
     env_file:
       - .env.dev
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://dev_user:dev_password@db:5432/rpg_dev_db
+      - REDIS_URL=redis://:dev_redis_pw@redis:6379/0
     volumes:
       - ./src:/app/src
     command: python -m src.bot.main
