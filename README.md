@@ -155,6 +155,7 @@
 
 ```
 rpg_sync_project/
+├── plugins/          # 마인크래프트 인게임 동기화 플러그인 서브모듈 (rpg_sync_plugin)
 ├── src/
 │   ├── bot/                # Discord.py 봇 메인 (이벤트 루프, Cogs, 스레드 풀 격리)
 │   │   ├── cogs/           # 도메인별 Cog (auth, board, jobs, system, users)

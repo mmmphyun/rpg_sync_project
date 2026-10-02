@@ -1,0 +1,3 @@
+[submodule "plugins/rpg_sync_plugin"]
+	path = plugins/rpg_sync_plugin
+	url = https://github.com/mmmphyun/rpg_sync_plugin.git
