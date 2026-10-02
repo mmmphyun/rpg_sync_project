@@ -32,6 +32,9 @@
 * **정적 사이트의 한계 극복**:
   * 기존 레거시 정적 위키([`jaeunify/do-it-minecraft-fossile`](https://github.com/jaeunify/do-it-minecraft-fossile))는 직업 데이터나 밸런스 패치 시마다 프론트엔드 소스 코드를 직접 수정해 재배포해야 했으며, 인게임 데이터와의 실시간 동기화가 불가능했습니다.
   * 본 프로젝트는 이를 데이터베이스 중심 아키텍처로 전면 재설계하여, 데이터 수정 즉시 웹 위키와 인게임에 무중단 반영되는 동적 시스템을 구축했습니다.
+* **조직 변화 관리와 Discord SSOT(단일 진실 공급원) 설계**:
+  * 개발자 편의 중심의 별도 웹 어드민 콘솔을 도입할 경우, 운영진이 Discord에서 논의한 내용을 웹 폼에 다시 복사·입력해야 하는 '플랫폼 전환 피로'와 휴먼 에러(누락·불일치)가 발생합니다.
+  * 운영진의 기존 업무 맥락(Discord)을 변경하지 않고 완결성을 보장하기 위해, Discord 채널을 SSOT로 고정하고 봇 파서가 DB와 웹 위키로 데이터를 단방향 전파하도록 아키텍처를 설계했습니다.
 * **운영진 온보딩 병목 자동화**:
   * 신규 유입 유저의 접속 사유 검토와 화이트리스트 등록을 운영진이 수작업으로 처리하던 반복 업무 병목을 디스코드 봇 컴포넌트와 연동해 자동화했습니다.
 * **1인 단독 엔지니어링**:
@@ -48,6 +51,9 @@
   * **디스코드 커뮤니티 유저**: 약 40명
   * **최대 동시 접속자**: 20명
   * **관리 직업 데이터셋**: 최대 약 90종 (스토리 내 등장인물 기반 직업군)
+* **네트워크 경계 보안 및 사설 터널링**:
+  * 인게임 마인크래프트 서버가 고정/공인 IP가 없는 비개발자 운영자의 개인 PC 환경에서 구동되었습니다.
+  * 로컬 공유기 포트포워딩 시 발생하는 외부 무차별 대입 공격(Brute-force) 위험을 원천 차단하기 위해, **Tailscale(WireGuard 기반) 가상 사설 메쉬 VPN**을 구축하여 외부 공인 포트 노출 없이(공인 포트 0개) 클라우드 VM과 암호화 터널 통신을 수행했습니다.
 * **인프라 제약 및 FinOps ($0 운영)**:
   * **호스트 인프라**: GCP Compute Engine Free Tier `e2-micro` (vCPU 2개, **1.0GB RAM**, 미국 오리건 리전)
   * **원격 데이터베이스**: Supabase PostgreSQL 15 (서울 리전, 미국 ↔ 한국 물리적 RTT 200ms)
@@ -116,6 +122,14 @@
 * **성과**:
   * 봇 다운 상태에서 인입된 20건의 완료 이벤트에 대해 재기동 시 단 1회의 대사 쿼리로 **누락 없이 100% 복구 및 동기화**를 완료했습니다.
 
+### 6. Discord 3초 인터랙션 타임아웃 방어와 비동기 온보딩 파이프라인
+* **문제 상황**: 신규 유저 온보딩 시 Mojang 외부 계정 검증 API와 대륙 간 원격 DB(Supabase) 쓰기 트랜잭션이 직렬로 강결합되어 Discord 게이트웨이의 엄격한 3초 인터랙션 제한 시간을 정면으로 초과하고 세션이 끊기는 현상이 발생했습니다.
+* **해결 방식**:
+  * 모달 제출 즉시 `interaction.response.defer(ephemeral=True)`를 발행하는 선제 지연 응답으로 3초 타임아웃을 선제 방어했습니다.
+  * 전역 `aiohttp.ClientSession` 풀링을 통해 Mojang API 재연결 핸드셰이크 오버헤드를 제거하고, Redis 기반 3회 오입력 브루트포스 락과 7일 유효기간 매직링크 서약을 결합해 외부 API 장애가 봇 전체로 전파되지 않도록 격리했습니다.
+* **성과**:
+  * 외부 네트워크 지연과 무관하게 Discord UI 무응답 에러 0건을 달성하고 무중단 온보딩 자동화를 완성했습니다.
+
 ---
 
 ## 장애 관제 및 서비스 종료 아카이빙
@@ -179,6 +193,21 @@ rpg_sync_project/
 4. **1GB RAM VM 환경에서 유저 사유 우회 중복 클릭 경쟁 상태**
    * *원인*: 여러 운영진이 동일 유저의 접속 사유(`ReasonBypassView`)를 동시에 승인/거절할 때 분산 경쟁 상태가 발생했습니다.
    * *해결*: Watchdog 프로세스의 메모리 부담을 배제하고 15초 Safe TTL 기반 `SET NX EX` 분산 락을 설계해 중복 처리를 0건으로 막았습니다.
+
+---
+
+## 심층 엔지니어링 의사결정 로그 (기술 블로그 시리즈)
+
+시스템 기획부터 분산 인프라 구축, 웹 보안 셀프 레드티밍, 운영 장애 해결까지의 상세 엔지니어링 기록입니다.
+
+| 편차 | 주제 | 핵심 다룸 내용 | 의사결정 로그 링크 |
+|---|---|---|:---:|
+| **Part 1** | 아키텍처 & SSOT | 디스코드 중심 단일 진실 공급원 및 제로 코스트 분산 아키텍처 설계 | [포스트 보기](https://mmmphyun.github.io/security-agent-toolkit/blog/proj-rpg-sync-project-01-problem-definition-and-architecture/) |
+| **Part 2** | 분산 연동 & 옵저버빌리티 | Tailscale 사설망 연동, Redis Pub/Sub, 관제 웹훅 알림 체계 | [포스트 보기](https://mmmphyun.github.io/security-agent-toolkit/blog/proj-rpg-sync-project-02-troubleshooting-and-collaboration/) |
+| **Part 3** | 풀스택 웹 보안 | XSS 무해화, 순수 ASGI 보안 미들웨어, HSTS 락아웃 방어 | [포스트 보기](https://mmmphyun.github.io/security-agent-toolkit/blog/proj-rpg-sync-project-03-fullstack-security-hardening/) |
+| **Part 4** | 비동기 온보딩 | 3초 인터랙션 타임아웃 격리, 선제 defer, 세션 풀링 | [포스트 보기](https://mmmphyun.github.io/security-agent-toolkit/blog/proj-rpg-sync-project-04-external-api-and-async-onboarding/) |
+| **Part 5** | 데이터 엔지니어링 | 비정형 마크다운 정형화, 계층형 컨텍스트 파서, 일괄 적재 | [포스트 보기](https://mmmphyun.github.io/security-agent-toolkit/blog/proj-rpg-sync-project-05-state-machine-parser-and-bulk-sync/) |
+| **Part 6** | 실용적 엔지니어링 타협 | 1GB RAM & RTT 200ms 물리적 제약 속 4가지 실용 타협 | [포스트 보기](https://mmmphyun.github.io/security-agent-toolkit/blog/proj-rpg-sync-project-06-pragmatic-engineering-compromises/) |
 
 ---
 
