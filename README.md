@@ -115,7 +115,7 @@
 * **배경**: 2026년 7월 서비스 종료 시 운영 데이터를 유실 없이 영구 보존하기 위해 정적 콜드 아카이빙 파이프라인 구축.
 * **구현**:
   * Cloudflare R2 도메인 매칭 정규식 필터링을 통해 안전한 정적 이미지만 선별 다운로드.
-  * `DateTimeEncoder` 커스텀 직렬화를 거쳐 PostgreSQL의 관계형 테이블 및 JSONB 필드를 전수 덤프하여 정적 아카이브([`public/archive`](public/archive))로 전환.
+  * `DateTimeEncoder` 커스텀 직렬화를 거쳐 PostgreSQL의 관계형 테이블 및 JSONB 필드를 전수 덤프하여 정적 아카이브 디렉토리(`public/archive/`)로 백업 전환.
 
 ---
 
@@ -132,7 +132,6 @@ rpg_sync_project/
 │       ├── routers/        # 인증, 대시보드, 직업 위키, 가이드 라우터
 │       └── templates/      # Jinja2 서버사이드 렌더링 템플릿
 ├── public/                 # Static 자산 및 아키텍처 다이어그램 SVG (Light/Dark)
-│   ├── archive/            # 서비스 종료 시점의 콜드 아카이브 데이터
 │   └── images/
 │       ├── architecture-light.svg
 │       └── architecture-dark.svg
