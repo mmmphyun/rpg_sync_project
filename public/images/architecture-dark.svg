@@ -35,37 +35,36 @@
   <rect x="32" y="16" width="160" height="16" rx="3" fill="#13151a"/>
   <text x="112" y="28" fill="#8892a0" font-size="9" font-weight="700" letter-spacing="0.08em" text-anchor="middle" class="font-mono">INGRESS BOUNDARY</text>
 
-  <!-- Node: Minecraft Server -->
-  <g transform="translate(35, 52)" filter="url(#shadow-dark-editorial)">
-    <rect width="180" height="102" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
-    <rect x="0" y="0" width="4" height="102" rx="2" fill="#7d93a8"/>
-    <text x="16" y="25" fill="#e6edf3" font-size="12" font-weight="600" class="font-sans">Minecraft Game Server</text>
-    <text x="16" y="42" fill="#8b949e" font-size="9.5" class="font-mono">PaperMC 1.20.4+ Plugin</text>
-    <text x="16" y="58" fill="#a4afba" font-size="9.5" class="font-sans">동접 최대 20명 인게임 이벤트</text>
-    <rect x="16" y="68" width="148" height="22" rx="4" fill="#242936"/>
-    <text x="90" y="83" fill="#9cb2c9" font-size="9" font-weight="600" text-anchor="middle" class="font-mono">Tailscale WireGuard</text>
+  <!-- 1. Web Portal Client (Top - 1:1 with FastAPI) -->
+  <g transform="translate(35, 48)" filter="url(#shadow-dark-editorial)">
+    <rect width="180" height="78" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <rect x="0" y="0" width="4" height="78" rx="2" fill="#8b949e"/>
+    <text x="16" y="22" fill="#e6edf3" font-size="12" font-weight="600" class="font-sans">직업 위키 &amp; 웹 클라이언트</text>
+    <text x="16" y="38" fill="#8b949e" font-size="9.5" class="font-mono">90종 직업 열람 / 외부 유입</text>
+    <rect x="16" y="48" width="148" height="20" rx="4" fill="#252933"/>
+    <text x="90" y="62" fill="#a4afba" font-size="9.5" font-weight="600" text-anchor="middle" class="font-mono">Cloudflare Proxy (CDN)</text>
   </g>
 
-  <!-- Node: Web Client / Staff -->
-  <g transform="translate(35, 214)" filter="url(#shadow-dark-editorial)">
-    <rect width="180" height="102" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
-    <rect x="0" y="0" width="4" height="102" rx="2" fill="#8b949e"/>
-    <text x="16" y="25" fill="#e6edf3" font-size="12" font-weight="600" class="font-sans">직업 위키 &amp; 웹 포털</text>
-    <text x="16" y="42" fill="#8b949e" font-size="9.5" class="font-mono">90종 직업 열람 / 외부 유입</text>
-    <text x="16" y="58" fill="#a4afba" font-size="9.5" class="font-sans">뉴비 온보딩 &amp; 불특정 트래픽</text>
-    <rect x="16" y="68" width="148" height="22" rx="4" fill="#252933"/>
-    <text x="90" y="83" fill="#a4afba" font-size="9" font-weight="600" text-anchor="middle" class="font-mono">Cloudflare Proxy (CDN)</text>
+  <!-- 2. Discord Gateway (Middle - 1:1 with discord.py) -->
+  <g transform="translate(35, 154)" filter="url(#shadow-dark-editorial)">
+    <rect width="180" height="100" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <rect x="0" y="0" width="4" height="100" rx="2" fill="#848bb0"/>
+    <text x="16" y="24" fill="#e6edf3" font-size="12" font-weight="600" class="font-sans">Discord Gateway</text>
+    <text x="16" y="40" fill="#8b949e" font-size="9.5" class="font-mono">커뮤니티 40명 · WSS 소켓</text>
+    <text x="16" y="56" fill="#a4afba" font-size="9.5" class="font-sans">사유 승인/거절 View 인터랙션</text>
+    <rect x="16" y="68" width="148" height="20" rx="4" fill="#252735"/>
+    <text x="90" y="82" fill="#a0a8cf" font-size="9.5" font-weight="600" text-anchor="middle" class="font-mono">Heartbeat (50ms)</text>
   </g>
 
-  <!-- Node: Discord Gateway -->
-  <g transform="translate(35, 376)" filter="url(#shadow-dark-editorial)">
-    <rect width="180" height="102" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
-    <rect x="0" y="0" width="4" height="102" rx="2" fill="#848bb0"/>
-    <text x="16" y="25" fill="#e6edf3" font-size="12" font-weight="600" class="font-sans">Discord Gateway</text>
-    <text x="16" y="42" fill="#8b949e" font-size="9.5" class="font-mono">커뮤니티 40명 · WSS 소켓</text>
-    <text x="16" y="58" fill="#a4afba" font-size="9.5" class="font-sans">사유 승인/거절 View 인터랙션</text>
-    <rect x="16" y="68" width="148" height="22" rx="4" fill="#252735"/>
-    <text x="90" y="83" fill="#a0a8cf" font-size="9" font-weight="600" text-anchor="middle" class="font-mono">Heartbeat (50ms)</text>
+  <!-- 3. Minecraft Game Server (Bottom - 1:1 with Redis) -->
+  <g transform="translate(35, 340)" filter="url(#shadow-dark-editorial)">
+    <rect width="180" height="100" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <rect x="0" y="0" width="4" height="100" rx="2" fill="#7d93a8"/>
+    <text x="16" y="24" fill="#e6edf3" font-size="12" font-weight="600" class="font-sans">Minecraft Game Server</text>
+    <text x="16" y="40" fill="#8b949e" font-size="9.5" class="font-mono">PaperMC 1.20.4+ Plugin</text>
+    <text x="16" y="56" fill="#a4afba" font-size="9.5" class="font-sans">동접 최대 20명 인게임 이벤트</text>
+    <rect x="16" y="68" width="148" height="20" rx="4" fill="#242936"/>
+    <text x="90" y="82" fill="#9cb2c9" font-size="9" font-weight="600" text-anchor="middle" class="font-mono">Tailscale WireGuard</text>
   </g>
 
 
@@ -76,7 +75,7 @@
   <rect x="286" y="16" width="280" height="16" rx="3" fill="#13151a"/>
   <text x="426" y="28" fill="#e6edf3" font-size="9.5" font-weight="700" letter-spacing="0.08em" text-anchor="middle" class="font-mono">GCP VM (SINGLE NODE · 1GB RAM)</text>
 
-  <!-- Sub-block: FastAPI Web -->
+  <!-- Sub-block 1: FastAPI Web (Top) -->
   <g transform="translate(290, 48)" filter="url(#shadow-dark-editorial)">
     <rect width="370" height="78" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
     <text x="16" y="22" fill="#e6edf3" font-size="12" font-weight="600" class="font-sans">FastAPI Server (직업 위키 포털)</text>
@@ -85,7 +84,7 @@
     <text x="16" y="60" fill="#8b949e" font-size="9.5" class="font-mono">Cloudflare cf-connecting-ip SlowAPI Rate Limiter 연동</text>
   </g>
 
-  <!-- Sub-block: discord.py Bot & Event Loop -->
+  <!-- Sub-block 2: discord.py Bot & Event Loop (Middle) -->
   <g transform="translate(290, 142)" filter="url(#shadow-dark-editorial)">
     <rect width="370" height="124" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
     <text x="16" y="22" fill="#e6edf3" font-size="12" font-weight="600" class="font-sans">discord.py Bot Process</text>
@@ -101,7 +100,7 @@
     <text x="16" y="117" fill="#8892a0" font-size="9" class="font-sans">&#x25C6; 디스코드 관리자 채널 도커 2000자 청크 로그 실시간 전파</text>
   </g>
 
-  <!-- Sub-block: Redis In-Memory State & Broker -->
+  <!-- Sub-block 3: Redis In-Memory State & Broker (Bottom) -->
   <g transform="translate(290, 282)" filter="url(#shadow-dark-editorial)">
     <rect width="370" height="226" rx="6" fill="#1e212b" stroke="#3a5445" stroke-width="1.2"/>
     <rect x="0" y="0" width="370" height="26" rx="5" fill="#1e2922"/>
@@ -170,18 +169,18 @@
   </g>
 
 
-  <!-- ===================================================== -->
-  <!-- CONNECTORS (Separated Orthogonal Lines - Zero Overlap) -->
-  <!-- ===================================================== -->
+  <!-- ======================================================= -->
+  <!-- CONNECTORS: Perfectly Parallel 1:1 Horizontal Routing   -->
+  <!-- ======================================================= -->
   
-  <!-- Connector 1: Minecraft -> Redis (Pub/Sub WireGuard, X_mid = 246) -->
-  <path d="M 215 103 H 242 Q 246 103 246 111 V 420 Q 246 428 254 428 H 290" fill="none" stroke="#7d93a8" stroke-width="1.2" marker-end="url(#arrow-slate-dark)"/>
-  
-  <!-- Connector 2: Web Client -> FastAPI (X_mid = 254) -->
-  <path d="M 215 265 H 250 Q 254 265 254 257 V 95 Q 254 87 262 87 H 290" fill="none" stroke="#8b949e" stroke-width="1.1" marker-end="url(#arrow-neutral-dark)"/>
+  <!-- 1. Web Portal Client -> FastAPI (Perfect Horizontal Flow) -->
+  <line x1="215" y1="87" x2="290" y2="87" stroke="#8b949e" stroke-width="1.2" marker-end="url(#arrow-neutral-dark)"/>
 
-  <!-- Connector 3: Discord Gateway -> Bot Event Loop (X_mid = 262) -->
-  <path d="M 215 427 H 258 Q 262 427 262 419 V 212 Q 262 204 270 204 H 290" fill="none" stroke="#8b949e" stroke-width="1.1" marker-end="url(#arrow-neutral-dark)"/>
+  <!-- 2. Discord Gateway -> discord.py Bot (Perfect Horizontal Flow) -->
+  <line x1="215" y1="204" x2="290" y2="204" stroke="#8b949e" stroke-width="1.2" marker-end="url(#arrow-neutral-dark)"/>
+
+  <!-- 3. Minecraft Server -> Redis (Direct Clean Horizontal Flow via Tailscale) -->
+  <line x1="215" y1="390" x2="290" y2="390" stroke="#7d93a8" stroke-width="1.3" marker-end="url(#arrow-slate-dark)"/>
 
   <!-- Internal Connector: Bot Event Loop -> Redis (FAST PATH) -->
   <path d="M 450 266 V 278" fill="none" stroke="#6ba583" stroke-width="1.8" marker-end="url(#arrow-sage-dark)"/>
@@ -190,7 +189,7 @@
     <text x="42" y="11" fill="#7db594" font-size="8" font-weight="700" text-anchor="middle" class="font-mono">FAST PATH 16ms</text>
   </g>
 
-  <!-- Connector 4: ThreadPool -> Supabase Pool (SLOW PATH, X_mid = 708) -->
+  <!-- Connector 4: ThreadPool -> Supabase Pool (SLOW PATH) -->
   <path d="M 660 168 H 704 Q 708 168 708 160 V 129 Q 708 121 716 121 H 745" fill="none" stroke="#cc7f66" stroke-width="1.8" marker-end="url(#arrow-terracotta-dark)"/>
   <g transform="translate(670, 142)">
     <rect width="90" height="15" rx="3" fill="#281f1c" stroke="#523932" stroke-width="0.8"/>
@@ -200,7 +199,7 @@
   <!-- Connection Pool -> PostgreSQL Engine -->
   <path d="M 845 210 V 226" fill="none" stroke="#cc7f66" stroke-width="1.3" marker-end="url(#arrow-terracotta-dark)"/>
 
-  <!-- Connector 5: Redis Reconcile Link with DB (Dashed, X_mid = 718) -->
+  <!-- Connector 5: Redis Reconcile Link with DB (Dashed) -->
   <path d="M 660 440 H 714 Q 718 440 718 432 V 338 Q 718 330 726 330 H 745" fill="none" stroke="#8b949e" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow-neutral-dark)"/>
 
 </svg>
