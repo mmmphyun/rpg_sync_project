@@ -1,22 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="100%" height="100%">
   <defs>
-    <!-- Arrow Markers -->
-    <marker id="arrow-muted-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#bfc0c0"/>
+    <!-- Arrow Markers: Muted Dark Editorial Palette -->
+    <marker id="arrow-neutral-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8 z" fill="#8b949e"/>
     </marker>
-    <marker id="arrow-fast-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#66bb6a"/>
+    <marker id="arrow-sage-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8 z" fill="#6ba583"/>
     </marker>
-    <marker id="arrow-slow-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f08a59"/>
+    <marker id="arrow-terracotta-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8 z" fill="#cc7f66"/>
     </marker>
-    <marker id="arrow-link-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6a95d8"/>
+    <marker id="arrow-slate-dark" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8 z" fill="#7d93a8"/>
     </marker>
 
-    <!-- Filters for subtle elevation in dark mode -->
-    <filter id="shadow-dark" x="-4%" y="-6%" width="108%" height="116%" filterUnits="userSpaceOnUse">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.25"/>
+    <!-- Subtle Dark Mode Elevation -->
+    <filter id="shadow-dark-editorial" x="-3%" y="-4%" width="106%" height="110%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.3"/>
     </filter>
   </defs>
 
@@ -25,136 +25,136 @@
     .font-mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; }
   </style>
 
-  <!-- Background Canvas -->
-  <rect width="960" height="520" fill="#14171f" rx="12"/>
+  <!-- Background Canvas: Charcoal Tone -->
+  <rect width="960" height="520" fill="#13151a" rx="10"/>
 
   <!-- ========================================== -->
   <!-- ZONE 1: INGRESS & SECURITY BOUNDARY (Left) -->
   <!-- ========================================== -->
-  <rect x="24" y="28" width="220" height="464" rx="10" fill="rgba(245,245,245,0.02)" stroke="rgba(245,245,245,0.12)" stroke-width="1" stroke-dasharray="4,4"/>
-  <rect x="36" y="20" width="168" height="18" rx="4" fill="#14171f"/>
-  <text x="120" y="33" fill="#bfc0c0" font-size="10" font-weight="700" letter-spacing="0.1em" text-anchor="middle" class="font-mono">INGRESS BOUNDARY</text>
+  <rect x="24" y="28" width="220" height="464" rx="8" fill="#181a21" stroke="#2a2e39" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="36" y="21" width="168" height="16" rx="3" fill="#13151a"/>
+  <text x="120" y="33" fill="#8892a0" font-size="9.5" font-weight="700" letter-spacing="0.08em" text-anchor="middle" class="font-mono">INGRESS BOUNDARY</text>
 
   <!-- Node: Minecraft Server -->
-  <g transform="translate(44, 60)" filter="url(#shadow-dark)">
-    <rect width="180" height="96" rx="8" fill="#1f232e" stroke="rgba(245,245,245,0.12)" stroke-width="1"/>
-    <rect x="0" y="0" width="6" height="96" rx="3" fill="#6a95d8"/>
-    <text x="18" y="26" fill="#f5f5f5" font-size="13" font-weight="700" class="font-sans">Minecraft Game Server</text>
-    <text x="18" y="44" fill="#8e98ac" font-size="10" class="font-mono">PaperMC 1.20.4+ Plugin</text>
-    <rect x="18" y="56" width="144" height="26" rx="4" fill="rgba(106,149,216,0.12)"/>
-    <text x="90" y="73" fill="#6a95d8" font-size="10" font-weight="600" text-anchor="middle" class="font-mono">Tailscale WireGuard</text>
+  <g transform="translate(44, 60)" filter="url(#shadow-dark-editorial)">
+    <rect width="180" height="96" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <rect x="0" y="0" width="4" height="96" rx="2" fill="#7d93a8"/>
+    <text x="16" y="25" fill="#e6edf3" font-size="12.5" font-weight="600" class="font-sans">Minecraft Game Server</text>
+    <text x="16" y="42" fill="#8b949e" font-size="9.5" class="font-mono">PaperMC 1.20.4+ Plugin</text>
+    <rect x="16" y="56" width="148" height="24" rx="4" fill="#242936"/>
+    <text x="90" y="72" fill="#9cb2c9" font-size="9.5" font-weight="600" text-anchor="middle" class="font-mono">Tailscale WireGuard</text>
   </g>
 
   <!-- Node: Web Client / Staff -->
-  <g transform="translate(44, 210)" filter="url(#shadow-dark)">
-    <rect width="180" height="96" rx="8" fill="#1f232e" stroke="rgba(245,245,245,0.12)" stroke-width="1"/>
-    <rect x="0" y="0" width="6" height="96" rx="3" fill="#bfc0c0"/>
-    <text x="18" y="26" fill="#f5f5f5" font-size="13" font-weight="700" class="font-sans">Web Portal Client</text>
-    <text x="18" y="44" fill="#8e98ac" font-size="10" class="font-mono">Staff &amp; Users / Browser</text>
-    <rect x="18" y="56" width="144" height="26" rx="4" fill="rgba(191,192,192,0.1)"/>
-    <text x="90" y="73" fill="#bfc0c0" font-size="10" font-weight="600" text-anchor="middle" class="font-mono">Cloudflare Proxy (CDN)</text>
+  <g transform="translate(44, 210)" filter="url(#shadow-dark-editorial)">
+    <rect width="180" height="96" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <rect x="0" y="0" width="4" height="96" rx="2" fill="#8b949e"/>
+    <text x="16" y="25" fill="#e6edf3" font-size="12.5" font-weight="600" class="font-sans">Web Portal Client</text>
+    <text x="16" y="42" fill="#8b949e" font-size="9.5" class="font-mono">Staff &amp; Users / Browser</text>
+    <rect x="16" y="56" width="148" height="24" rx="4" fill="#252933"/>
+    <text x="90" y="72" fill="#a4afba" font-size="9.5" font-weight="600" text-anchor="middle" class="font-mono">Cloudflare Proxy (CDN)</text>
   </g>
 
   <!-- Node: Discord Gateway -->
-  <g transform="translate(44, 360)" filter="url(#shadow-dark)">
-    <rect width="180" height="96" rx="8" fill="#1f232e" stroke="rgba(245,245,245,0.12)" stroke-width="1"/>
-    <rect x="0" y="0" width="6" height="96" rx="3" fill="#7983f5"/>
-    <text x="18" y="26" fill="#f5f5f5" font-size="13" font-weight="700" class="font-sans">Discord Gateway</text>
-    <text x="18" y="44" fill="#8e98ac" font-size="10" class="font-mono">WSS WebSocket Events</text>
-    <rect x="18" y="56" width="144" height="26" rx="4" fill="rgba(121,131,245,0.12)"/>
-    <text x="90" y="73" fill="#7983f5" font-size="10" font-weight="600" text-anchor="middle" class="font-mono">Heartbeat (50ms)</text>
+  <g transform="translate(44, 360)" filter="url(#shadow-dark-editorial)">
+    <rect width="180" height="96" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <rect x="0" y="0" width="4" height="96" rx="2" fill="#848bb0"/>
+    <text x="16" y="25" fill="#e6edf3" font-size="12.5" font-weight="600" class="font-sans">Discord Gateway</text>
+    <text x="16" y="42" fill="#8b949e" font-size="9.5" class="font-mono">WSS WebSocket Events</text>
+    <rect x="16" y="56" width="148" height="24" rx="4" fill="#252735"/>
+    <text x="90" y="72" fill="#a0a8cf" font-size="9.5" font-weight="600" text-anchor="middle" class="font-mono">Heartbeat (50ms)</text>
   </g>
 
 
   <!-- ======================================================= -->
   <!-- ZONE 2: GCP COMPUTE ENGINE (Single Node · 1GB RAM Limit) -->
   <!-- ======================================================= -->
-  <rect x="270" y="28" width="410" height="464" rx="10" fill="rgba(245,245,245,0.02)" stroke="rgba(245,245,245,0.15)" stroke-width="1.2"/>
-  <rect x="286" y="20" width="280" height="18" rx="4" fill="#14171f"/>
-  <text x="426" y="33" fill="#f5f5f5" font-size="10" font-weight="700" letter-spacing="0.1em" text-anchor="middle" class="font-mono">GCP VM (SINGLE NODE · 1GB RAM)</text>
+  <rect x="270" y="28" width="410" height="464" rx="8" fill="#181a22" stroke="#2e3340" stroke-width="1"/>
+  <rect x="286" y="21" width="280" height="16" rx="3" fill="#13151a"/>
+  <text x="426" y="33" fill="#e6edf3" font-size="9.5" font-weight="700" letter-spacing="0.08em" text-anchor="middle" class="font-mono">GCP VM (SINGLE NODE · 1GB RAM)</text>
 
   <!-- Sub-block: FastAPI Web -->
-  <g transform="translate(290, 60)" filter="url(#shadow-dark)">
-    <rect width="370" height="74" rx="8" fill="#1f232e" stroke="rgba(245,245,245,0.12)" stroke-width="1"/>
-    <text x="18" y="24" fill="#f5f5f5" font-size="13" font-weight="700" class="font-sans">FastAPI Server</text>
-    <text x="120" y="24" fill="#8e98ac" font-size="11" class="font-mono">Pure ASGI · Jinja2 SSR</text>
-    <text x="18" y="46" fill="#bfc0c0" font-size="11" class="font-sans">Security Headers 6종 주입 · Client IP Rate Limiter</text>
-    <text x="18" y="62" fill="#8e98ac" font-size="10" class="font-mono">SlowAPI + Redis Backed · CSRF Origin Check</text>
+  <g transform="translate(290, 60)" filter="url(#shadow-dark-editorial)">
+    <rect width="370" height="74" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <text x="16" y="23" fill="#e6edf3" font-size="12.5" font-weight="600" class="font-sans">FastAPI Server</text>
+    <text x="110" y="23" fill="#8b949e" font-size="10" class="font-mono">Pure ASGI · Jinja2 SSR</text>
+    <text x="16" y="44" fill="#a4afba" font-size="10.5" class="font-sans">Security Headers 6종 주입 · Client IP Rate Limiter</text>
+    <text x="16" y="60" fill="#8b949e" font-size="9.5" class="font-mono">SlowAPI + Redis Backed · CSRF Origin Check</text>
   </g>
 
   <!-- Sub-block: discord.py Bot & Event Loop -->
-  <g transform="translate(290, 154)" filter="url(#shadow-dark)">
-    <rect width="370" height="110" rx="8" fill="#1f232e" stroke="rgba(245,245,245,0.12)" stroke-width="1"/>
-    <text x="18" y="24" fill="#f5f5f5" font-size="13" font-weight="700" class="font-sans">discord.py Bot Process</text>
-    <text x="185" y="24" fill="#66bb6a" font-size="10" font-weight="600" class="font-mono">[Asyncio Event Loop]</text>
+  <g transform="translate(290, 154)" filter="url(#shadow-dark-editorial)">
+    <rect width="370" height="110" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <text x="16" y="23" fill="#e6edf3" font-size="12.5" font-weight="600" class="font-sans">discord.py Bot Process</text>
+    <text x="180" y="23" fill="#6ba583" font-size="9.5" font-weight="600" class="font-mono">[Asyncio Event Loop]</text>
     
-    <!-- ThreadPool Isolation Box -->
-    <rect x="18" y="40" width="334" height="54" rx="6" fill="rgba(240,138,89,0.08)" stroke="#f08a59" stroke-width="1" stroke-dasharray="3,3"/>
-    <text x="30" y="58" fill="#f08a59" font-size="11" font-weight="700" class="font-sans">ThreadPoolExecutor (max_workers=20)</text>
-    <text x="30" y="74" fill="#bfc0c0" font-size="10" class="font-sans">동기 DB I/O 격리 위임 (asyncio.to_thread)</text>
-    <text x="30" y="88" fill="#66bb6a" font-size="9" font-weight="700" class="font-mono">&#x25C6; Gateway Lag 206ms &#x2192; 14.6ms (-92.9% 동결 차단)</text>
+    <!-- ThreadPool Isolation Box: Pastel Terracotta Dark -->
+    <rect x="16" y="38" width="338" height="56" rx="5" fill="#261f1c" stroke="#523932" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="28" y="56" fill="#cc7f66" font-size="11" font-weight="600" class="font-sans">ThreadPoolExecutor (max_workers=20)</text>
+    <text x="28" y="72" fill="#a4afba" font-size="9.5" class="font-sans">동기 DB I/O 격리 위임 (asyncio.to_thread)</text>
+    <text x="28" y="86" fill="#6ba583" font-size="9.5" font-weight="600" class="font-mono">&#x25C6; Gateway Lag 206ms &#x2192; 14.6ms (-92.9% 동결 차단)</text>
   </g>
 
   <!-- Sub-block: Redis In-Memory State & Broker -->
-  <g transform="translate(290, 284)" filter="url(#shadow-dark)">
-    <rect width="370" height="188" rx="8" fill="#1f232e" stroke="#66bb6a" stroke-width="1.5"/>
-    <rect x="0" y="0" width="370" height="30" rx="7" fill="rgba(102,187,106,0.12)"/>
-    <text x="18" y="20" fill="#66bb6a" font-size="13" font-weight="700" class="font-sans">Redis 7 (In-Memory State Broker)</text>
-    <text x="245" y="20" fill="#66bb6a" font-size="10" font-weight="700" class="font-mono">[16.18ms Fast Path]</text>
+  <g transform="translate(290, 284)" filter="url(#shadow-dark-editorial)">
+    <rect width="370" height="188" rx="6" fill="#1e212b" stroke="#3a5445" stroke-width="1.2"/>
+    <rect x="0" y="0" width="370" height="28" rx="5" fill="#1e2922"/>
+    <text x="16" y="19" fill="#7db594" font-size="12.5" font-weight="600" class="font-sans">Redis 7 (In-Memory State Broker)</text>
+    <text x="250" y="19" fill="#6ba583" font-size="9.5" font-weight="700" class="font-mono">[16.18ms Fast Path]</text>
 
     <!-- Fast Path Caching -->
-    <rect x="18" y="42" width="334" height="38" rx="6" fill="#181a24" stroke="rgba(245,245,245,0.08)" stroke-width="1"/>
-    <text x="30" y="58" fill="#f5f5f5" font-size="11" font-weight="700" class="font-sans">O(1) User / Job Cache (Pre-warmed)</text>
-    <text x="30" y="72" fill="#66bb6a" font-size="10" font-weight="600" class="font-mono">DB I/O 0회 바이패스 &#x2192; 평균 레이턴시 16.18ms (-96.0%)</text>
+    <rect x="16" y="38" width="338" height="40" rx="5" fill="#171920" stroke="#292d38" stroke-width="1"/>
+    <text x="28" y="55" fill="#e6edf3" font-size="10.5" font-weight="600" class="font-sans">O(1) User / Job Cache (Pre-warmed)</text>
+    <text x="28" y="69" fill="#6ba583" font-size="9.5" font-weight="600" class="font-mono">DB I/O 0회 바이패스 &#x2192; 평균 레이턴시 16.18ms (-96.0%)</text>
 
     <!-- Distributed Lock -->
-    <rect x="18" y="88" width="334" height="38" rx="6" fill="#181a24" stroke="rgba(245,245,245,0.08)" stroke-width="1"/>
-    <text x="30" y="104" fill="#f5f5f5" font-size="11" font-weight="700" class="font-sans">Safe TTL (15s) Distributed Lock</text>
-    <text x="30" y="118" fill="#bfc0c0" font-size="10" class="font-mono">SET NX EX 15s &#x2192; 20건 동시 경합 중 Race Condition 0.0%</text>
+    <rect x="16" y="86" width="338" height="40" rx="5" fill="#171920" stroke="#292d38" stroke-width="1"/>
+    <text x="28" y="103" fill="#e6edf3" font-size="10.5" font-weight="600" class="font-sans">Safe TTL (15s) Distributed Lock</text>
+    <text x="28" y="117" fill="#8b949e" font-size="9.5" class="font-mono">SET NX EX 15s &#x2192; 20건 동시 경합 중 Race Condition 0.0%</text>
 
     <!-- Pub/Sub Event Relay -->
-    <rect x="18" y="134" width="334" height="38" rx="6" fill="#181a24" stroke="rgba(245,245,245,0.08)" stroke-width="1"/>
-    <text x="30" y="150" fill="#f5f5f5" font-size="11" font-weight="700" class="font-sans">Pub/Sub Cross-Platform Relay</text>
-    <text x="30" y="164" fill="#bfc0c0" font-size="10" class="font-mono">Minecraft &#x2194; Discord 실시간 이벤트 전파 &amp; 무상태 동기화</text>
+    <rect x="16" y="134" width="338" height="40" rx="5" fill="#171920" stroke="#292d38" stroke-width="1"/>
+    <text x="28" y="151" fill="#e6edf3" font-size="10.5" font-weight="600" class="font-sans">Pub/Sub Cross-Platform Relay</text>
+    <text x="28" y="165" fill="#8b949e" font-size="9.5" class="font-mono">Minecraft &#x2194; Discord 실시간 이벤트 전파 &amp; 무상태 동기화</text>
   </g>
 
 
   <!-- ======================================================== -->
   <!-- ZONE 3: DATABASE & LATENCY BOUNDARY (Supabase KR Region) -->
   <!-- ======================================================== -->
-  <rect x="710" y="28" width="226" height="464" rx="10" fill="rgba(245,245,245,0.02)" stroke="rgba(240,138,89,0.3)" stroke-width="1.2" stroke-dasharray="4,4"/>
-  <rect x="724" y="20" width="198" height="18" rx="4" fill="#14171f"/>
-  <text x="823" y="33" fill="#f08a59" font-size="10" font-weight="700" letter-spacing="0.08em" text-anchor="middle" class="font-mono">SUPABASE KR (RTT 200ms)</text>
+  <rect x="710" y="28" width="226" height="464" rx="8" fill="#1d1917" stroke="#4d352e" stroke-width="1" stroke-dasharray="3,3"/>
+  <rect x="724" y="21" width="198" height="16" rx="3" fill="#13151a"/>
+  <text x="823" y="33" fill="#cc7f66" font-size="9.5" font-weight="700" letter-spacing="0.08em" text-anchor="middle" class="font-mono">SUPABASE KR (RTT 200ms)</text>
 
   <!-- Node: Self-healing Connection Pool -->
-  <g transform="translate(724, 60)" filter="url(#shadow-dark)">
-    <rect width="198" height="150" rx="8" fill="#1f232e" stroke="#f08a59" stroke-width="1.5"/>
-    <rect x="0" y="0" width="198" height="28" rx="7" fill="rgba(240,138,89,0.1)"/>
-    <text x="14" y="19" fill="#f08a59" font-size="12" font-weight="700" class="font-sans">자가 치유 커넥션 풀</text>
+  <g transform="translate(724, 60)" filter="url(#shadow-dark-editorial)">
+    <rect width="198" height="150" rx="6" fill="#1e212b" stroke="#523932" stroke-width="1.2"/>
+    <rect x="0" y="0" width="198" height="26" rx="5" fill="#281f1c"/>
+    <text x="14" y="18" fill="#cc7f66" font-size="11.5" font-weight="600" class="font-sans">자가 치유 커넥션 풀</text>
     
-    <text x="14" y="46" fill="#f5f5f5" font-size="11" font-weight="600" class="font-sans">@db_retry 데코레이터</text>
-    <text x="14" y="60" fill="#8e98ac" font-size="9" class="font-mono">원격 소켓 강제 종료 100% 복구</text>
+    <text x="14" y="45" fill="#e6edf3" font-size="10.5" font-weight="600" class="font-sans">@db_retry 데코레이터</text>
+    <text x="14" y="58" fill="#8b949e" font-size="9" class="font-mono">원격 소켓 강제 종료 100% 복구</text>
     
-    <text x="14" y="82" fill="#f5f5f5" font-size="11" font-weight="600" class="font-sans">SELECT 1 안티패턴 제거</text>
-    <text x="14" y="96" fill="#8e98ac" font-size="9" class="font-mono">RTT 200ms 사전 질의 누적 차단</text>
+    <text x="14" y="80" fill="#e6edf3" font-size="10.5" font-weight="600" class="font-sans">SELECT 1 안티패턴 제거</text>
+    <text x="14" y="93" fill="#8b949e" font-size="9" class="font-mono">RTT 200ms 사전 질의 누적 차단</text>
 
-    <text x="14" y="118" fill="#f5f5f5" font-size="11" font-weight="600" class="font-sans">TCP Keepalive 설정</text>
-    <text x="14" y="132" fill="#66bb6a" font-size="9" font-weight="700" class="font-mono">&#x25C6; 레이턴시 405ms &#x2192; 243ms (-40%)</text>
+    <text x="14" y="115" fill="#e6edf3" font-size="10.5" font-weight="600" class="font-sans">TCP Keepalive 설정</text>
+    <text x="14" y="128" fill="#6ba583" font-size="9" font-weight="600" class="font-mono">&#x25C6; 레이턴시 405ms &#x2192; 243ms (-40%)</text>
   </g>
 
   <!-- Node: PostgreSQL Database -->
-  <g transform="translate(724, 250)" filter="url(#shadow-dark)">
-    <rect width="198" height="150" rx="8" fill="#1f232e" stroke="rgba(245,245,245,0.12)" stroke-width="1"/>
-    <text x="14" y="24" fill="#f5f5f5" font-size="13" font-weight="700" class="font-sans">PostgreSQL 15 (DB)</text>
-    <text x="14" y="42" fill="#8e98ac" font-size="10" class="font-mono">Single Source of Truth</text>
+  <g transform="translate(724, 250)" filter="url(#shadow-dark-editorial)">
+    <rect width="198" height="150" rx="6" fill="#1e212b" stroke="#313644" stroke-width="1"/>
+    <text x="14" y="24" fill="#e6edf3" font-size="12.5" font-weight="600" class="font-sans">PostgreSQL 15 (DB)</text>
+    <text x="14" y="41" fill="#8b949e" font-size="9.5" class="font-mono">Single Source of Truth</text>
 
-    <rect x="14" y="54" width="170" height="36" rx="4" fill="#181a24" stroke="rgba(245,245,245,0.08)" stroke-width="1"/>
-    <text x="24" y="69" fill="#f5f5f5" font-size="10" font-weight="600" class="font-sans">ON CONFLICT DO UPDATE</text>
-    <text x="24" y="82" fill="#8e98ac" font-size="9" class="font-mono">멱등성 보장 벌크 UPSERT</text>
+    <rect x="14" y="54" width="170" height="36" rx="4" fill="#171920" stroke="#292d38" stroke-width="1"/>
+    <text x="24" y="69" fill="#e6edf3" font-size="10" font-weight="600" class="font-sans">ON CONFLICT DO UPDATE</text>
+    <text x="24" y="82" fill="#8b949e" font-size="8.5" class="font-mono">멱등성 보장 벌크 UPSERT</text>
 
-    <rect x="14" y="98" width="170" height="36" rx="4" fill="#181a24" stroke="rgba(245,245,245,0.08)" stroke-width="1"/>
-    <text x="24" y="113" fill="#f5f5f5" font-size="10" font-weight="600" class="font-sans">사후 상태 대사 (Reconcile)</text>
-    <text x="24" y="126" fill="#8e98ac" font-size="9" class="font-mono">봇 순단 시 누락 데이터 동기화</text>
+    <rect x="14" y="98" width="170" height="36" rx="4" fill="#171920" stroke="#292d38" stroke-width="1"/>
+    <text x="24" y="113" fill="#e6edf3" font-size="10" font-weight="600" class="font-sans">사후 상태 대사 (Reconcile)</text>
+    <text x="24" y="126" fill="#8b949e" font-size="8.5" class="font-mono">봇 순단 시 누락 데이터 동기화</text>
   </g>
 
 
@@ -163,34 +163,34 @@
   <!-- ============================================== -->
   
   <!-- Minecraft -> Redis (Pub/Sub WireGuard) -->
-  <path d="M 224 108 H 257 Q 265 108 265 116 V 360 Q 265 368 273 368 H 290" fill="none" stroke="#6a95d8" stroke-width="1.3" marker-end="url(#arrow-link-dark)"/>
+  <path d="M 224 108 H 257 Q 265 108 265 116 V 360 Q 265 368 273 368 H 290" fill="none" stroke="#7d93a8" stroke-width="1.2" marker-end="url(#arrow-slate-dark)"/>
   
   <!-- Web Client -> FastAPI -->
-  <path d="M 224 258 H 257 Q 265 258 265 250 V 97 Q 265 97 273 97 H 290" fill="none" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#arrow-muted-dark)"/>
+  <path d="M 224 258 H 257 Q 265 258 265 250 V 97 Q 265 97 273 97 H 290" fill="none" stroke="#8b949e" stroke-width="1.1" marker-end="url(#arrow-neutral-dark)"/>
 
   <!-- Discord Gateway -> Bot Event Loop -->
-  <path d="M 224 408 H 257 Q 265 408 265 400 V 209 Q 265 209 273 209 H 290" fill="none" stroke="#bfc0c0" stroke-width="1.2" marker-end="url(#arrow-muted-dark)"/>
+  <path d="M 224 408 H 257 Q 265 408 265 400 V 209 Q 265 209 273 209 H 290" fill="none" stroke="#8b949e" stroke-width="1.1" marker-end="url(#arrow-neutral-dark)"/>
 
-  <!-- Bot Event Loop -> Redis (FAST PATH: 16.18ms) -->
-  <path d="M 475 264 V 276 Q 475 284 475 284" fill="none" stroke="#66bb6a" stroke-width="2" marker-end="url(#arrow-fast-dark)"/>
+  <!-- Bot Event Loop -> Redis (FAST PATH: 16.18ms, Sage Tone) -->
+  <path d="M 475 264 V 276 Q 475 284 475 284" fill="none" stroke="#6ba583" stroke-width="1.6" marker-end="url(#arrow-sage-dark)"/>
 
-  <!-- ThreadPool -> Supabase Pool (SLOW PATH: 243.41ms RTT Boundary) -->
-  <path d="M 660 216 H 685 Q 692 216 692 208 V 135 Q 692 135 700 135 H 724" fill="none" stroke="#f08a59" stroke-width="2" marker-end="url(#arrow-slow-dark)"/>
+  <!-- ThreadPool -> Supabase Pool (SLOW PATH: 243.41ms RTT Boundary, Terracotta) -->
+  <path d="M 660 216 H 685 Q 692 216 692 208 V 135 Q 692 135 700 135 H 724" fill="none" stroke="#cc7f66" stroke-width="1.6" marker-end="url(#arrow-terracotta-dark)"/>
 
   <!-- Connection Pool -> PostgreSQL Engine -->
-  <path d="M 823 210 V 242" fill="none" stroke="#f08a59" stroke-width="1.5" marker-end="url(#arrow-slow-dark)"/>
+  <path d="M 823 210 V 242" fill="none" stroke="#cc7f66" stroke-width="1.2" marker-end="url(#arrow-terracotta-dark)"/>
 
   <!-- Redis Reconcile Link with DB (Dashed) -->
-  <path d="M 660 380 H 685 Q 692 380 692 370 V 325 Q 692 325 700 325 H 724" fill="none" stroke="#8e98ac" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-muted-dark)"/>
+  <path d="M 660 380 H 685 Q 692 380 692 370 V 325 Q 692 325 700 325 H 724" fill="none" stroke="#8b949e" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow-neutral-dark)"/>
 
-  <!-- Path Badges / Latency Indicators -->
-  <g transform="translate(485, 268)">
-    <rect width="96" height="18" rx="4" fill="#66bb6a"/>
-    <text x="48" y="13" fill="#14171f" font-size="9" font-weight="700" text-anchor="middle" class="font-mono">FAST PATH 16ms</text>
+  <!-- Path Badges: Soft Pastel Tags Dark -->
+  <g transform="translate(485, 269)">
+    <rect width="90" height="16" rx="3" fill="#1e2922" stroke="#3a5445" stroke-width="0.8"/>
+    <text x="45" y="12" fill="#7db594" font-size="8.5" font-weight="700" text-anchor="middle" class="font-mono">FAST PATH 16ms</text>
   </g>
-  <g transform="translate(642, 170)">
-    <rect width="112" height="18" rx="4" fill="#f08a59"/>
-    <text x="56" y="13" fill="#14171f" font-size="9" font-weight="700" text-anchor="middle" class="font-mono">SLOW PATH 243ms</text>
+  <g transform="translate(642, 171)">
+    <rect width="104" height="16" rx="3" fill="#281f1c" stroke="#523932" stroke-width="0.8"/>
+    <text x="52" y="12" fill="#cc7f66" font-size="8.5" font-weight="700" text-anchor="middle" class="font-mono">SLOW PATH 243ms</text>
   </g>
 
 </svg>
