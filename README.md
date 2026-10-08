@@ -21,9 +21,18 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="public/images/architecture-dark.svg">
-    <img alt="시스템 아키텍처 다이어그램" src="public/images/architecture-light.svg" width="100%">
+    <source media="(prefers-color-scheme: light)" srcset="public/images/architecture-light.svg">
+    <img alt="RPG Sync 시스템 아키텍처 다이어그램" src="public/images/architecture-light.svg" width="100%">
   </picture>
 </p>
+
+* **아키텍처 데이터 흐름 및 분산 제어 규약**:
+  * **① Tailscale 사설 터널**: 공인 IP가 없는 로컬 PaperMC 호스트와 GCP 단일 VM 간 외부 포트 개방 없이 WireGuard 암호화 터널 통신.
+  * **② 웹소켓 게이트웨이**: Discord 커뮤니티 유저 및 운영진의 모달 인터랙션을 봇 비동기 이벤트 루프로 수신.
+  * **③ HTTP 조회**: 웹 브라우저 포털 사용자가 ASGI 미들웨어를 거쳐 FastAPI 백엔드로 직업/스킬 데이터 요청.
+  * **④ Safe TTL 분산 락 & Pub/Sub**: 1GB RAM 환경에서 운영진 중복 승인 경합을 억제하는 15초 안전 만료 마진 Redis 분산 락 및 크로스 플랫폼 이벤트 전파.
+  * **⑤ 인메모리 Fast Path**: 200ms 대륙 간 물리 지연을 극복하기 위해 FastAPI 포털의 반복 직업 조회를 Redis 캐시(16.18ms)로 전환.
+  * **⑥ 원격 DB 질의 및 자가 치유**: 200ms 대륙 간 RTT 환경에서 사전 `SELECT 1` 검증을 배제하고 `@db_retry` 소켓 자가 치유 데코레이터로 원격 Supabase DB 무중단 연동.
 
 ---
 
